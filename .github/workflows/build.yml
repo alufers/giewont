@@ -1,0 +1,16 @@
+name: Build with CMake
+
+on:
+  push: # Trigger on push events
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3  # Checkout the repository
+        with:
+          recursive: true  # Checkout submodules recursively
+      - name: Configure CMake
+        run: cmake -B build -S .
+      - name: Build
+        run: cmake --build build --config Release
