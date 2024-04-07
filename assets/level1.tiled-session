@@ -6,7 +6,16 @@
     "activeFile": "",
     "expandedProjectPaths": [
     ],
+    "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
+        "level1.tmj": {
+            "scale": 0.27,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1001.8518518518517,
+                "y": 907.4074074074072
+            }
+        },
         "level1.tmx": {
             "scale": 0.7862380952380952,
             "selectedLayer": 1,
@@ -14,6 +23,12 @@
                 "x": 1050.5723457089214,
                 "y": 699.5336442371753
             }
+        },
+        "tileset_base.j": {
+            "scaleInDock": 1
+        },
+        "tileset_base.tsj": {
+            "scaleInDock": 1
         },
         "tileset_base.tsx": {
             "dynamicWrapping": true,
@@ -29,6 +44,7 @@
     ],
     "project": "level1.tiled-project",
     "recentFiles": [
+        "level1.tmj",
         "level1.tmx",
         "tileset_base.tsx"
     ],
