@@ -30,6 +30,14 @@ void Game::push_entity(std::unique_ptr<Entity> entity) {
   entities[idx] = std::move(entity);
 }
 
+void Game::load_assets() {
+  for(auto &entity : entities) {
+    if (entity != nullptr) {
+      entity->load_assets(*this);
+    }
+  }
+}
+
 void Game::destroy_marked_entities() {
   for (size_t i = 0; i < entities.size(); i++) {
     if (entities[i] != nullptr && entities[i]->marked_for_deletion) {

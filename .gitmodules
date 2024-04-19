@@ -1,3 +1,6 @@
 [submodule "libs/nbnet"]
 	path = libs/nbnet
 	url = https://github.com/nathhB/nbnet.git
+[submodule "libs/json"]
+	path = libs/json
+	url = https://github.com/nlohmann/json.git

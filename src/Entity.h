@@ -22,7 +22,25 @@ public:
   /** @brief Whether the entity should be deleted in the next frame. */
   bool marked_for_deletion = false;
 
+  /**
+   * @brief Load assets needed fro this entity.
+   * 
+   * @param game 
+   */
+  virtual void load_assets(const Game &game) {}
+
+  /**
+   * @brief Update entity state.
+   *
+   * @param game
+   */
   virtual void update(const Game &game) = 0;
+
+  /**
+   * @brief Render the entity to the screen.
+   *
+   * @param game
+   */
   virtual void draw(const Game &game) = 0;
 
   void destroy();
