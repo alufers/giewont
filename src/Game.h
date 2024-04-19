@@ -4,6 +4,7 @@
 #include "Entity.h"
 #include <memory>
 #include <vector>
+#include "ResourceManager.h"
 
 namespace giewont {
 
@@ -16,6 +17,10 @@ private:
 public:
   static constexpr size_t MAX_ENTITIES = 1024;
 
+  std::unique_ptr<ResourceManager> rm = std::make_unique<ResourceManager>();
+
+
+  void load_assets();
   void update(float delta_time);
   void draw();
 
