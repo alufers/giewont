@@ -4,7 +4,13 @@
 
 using giewont::Game;
 
-void Game::draw() {}
+void Game::draw() {
+  for (auto &entity : entities) {
+    if (entity != nullptr) {
+      entity->draw(*this);
+    }
+  }
+}
 
 void Game::update(float delta_time) { destroy_marked_entities(); }
 

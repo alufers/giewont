@@ -1,6 +1,7 @@
 #include "raylib.h"
 
 #include "Game.h"
+#include "TilemapEntity.h"
 #include <chrono>
 #include <memory>
 
@@ -14,6 +15,10 @@ int main() {
   SetTargetFPS(60);
 
   std::unique_ptr<giewont::Game> g = std::make_unique<giewont::Game>();
+  g->push_entity(std::make_unique<giewont::TilemapEntity>("level1.tmj"));
+
+  // Load assets
+  g->load_assets();
 
   std::chrono::time_point<std::chrono::system_clock> last_frame_time =
       std::chrono::system_clock::now();
