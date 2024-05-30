@@ -58,7 +58,7 @@ TilemapEntity::TilemapEntity(std::string tilemap_json_path) {
   this->tilemap_json_path = tilemap_json_path;
 };
 
-void TilemapEntity::update(const Game &game) {}
+void TilemapEntity::update(const Game &game, float delta_time) {}
 
 void TilemapEntity::draw(const Game &game) {
   auto tex = game.rm->get_texture(this->tileset_data->texture_res_id);

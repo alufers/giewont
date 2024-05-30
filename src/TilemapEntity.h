@@ -47,7 +47,7 @@ class TilemapEntity : public Entity {
 public:
   TilemapEntity(std::string tilemap_json_path);
   void load_assets(const Game &game) override;
-  void update(const Game &game) override;
+  void update(const Game &game, float delta_time) override;
   void draw(const Game &game) override;
 
 private:

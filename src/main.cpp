@@ -5,8 +5,8 @@
 #include <chrono>
 #include <memory>
 
-#define SCREEN_WIDTH (800)
-#define SCREEN_HEIGHT (450)
+#define SCREEN_WIDTH (1920)
+#define SCREEN_HEIGHT (1080)
 
 #define WINDOW_TITLE "GIEWONT"
 
