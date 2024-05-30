@@ -10,6 +10,32 @@
  "tileheight":70,
  "tiles":[
         {
+         "id":2,
+         "objectgroup":
+            {
+             "draworder":"index",
+             "id":2,
+             "name":"",
+             "objects":[
+                    {
+                     "height":40.3333333333333,
+                     "id":1,
+                     "name":"",
+                     "rotation":0,
+                     "type":"",
+                     "visible":true,
+                     "width":69.6666666666667,
+                     "x":0.333333333333334,
+                     "y":0.333333333333333
+                    }],
+             "opacity":1,
+             "type":"objectgroup",
+             "visible":true,
+             "x":0,
+             "y":0
+            }
+        }, 
+        {
          "id":19,
          "type":"ladder"
         }, 
