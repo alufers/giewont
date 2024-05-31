@@ -26,6 +26,11 @@ jobs:
             emcmake cmake -B build -S . -DPLATFORM=Web
       - name: Build
         run: cmake --build build --config Release
+      - name: Cleanup build dir
+        run: |
+            find build -type f ! -name '*.wasm' ! -name '*.js' ! -name '*.html' -delete
+            find build -type d -empty -delete
+            rm -rf build/_deps || true
       # Upload the build artifacts
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
