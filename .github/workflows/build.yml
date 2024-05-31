@@ -1,0 +1,19 @@
+name: Build with CMake
+
+on:
+  push: # Trigger on push events
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v3  # Checkout the repository
+        with:
+            submodules: recursive  # Checkout submodules recursively
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev
+      - name: Configure CMake
+        run: |
+            cmake -B build -S .
+      - name: Build
+        run: cmake --build build --config Release

@@ -1,0 +1,54 @@
+name: Build with CMake for Web
+
+on:
+  push: # Trigger on push events
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v3  # Checkout the repository
+        with:
+            submodules: recursive  # Checkout submodules recursively
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev
+      - name: Setup emsdk
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          # Make sure to set a version number!
+          version: 3.1.60
+          # This is the name of the cache folder.
+          # The cache folder will be placed in the build directory,
+          #  so make sure it doesn't conflict with anything!
+          actions-cache-folder: 'emsdk-cache'
+      - name: Configure CMake
+        run: |
+            emcmake cmake -B build -S . -DPLATFORM=Web
+      - name: Build
+        run: cmake --build build --config Release
+      # Upload the build artifacts
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-pages
+          path: build
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4 # or specific "vX.X.X" version tag for this action
+
