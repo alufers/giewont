@@ -57,6 +57,8 @@ public:
 
   bool check_collision_aabb(const AABB &aabb, Vec2 &resolution);
 
+  bool check_allow_jump(const Vec2 &feet_pos);
+
 private:
   int tilemap_width;  // in tiles
   int tilemap_height; // in tiles

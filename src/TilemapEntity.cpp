@@ -140,6 +140,26 @@ bool TilemapEntity::check_collision_aabb(const AABB &aabb, Vec2 &resolution) {
   return false;
 }
 
+bool TilemapEntity::check_allow_jump(const Vec2 &feet_pos) {
+  Vec2 in_local_space = feet_pos - this->position;
+  AABB tilemap_aabb =
+      AABB(Vec2(0, 0), Vec2((float)this->tilemap_width * this->tile_size.x,
+                            (float)this->tilemap_height * this->tile_size.y));
+  if (!tilemap_aabb.contains(in_local_space)) {
+    return false;
+  }
+  int x = (int)in_local_space.x / this->tile_size.x;
+  int y = (int)in_local_space.y / this->tile_size.y;
+  if (x < 0 || y < 0 || x >= this->tilemap_width || y >= this->tilemap_height) {
+    return false;
+  }
+  int tile_id = this->tilemap_data[y * this->tilemap_width + x];
+  TilesetTileInfo &tile_info = get_tile_info_for_tile_id(tile_id);
+
+  return tile_info.tile == TileType::LADDER || tile_info.tile == TileType::SOLID;
+
+}
+
 /////// TilesetData
 
 TilesetData::TilesetData(res_id tileset_res_id, res_id texture_res_id,
