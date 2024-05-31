@@ -32,11 +32,10 @@ jobs:
             find build -type d -empty -delete
             rm -rf build/_deps || true
       # Upload the build artifacts
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: github-pages
-          path: build
+      -  name: Upload screenshots as a github-pages artifact
+         uses: actions/upload-pages-artifact@v1
+         with: 
+           path: build
   deploy:
     needs: build
     runs-on: ubuntu-latest
