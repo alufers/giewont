@@ -1,7 +1,7 @@
 #include "ResourceManager.h"
 #include <fstream>
-using giewont::ResourceManager;
 using giewont::res_id;
+using giewont::ResourceManager;
 
 ResourceManager::ResourceManager() {}
 
@@ -24,14 +24,17 @@ std::shared_ptr<nlohmann::json> ResourceManager::get_json(res_id id) {
   return jsons[id];
 }
 
-
 res_id ResourceManager::load_texture(std::string path) {
   std::string full_path = assets_path + path;
   if (texture_paths.find(full_path) != texture_paths.end()) {
     return texture_paths[full_path];
   }
   texture_paths[full_path] = textures.size();
-  textures.push_back(std::make_shared<Texture2D>(LoadTexture(full_path.c_str())));
+  auto tex = std::make_shared<Texture2D>(LoadTexture(full_path.c_str()));
+  if(tex->width == 0 || tex->height == 0) {
+    throw std::runtime_error("Could not load texture: " + full_path);
+  }
+  textures.push_back(std::move(tex));
   return texture_paths[full_path];
 }
 
