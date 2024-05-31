@@ -1,0 +1,28 @@
+name: Build with CMake for Web
+
+on:
+  push: # Trigger on push events
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v3  # Checkout the repository
+        with:
+            submodules: recursive  # Checkout submodules recursively
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev
+      - name: Setup emsdk
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          # Make sure to set a version number!
+          version: 3.1.60
+          # This is the name of the cache folder.
+          # The cache folder will be placed in the build directory,
+          #  so make sure it doesn't conflict with anything!
+          actions-cache-folder: 'emsdk-cache'
+      - name: Configure CMake
+        run: |
+            emcmake cmake -B build -S . -DPLATFORM=Web
+      - name: Build
+        run: cmake --build build --config Release

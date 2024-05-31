@@ -9,6 +9,10 @@
 #include <vector>
 #include "raylib.h"
 
+#ifndef GIEWONT_ASSETS_PATH
+#define GIEWONT_ASSETS_PATH "assets/"
+#endif
+
 namespace giewont {
 
 /**
@@ -21,7 +25,7 @@ public:
   /**
    * @todo Make it configurable via ENV.
    */
-  std::string assets_path = "../assets/";
+  std::string assets_path = GIEWONT_ASSETS_PATH;
   /**
    * @brief Loads a JSON file into the resource manager.
    *
