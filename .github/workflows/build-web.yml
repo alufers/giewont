@@ -1,4 +1,4 @@
-name: Build with CMake
+name: Build with CMake for Web
 
 on:
   push: # Trigger on push events
