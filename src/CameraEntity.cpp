@@ -13,11 +13,17 @@ CameraEntity::CameraEntity() {
 void CameraEntity::load_assets(const Game &game) {}
 
 void CameraEntity::update(const Game &game, float delta_time) {
- 
+ // check scroll
+
 }
 
 void CameraEntity::draw(const Game &game) {
   // Do nothing
+  float mouse_scroll = GetMouseWheelMove();
+
+  if (mouse_scroll != 0) {
+    camera.zoom += mouse_scroll * 0.1f;
+  }
 }
 
 void CameraEntity::begin_mode2d() { BeginMode2D(camera); }

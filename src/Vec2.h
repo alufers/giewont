@@ -3,6 +3,8 @@
 
 #include "raylib.h"
 #include <cmath>
+#include <iostream>
+
 namespace giewont {
 
 class Vec2 {
@@ -66,6 +68,11 @@ public:
   }
 
   Vector2 to_raylib() const { return {x, y}; }
+
+  friend auto operator<<(std::ostream &os, const Vec2 &v) -> std::ostream & {
+    os << "(" << v.x << ", " << v.y << ")";
+    return os;
+  }
 };
 } // namespace giewont
 

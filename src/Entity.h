@@ -1,8 +1,8 @@
 #ifndef ENTITY_H_
 #define ENTITY_H_
-#include <cstdint>
 #include "Vec2.h"
-
+#include "AABB.h"
+#include <cstdint>
 
 namespace giewont {
 
@@ -30,8 +30,8 @@ public:
 
   /**
    * @brief Load assets needed fro this entity.
-   * 
-   * @param game 
+   *
+   * @param game
    */
   virtual void load_assets(const Game &game) {}
 
@@ -64,18 +64,14 @@ public:
   bool valid(Game const &game) const;
   Entity &get(Game &game) const;
 
-
-  template <typename T>
-  T &get_as(Game &game) const {
+  template <typename T> T &get_as(Game &game) const {
     return dynamic_cast<T &>(get(game));
   }
 
-  template <typename T>
-  bool valid_as(Game &game) const {
+  template <typename T> bool valid_as(Game &game) const {
     return valid(game) && dynamic_cast<T *>(get(game)) != nullptr;
   }
 };
-
 
 } // namespace giewont
 
