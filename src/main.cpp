@@ -1,3 +1,4 @@
+#include "CharacterEntity.h"
 #include "raylib.h"
 
 #include "Game.h"
@@ -44,9 +45,9 @@ int main() {
 
   g->push_entity(std::make_unique<giewont::TilemapEntity>("level1.tmj"));
 
-  auto phys_ent = std::make_unique<giewont::PhysEntity>();
+  auto phys_ent = std::make_unique<giewont::CharacterEntity>();
   phys_ent->position = {100, 100};
-  phys_ent->velocity = {50.0f, 0};
+  // phys_ent->velocity = {50.0f, 0};
   g->push_entity(std::move(phys_ent));
 
   // Load assets

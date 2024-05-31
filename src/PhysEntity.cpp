@@ -10,9 +10,7 @@ using namespace giewont;
 
 PhysEntity::PhysEntity() : Entity() {}
 
-void PhysEntity::load_assets(const Game &game) {
-  this->_sprite_id = game.rm->load_texture("entites/slime.png");
-}
+void PhysEntity::load_assets(const Game &game) {}
 
 void PhysEntity::update(const Game &game, float delta_time) {
   this->velocity += game.gravity * delta_time;
@@ -41,9 +39,6 @@ void PhysEntity::update(const Game &game, float delta_time) {
   }
 }
 
-void PhysEntity::draw(const Game &game) {
-  DrawTexture(*game.rm->get_texture(this->_sprite_id), this->position.x,
-              this->position.y, WHITE);
-}
+void PhysEntity::draw(const Game &game) {}
 
 AABB &PhysEntity::get_aabb() { return _default_aabb; }

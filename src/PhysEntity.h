@@ -27,7 +27,7 @@ public:
   private:
     AABB _default_aabb = AABB(Vec2(0, 0), Vec2(70, 70));
 
-    res_id _sprite_id;
+
 };
 
 } // namespace giewont
