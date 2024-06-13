@@ -26,20 +26,44 @@ public:
            min.y <= other.max.y && max.y >= other.min.y;
   }
 
-  bool intersects_with_resolutions(const AABB &other, Vec2 &resolution) const {
+  bool intersects_with_normal_penetration(const AABB &other, Vec2 &normal,
+                                          float &penetration) const {
 
     if (!intersects(other)) {
-      resolution = Vec2(0, 0);
+
       return false;
     }
 
-    // choose the axis with the smallest overlap
-    float x_overlap = std::min(max.x - other.min.x, other.max.x - min.x);
-    float y_overlap = std::min(max.y - other.min.y, other.max.y - min.y);
-    if (x_overlap < y_overlap) {
-      resolution = Vec2(-x_overlap, 0);
-    } else {
-      resolution = Vec2(0, -y_overlap);
+    Vec2 n = other.center() - center();
+    float a_extent_x = (max.x - min.x) / 2;
+    float b_extent_x = (other.max.x - other.min.x) / 2;
+
+    float x_overlap = a_extent_x + b_extent_x - std::abs(n.x);
+
+    if (x_overlap > 0) {
+      float a_extent_y = (max.y - min.y) / 2;
+      float b_extent_y = (other.max.y - other.min.y) / 2;
+
+      float y_overlap = a_extent_y + b_extent_y - std::abs(n.y);
+
+      if (y_overlap > 0) {
+        if (x_overlap < y_overlap) {
+          if (n.x < 0) {
+            normal = Vec2(-1, 0);
+          } else {
+            normal = Vec2(1, 0);
+          }
+          penetration = x_overlap;
+        } else {
+          if (n.y < 0) {
+            normal = Vec2(0, -1);
+          } else {
+            normal = Vec2(0, 1);
+          }
+          penetration = y_overlap;
+        }
+        return true;
+      }
     }
 
     return true;
@@ -52,6 +76,9 @@ public:
   AABB translated(const Vec2 &offset) const {
     return AABB(min + offset, max + offset);
   }
+
+  float width() const { return max.x - min.x; }
+  float height() const { return max.y - min.y; }
 };
 } // namespace giewont
 

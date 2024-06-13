@@ -20,13 +20,14 @@ public:
   Vec2 velocity = {0, 0};
 
   virtual AABB &get_aabb();
-  void load_assets(const Game &game);
-  void update(const Game &game, float delta_time);
-  void draw(const Game &game);
+  void load_assets(const Game &game) override;
+  void update(const Game &game, float delta_time) override;
+  void draw(const Game &game) override;
+  void draw_debug(const Game &game) override;
 
   private:
     AABB _default_aabb = AABB(Vec2(0, 0), Vec2(70, 70));
-
+    Vec2 _resolution_vector_debug = {0, 0};
 
 };
 

@@ -99,16 +99,18 @@ TilesetTileInfo &TilemapEntity::get_tile_info_for_tile_id(int tile_id) {
   return tileset.tile_info[tile_id - tileset.first_gid];
 }
 
-bool TilemapEntity::check_collision_aabb(const AABB &aabb, Vec2 &resolution) {
+std::vector<TilemapCollisionManifold>
+TilemapEntity::check_collision_aabb(const AABB &aabb) {
   AABB in_local_space = aabb.translated(-this->position);
 
   AABB tilemap_aabb =
       AABB(Vec2(0, 0), Vec2((float)this->tilemap_width * this->tile_size.x,
                             (float)this->tilemap_height * this->tile_size.y));
   if (!tilemap_aabb.intersects(in_local_space)) {
-    return false;
+    return {};
   }
 
+  std::vector<TilemapCollisionManifold> manifolds;
   // tile coords
   int start_x = (int)in_local_space.min.x / this->tile_size.x;
   int start_y = (int)in_local_space.min.y / this->tile_size.y;
@@ -130,14 +132,18 @@ bool TilemapEntity::check_collision_aabb(const AABB &aabb, Vec2 &resolution) {
         AABB tile_aabb = AABB::from_min_and_size(
             Vec2((float)x * this->tile_size.x, (float)y * this->tile_size.y),
             this->tile_size);
-        if (tile_aabb.intersects_with_resolutions(in_local_space, resolution)) {
-          return true;
+        Vec2 normal(0.0, 0.0);
+        float penetration = 0.0;
+        if (tile_aabb.intersects_with_normal_penetration(in_local_space, normal,
+                                                         penetration)) {
+          TilemapCollisionManifold manifold = {normal, penetration};
+          manifolds.push_back(manifold);
         }
       }
     }
   }
 
-  return false;
+  return manifolds;
 }
 
 bool TilemapEntity::check_allow_jump(const Vec2 &feet_pos) {
@@ -156,8 +162,8 @@ bool TilemapEntity::check_allow_jump(const Vec2 &feet_pos) {
   int tile_id = this->tilemap_data[y * this->tilemap_width + x];
   TilesetTileInfo &tile_info = get_tile_info_for_tile_id(tile_id);
 
-  return tile_info.tile == TileType::LADDER || tile_info.tile == TileType::SOLID;
-
+  return tile_info.tile == TileType::LADDER ||
+         tile_info.tile == TileType::SOLID;
 }
 
 /////// TilesetData

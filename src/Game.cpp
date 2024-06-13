@@ -3,8 +3,9 @@
 #include "Log.h"
 #include "NullEntity.h"
 #include <exception>
+#include <format>
+#include <nlohmann/json.hpp>
 #include <stdexcept>
-#include <format> 
 
 using namespace giewont;
 
@@ -18,6 +19,15 @@ void Game::draw() {
       entity->draw(*this);
     }
   }
+
+  if (debug_overlay) {
+    for (auto &entity : entities) {
+      if (entity != nullptr) {
+        entity->draw_debug(*this);
+      }
+    }
+  }
+
   camera.end_mode2d();
 
   DrawText(std::format("UPS: {:.2f}", last_ups).c_str(), 10, 10, 20, BLACK);

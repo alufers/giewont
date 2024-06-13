@@ -45,6 +45,12 @@ public:
                  Vec2 offset);
 };
 
+class TilemapCollisionManifold {
+public:
+  Vec2 normal;
+  float penetration;
+};
+
 /**
  * @brief Entity for a loaded tilemap.
  */
@@ -55,7 +61,7 @@ public:
   void update(const Game &game, float delta_time) override;
   void draw(const Game &game) override;
 
-  bool check_collision_aabb(const AABB &aabb, Vec2 &resolution);
+  std::vector<TilemapCollisionManifold> check_collision_aabb(const AABB &aabb);
 
   bool check_allow_jump(const Vec2 &feet_pos);
 
