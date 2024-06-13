@@ -49,6 +49,13 @@ public:
    */
   virtual void draw(const Game &game) = 0;
 
+  /**
+   * @brief Function to draw debug information over all other entities.
+   * 
+   * @param game 
+   */
+  virtual void draw_debug(const Game &game) {}
+
   EntityRef get_ref() const;
 
   void destroy();
