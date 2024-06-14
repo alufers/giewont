@@ -29,7 +29,7 @@ public:
   bool debug_overlay = false;
 
   void load_assets();
-  void update(float delta_time);
+  virtual void update(float delta_time);
 
   // Multiplayer
 

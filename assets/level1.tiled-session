@@ -10,10 +10,10 @@
     "fileStates": {
         "level1.tmj": {
             "scale": 0.33,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 1030.3030303030303,
-                "y": 678.7878787878788
+                "x": 993.939393939394,
+                "y": 639.3939393939394
             }
         },
         "level1.tmx": {

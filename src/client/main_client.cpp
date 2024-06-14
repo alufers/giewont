@@ -16,7 +16,7 @@
 
 #define WINDOW_TITLE "GIEWONT"
 
-static std::unique_ptr<giewont::ClientGame> g = std::make_unique<giewont::ClientGame>();
+static std::unique_ptr<giewont::ClientGame> g = std::make_unique<giewont::ClientGame>("localhost", 1338);
 
 static void main_loop() {
   static std::chrono::time_point<std::chrono::system_clock> last_frame_time =
@@ -46,6 +46,8 @@ int main() {
 
   // Load assets
   g->load_assets();
+
+  g->init_net_client();
 
 #if defined(PLATFORM_WEB)
   emscripten_set_main_loop(main_loop, 60, 1);

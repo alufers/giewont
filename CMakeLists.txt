@@ -13,6 +13,8 @@ endif ()
 set(RAYLIB_VERSION 5.0)
 find_package(raylib ${RAYLIB_VERSION} QUIET) # QUIET or REQUIRED
 
+find_package(LibDataChannel REQUIRED)
+
 if(NOT raylib_FOUND) # If there's none, fetch and build raylib
     set(FETCHCONTENT_QUIET FALSE)
     include(FetchContent)
@@ -52,6 +54,7 @@ set(COMMON_SOURCES
 set(COMMON_INCLUDES
     "${CMAKE_CURRENT_LIST_DIR}/src/"  
     "${CMAKE_CURRENT_LIST_DIR}/src/math"
+    "${CMAKE_CURRENT_LIST_DIR}/src/net"
 ) 
 
 ### Client build
@@ -83,6 +86,7 @@ if (EMSCRIPTEN)
     set_target_properties(${CLIENT_EXE_NAME} PROPERTIES OUTPUT_NAME "index")
 else()
     target_compile_definitions(${CLIENT_EXE_NAME} PUBLIC -DGIEWONT_ASSETS_PATH="../assets/")
+    target_link_libraries(${CLIENT_EXE_NAME} PUBLIC LibDataChannel::LibDataChannel)
 endif()
 
 
@@ -92,6 +96,7 @@ set(SERVER_EXE_NAME "giewont_server")
 
 set(SERVER_SOURCES 
     src/server/main_server.cpp
+    src/server/ServerGame.cpp
 )
 
 set (SERVER_INCLUDES
@@ -104,6 +109,6 @@ target_sources(${SERVER_EXE_NAME} PRIVATE ${COMMON_SOURCES} ${SERVER_SOURCES})
 target_include_directories(${SERVER_EXE_NAME} PRIVATE ${COMMON_INCLUDES} ${SERVER_INCLUDES})
 target_include_directories(${SERVER_EXE_NAME} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/libs/nbnet")
 
-target_link_libraries(${SERVER_EXE_NAME} PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(${SERVER_EXE_NAME} PRIVATE nlohmann_json::nlohmann_json LibDataChannel::LibDataChannel)
 target_compile_options(${SERVER_EXE_NAME} PRIVATE -ggdb)
 
