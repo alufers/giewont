@@ -6,7 +6,8 @@
 #include "Game.h"
 #include "ResourceManager.h"
 #include "Vec2.h"
-#include <string>
+#include <filesystem>
+#include <nlohmann/json.hpp>
 #include <vector>
 
 namespace giewont {
@@ -56,25 +57,33 @@ public:
  */
 class TilemapEntity : public Entity {
 public:
-  TilemapEntity(std::string tilemap_json_path);
-  void load_assets(const Game &game) override;
-  void update(const Game &game, float delta_time) override;
+  /**
+   * @brief Construct a new Tilemap Entity object
+   *
+   * @param level_parent_folder The folder from which the level is loaded.
+   * @param tile_layer_data
+   * @param level_data
+   * @param game
+   */
+  TilemapEntity(const std::filesystem::path &level_parent_folder,
+                const nlohmann::json &tile_layer_data,
+                const nlohmann::json &level_data, const Game &game);
+
+  void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
 
   std::vector<TilemapCollisionManifold> check_collision_aabb(const AABB &aabb);
 
   bool check_allow_jump(const Vec2 &feet_pos);
 
+  Vec2 tile_size = Vec2(0.0f, 0.0f); // in game units
+
 private:
   int tilemap_width;  // in tiles
   int tilemap_height; // in tiles
 
-  Vec2 tile_size = Vec2(0.0f, 0.0f); // in game units
-
   std::vector<int> tilemap_data;
 
-  std::string tilemap_json_path;
-  res_id tilemap_res_id;
   std::vector<TilesetData> tilesets = {
       TilesetData(0)}; // 0 is the air tileset, it is always present
 

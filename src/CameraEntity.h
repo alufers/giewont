@@ -3,7 +3,10 @@
 
 #include "Entity.h"
 #include "Game.h"
+
+#ifdef GIEWONT_HAS_GRAPHICS
 #include "raylib.h"
+#endif
 
 namespace giewont {
 
@@ -16,14 +19,17 @@ class CameraEntity : public Entity {
 public:
   CameraEntity();
   void load_assets(const Game &game) override;
-  void update(const Game &game, float delta_time) override;
+  void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
-
+#ifdef GIEWONT_HAS_GRAPHICS
   void begin_mode2d();
   void end_mode2d();
+#endif
 
 private:
+#ifdef GIEWONT_HAS_GRAPHICS
   Camera2D camera = {0};
+#endif
 };
 
 } // namespace giewont

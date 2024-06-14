@@ -3,35 +3,15 @@
 #include "Log.h"
 #include "NullEntity.h"
 #include <exception>
-#include <format>
+
 #include <nlohmann/json.hpp>
 #include <stdexcept>
+#include "LevelLoader.h"
 
 using namespace giewont;
 
 Game::Game() { this->entities.push_back(std::make_unique<NullEntity>()); }
 
-void Game::draw() {
-  auto &camera = camera_ref.get_as<CameraEntity>(*this);
-  camera.begin_mode2d();
-  for (auto &entity : entities) {
-    if (entity != nullptr) {
-      entity->draw(*this);
-    }
-  }
-
-  if (debug_overlay) {
-    for (auto &entity : entities) {
-      if (entity != nullptr) {
-        entity->draw_debug(*this);
-      }
-    }
-  }
-
-  camera.end_mode2d();
-
-  DrawText(std::format("UPS: {:.2f}", last_ups).c_str(), 10, 10, 20, BLACK);
-}
 
 void Game::update(float delta_time) {
   destroy_marked_entities();
@@ -76,6 +56,10 @@ EntityRef Game::push_entity(std::unique_ptr<Entity> entity) {
 }
 
 void Game::load_assets() {
+
+  LevelLoader level_loader("level1.tmj");
+  level_loader.load_level(*this);
+
   for (auto &entity : entities) {
     if (entity != nullptr) {
       entity->load_assets(*this);

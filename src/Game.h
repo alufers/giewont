@@ -26,22 +26,26 @@ public:
   Vec2 gravity = {0.0f, 9.81f * 70}; // y is positive down, and 1m = 70 units
 
   // Debug
-  bool debug_overlay = true;
+  bool debug_overlay = false;
 
   void load_assets();
   void update(float delta_time);
-  void draw();
+
+  // Multiplayer
+
+  virtual bool is_server() const { return false; }
 
   EntityRef push_entity(std::unique_ptr<Entity> entity);
 
   std::vector<std::unique_ptr<Entity>> entities;
 
+protected:
+  /** @brief Last update per second. */
+  float last_ups = 0.0;
+
 private:
   uint32_t generation_counter = 0;
   void destroy_marked_entities();
-
-  /** @brief Last update per second. */
-  float last_ups = 0.0;
 
   friend class EntityRef;
 };

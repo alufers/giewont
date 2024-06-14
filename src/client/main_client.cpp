@@ -1,7 +1,7 @@
 #include "CharacterEntity.h"
 #include "raylib.h"
 
-#include "Game.h"
+#include "ClientGame.h"
 #include "PhysEntity.h"
 #include "TilemapEntity.h"
 #include <chrono>
@@ -16,7 +16,7 @@
 
 #define WINDOW_TITLE "GIEWONT"
 
-static std::unique_ptr<giewont::Game> g = std::make_unique<giewont::Game>();
+static std::unique_ptr<giewont::ClientGame> g = std::make_unique<giewont::ClientGame>();
 
 static void main_loop() {
   static std::chrono::time_point<std::chrono::system_clock> last_frame_time =
@@ -43,12 +43,6 @@ int main() {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_TITLE);
   SetTargetFPS(60);
 
-  g->push_entity(std::make_unique<giewont::TilemapEntity>("level1.tmj"));
-
-  auto phys_ent = std::make_unique<giewont::CharacterEntity>();
-  phys_ent->position = {100, 100};
-  // phys_ent->velocity = {50.0f, 0};
-  g->push_entity(std::move(phys_ent));
 
   // Load assets
   g->load_assets();

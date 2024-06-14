@@ -1,73 +1,61 @@
 #include "TilemapEntity.h"
-
-#include <filesystem>
-#include <raylib.h>
-
 #include "Log.h"
 #include "Vec2.h"
 #include <cmath>
 #include <iostream>
 
+#ifdef GIEWONT_HAS_GRAPHICS
+#include <raylib.h>
+#endif
+
 using namespace giewont;
 
-void TilemapEntity::load_assets(const Game &game) {
-
-  this->tilemap_res_id = game.rm->load_json(tilemap_json_path);
-
-  std::filesystem::path tilemap_dir =
-      std::filesystem::path(tilemap_json_path).parent_path();
-
-  auto tilemapData = game.rm->get_json(this->tilemap_res_id);
+TilemapEntity::TilemapEntity(const std::filesystem::path &level_parent_folder,
+                             const nlohmann::json &tile_layer_data,
+                             const nlohmann::json &level_data,
+                             const Game &game) {
 
   // check if "tileheight" and "tilewidth" are present and are positive
-  if (!tilemapData->contains("tileheight") ||
-      !tilemapData->contains("tilewidth") ||
-      (*tilemapData)["tileheight"] <= 0 || (*tilemapData)["tilewidth"] <= 0) {
+  if (!level_data.contains("tileheight") || !level_data.contains("tilewidth") ||
+      level_data["tileheight"] <= 0 || level_data["tilewidth"] <= 0) {
     throw std::runtime_error(
         "Tilemap must have positive tileheight and tilewidth");
   }
 
-  this->tile_size.x = (*tilemapData)["tilewidth"];
-  this->tile_size.y = (*tilemapData)["tileheight"];
+  this->tile_size.x = level_data["tilewidth"];
+  this->tile_size.y = level_data["tileheight"];
 
   // check if "tilesets" is present and has at least one item
-  if (!tilemapData->contains("tilesets") ||
-      (*tilemapData)["tilesets"].size() == 0) {
+  if (!level_data.contains("tilesets") || level_data["tilesets"].size() == 0) {
     throw std::runtime_error("Tilemap must have at least one tileset");
   }
 
-  for (auto &tileset : (*tilemapData)["tilesets"]) {
+  for (auto &tileset : level_data["tilesets"]) {
     int first_gid = tileset["firstgid"];
-    std::filesystem::path tilesetPath = tilemap_dir / tileset["source"];
+    std::filesystem::path tilesetPath = level_parent_folder / tileset["source"];
     auto tileset_json_res_id = game.rm->load_json(tilesetPath.string());
     auto tilesetData = game.rm->get_json(tileset_json_res_id);
-    std::filesystem::path texturePath = tilemap_dir / (*tilesetData)["image"];
+    std::filesystem::path texturePath =
+        level_parent_folder / (*tilesetData)["image"];
     auto tileset_texture_res_id = game.rm->load_texture(texturePath.string());
     this->tilesets.push_back(
         TilesetData(tileset_json_res_id, tileset_texture_res_id, first_gid));
     this->tilesets.back().load_tileset_data(game);
   }
 
-  for (auto &layer : (*tilemapData)["layers"]) {
-    if (layer["type"] == "tilelayer") {
-      this->tilemap_width = layer["width"];
-      this->tilemap_height = layer["height"];
-      for (int i = 0; i < this->tilemap_width * this->tilemap_height; i++) {
-        int tile_id = layer["data"][i];
-        this->tilemap_data.push_back(tile_id);
-      }
-    }
+  this->tilemap_width = tile_layer_data["width"];
+  this->tilemap_height = tile_layer_data["height"];
+  for (int i = 0; i < this->tilemap_width * this->tilemap_height; i++) {
+    int tile_id = tile_layer_data["data"][i];
+    this->tilemap_data.push_back(tile_id);
   }
+
   if (this->tilemap_data.size() != this->tilemap_width * this->tilemap_height) {
     throw std::runtime_error("Tilemap data size does not match width*height");
   }
-}
-
-TilemapEntity::TilemapEntity(std::string tilemap_json_path) {
-  this->tilemap_json_path = tilemap_json_path;
 };
 
-void TilemapEntity::update(const Game &game, float delta_time) {}
+void TilemapEntity::update(Game &game, float delta_time) {}
 
 void TilemapEntity::draw(const Game &game) {
 
@@ -224,6 +212,8 @@ void TilesetData::load_tileset_data(const Game &game) {
 
 void TilesetData::draw_tile(const Game &game, int tile_id, int pos_x, int pos_y,
                             Vec2 size, Vec2 offset) {
+
+#ifdef GIEWONT_HAS_GRAPHICS
   if (tile_id < this->first_gid) {
     return;
   }
@@ -243,4 +233,5 @@ void TilesetData::draw_tile(const Game &game, int tile_id, int pos_x, int pos_y,
   Vector2 origin = {0, 0};
 
   DrawTexturePro(*tex, src, dest, origin, 0, WHITE);
+#endif
 }

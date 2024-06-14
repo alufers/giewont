@@ -21,7 +21,7 @@ public:
 
   virtual AABB &get_aabb();
   void load_assets(const Game &game) override;
-  void update(const Game &game, float delta_time) override;
+  void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
   void draw_debug(const Game &game) override;
 

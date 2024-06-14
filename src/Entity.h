@@ -28,6 +28,8 @@ public:
   /** @brief Position in world-space of the entity. */
   Vec2 position = {0.0f, 0.0f};
 
+  bool is_static = false;
+
   /**
    * @brief Load assets needed fro this entity.
    *
@@ -40,7 +42,7 @@ public:
    *
    * @param game
    */
-  virtual void update(const Game &game, float delta_time) = 0;
+  virtual void update(Game &game, float delta_time) = 0;
 
   /**
    * @brief Render the entity to the screen.

@@ -6,7 +6,6 @@
 #include "Game.h"
 #include "PhysEntity.h"
 #include "ResourceManager.h"
-#include "raylib.h"
 #include <memory>
 
 namespace giewont {
@@ -15,13 +14,11 @@ class CharacterController;
 class KeyboardCharacterController;
 
 enum class CharacterMovementCommand {
-    NONE = 0,
-    MOVE_LEFT = 1 << 0,
-    MOVE_RIGHT = 1 << 1,
-    JUMP = 1 << 2,
+  NONE = 0,
+  MOVE_LEFT = 1 << 0,
+  MOVE_RIGHT = 1 << 1,
+  JUMP = 1 << 2,
 };
-
-
 
 /**
  * @brief Entiity for player and non-player characters.
@@ -30,18 +27,19 @@ class CharacterEntity : public PhysEntity {
 public:
   std::unique_ptr<CharacterController> controller;
 
-  float max_horiz_speed = 100.0f;
-  float horiz_accel = 1000.0f;
-  float jump_speed = 200.0f;
+  float max_horiz_speed = 300.0f;
+  float horiz_accel = 2000.0f;
+  float jump_speed = 500.0f;
 
   CharacterEntity();
   void load_assets(const Game &game) override;
-  void update(const Game &game, float delta_time) override;
+  void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
 
   AABB &get_aabb() override { return character_aabb; }
 
-  void perform_movement(const Game &game, float delta_time, CharacterMovementCommand command);
+  void perform_movement(const Game &game, float delta_time,
+                        CharacterMovementCommand command);
 
 private:
   res_id _texture_id;
@@ -53,14 +51,24 @@ private:
  */
 class CharacterController {
 public:
-  virtual void update(const Game &game, CharacterEntity &character,
+  virtual void update(Game &game, CharacterEntity &character,
                       float delta_time) = 0;
 };
 
 class KeyboardCharacterController : public CharacterController {
 public:
-  void update(const Game &game, CharacterEntity &character,
+  void update(Game &game, CharacterEntity &character,
               float delta_time) override;
+};
+
+class DumbAICharacterController : public CharacterController {
+public:
+  void update(Game &game, CharacterEntity &character,
+              float delta_time) override;
+
+private:
+  float dwell_time = 0.0;
+  bool moving_right = false;
 };
 
 } // namespace giewont
