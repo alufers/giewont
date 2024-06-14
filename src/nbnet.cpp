@@ -18,11 +18,14 @@ static const char *log_type_strings[] = {"INFO", "ERROR", "DEBUG", "TRACE",
 
 // Basic logging function
 void Log(int type, const char *fmt, ...) {
+  if(type == LOG_DEBUG || type == LOG_TRACE) {
+    return;
+  }
   va_list args;
 
   va_start(args, fmt);
 
-  printf("[%s] ", log_type_strings[type]);
+  printf("[nbnet - %s] ", log_type_strings[type]);
   vprintf(fmt, args);
   printf("\n");
 
@@ -32,4 +35,12 @@ void Log(int type, const char *fmt, ...) {
 #define NBNET_IMPL
 
 #include "nbnet.h"
+
+#ifdef PLATFORM_WEB
+#include "net_drivers/webrtc.h"
+#else
+#include "net_drivers/webrtc_c.h"
+#endif
+
+
 }
