@@ -8,7 +8,6 @@
 #include "Vec2.h"
 #include <filesystem>
 #include <nlohmann/json.hpp>
-#include <string>
 #include <vector>
 
 namespace giewont {

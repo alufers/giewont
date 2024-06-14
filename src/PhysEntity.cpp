@@ -4,9 +4,11 @@
 
 #include "Log.h"
 #include "TilemapEntity.h"
-#include "raylib.h"
 #include <cmath>
 #include <memory>
+#ifdef GIEWONT_HAS_GRAPHICS
+#include "raylib.h"
+#endif
 
 using namespace giewont;
 
@@ -28,10 +30,10 @@ void PhysEntity::update(Game &game, float delta_time) {
     }
     auto aabb_to_check = this->get_aabb().translated(this->position);
     if (TilemapEntity *tilemap = dynamic_cast<TilemapEntity *>(entity.get())) {
-     
+
       auto collision_manifolds = tilemap->check_collision_aabb(aabb_to_check);
       for (auto &manifold : collision_manifolds) {
-       float velAlongNormal = this->velocity.dot(manifold.normal);
+        float velAlongNormal = this->velocity.dot(manifold.normal);
         if (velAlongNormal > 0) {
           continue;
         }
@@ -50,6 +52,7 @@ void PhysEntity::update(Game &game, float delta_time) {
 void PhysEntity::draw(const Game &game) {}
 
 void PhysEntity::draw_debug(const Game &game) {
+#ifdef GIEWONT_HAS_GRAPHICS
   // draw aabb
   auto aabb = this->get_aabb().translated(this->position);
   DrawRectangleLines(aabb.min.x, aabb.min.y, aabb.width(), aabb.height(),
@@ -59,6 +62,7 @@ void PhysEntity::draw_debug(const Game &game) {
   LOG_DEBUG() << "Resolution vector: " << reso << std::endl;
   DrawLine(this->position.x, this->position.y, this->position.x + reso.x,
            this->position.y + reso.y, RED);
+#endif
 }
 
 AABB &PhysEntity::get_aabb() { return _default_aabb; }

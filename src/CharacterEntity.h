@@ -6,7 +6,6 @@
 #include "Game.h"
 #include "PhysEntity.h"
 #include "ResourceManager.h"
-#include "raylib.h"
 #include <memory>
 
 namespace giewont {

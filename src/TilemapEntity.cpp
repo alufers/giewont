@@ -1,12 +1,12 @@
 #include "TilemapEntity.h"
-
-
-#include <raylib.h>
-
 #include "Log.h"
 #include "Vec2.h"
 #include <cmath>
 #include <iostream>
+
+#ifdef GIEWONT_HAS_GRAPHICS
+#include <raylib.h>
+#endif
 
 using namespace giewont;
 
@@ -14,8 +14,6 @@ TilemapEntity::TilemapEntity(const std::filesystem::path &level_parent_folder,
                              const nlohmann::json &tile_layer_data,
                              const nlohmann::json &level_data,
                              const Game &game) {
-
-
 
   // check if "tileheight" and "tilewidth" are present and are positive
   if (!level_data.contains("tileheight") || !level_data.contains("tilewidth") ||
@@ -32,18 +30,19 @@ TilemapEntity::TilemapEntity(const std::filesystem::path &level_parent_folder,
     throw std::runtime_error("Tilemap must have at least one tileset");
   }
 
-  for (auto &tileset :level_data["tilesets"]) {
+  for (auto &tileset : level_data["tilesets"]) {
     int first_gid = tileset["firstgid"];
     std::filesystem::path tilesetPath = level_parent_folder / tileset["source"];
     auto tileset_json_res_id = game.rm->load_json(tilesetPath.string());
     auto tilesetData = game.rm->get_json(tileset_json_res_id);
-    std::filesystem::path texturePath = level_parent_folder / (*tilesetData)["image"];
+    std::filesystem::path texturePath =
+        level_parent_folder / (*tilesetData)["image"];
     auto tileset_texture_res_id = game.rm->load_texture(texturePath.string());
     this->tilesets.push_back(
         TilesetData(tileset_json_res_id, tileset_texture_res_id, first_gid));
     this->tilesets.back().load_tileset_data(game);
   }
-  
+
   this->tilemap_width = tile_layer_data["width"];
   this->tilemap_height = tile_layer_data["height"];
   for (int i = 0; i < this->tilemap_width * this->tilemap_height; i++) {
@@ -213,6 +212,8 @@ void TilesetData::load_tileset_data(const Game &game) {
 
 void TilesetData::draw_tile(const Game &game, int tile_id, int pos_x, int pos_y,
                             Vec2 size, Vec2 offset) {
+
+#ifdef GIEWONT_HAS_GRAPHICS
   if (tile_id < this->first_gid) {
     return;
   }
@@ -232,4 +233,5 @@ void TilesetData::draw_tile(const Game &game, int tile_id, int pos_x, int pos_y,
   Vector2 origin = {0, 0};
 
   DrawTexturePro(*tex, src, dest, origin, 0, WHITE);
+#endif
 }

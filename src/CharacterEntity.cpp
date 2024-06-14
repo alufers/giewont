@@ -4,7 +4,10 @@
 #include "PhysEntity.h"
 #include "TilemapEntity.h"
 #include <cmath>
+
+#ifdef GIEWONT_HAS_GRAPHICS
 #include <raylib.h>
+#endif
 
 using namespace giewont;
 
@@ -32,10 +35,12 @@ CharacterEntity::CharacterEntity() : PhysEntity() {
 void CharacterEntity::load_assets(const Game &game) {
 
   _texture_id = game.rm->load_texture("entites/slime.png");
-
+#ifdef GIEWONT_HAS_GRAPHICS
+  // TODO: remove this, can't load texture on the server
   auto tex = game.rm->get_texture(_texture_id);
   character_aabb =
       AABB::from_min_and_size(Vec2(0, 0), Vec2(tex->width, tex->height));
+#endif
 }
 
 void CharacterEntity::update(Game &game, float delta_time) {
@@ -44,8 +49,10 @@ void CharacterEntity::update(Game &game, float delta_time) {
 }
 
 void CharacterEntity::draw(const Game &game) {
+#ifdef GIEWONT_HAS_GRAPHICS
   auto tex = game.rm->get_texture(_texture_id);
   DrawTexture(*tex, position.x, position.y, WHITE);
+#endif
 }
 
 void CharacterEntity::perform_movement(const Game &game, float delta_time,
@@ -99,6 +106,7 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
 void KeyboardCharacterController::update(Game &game, CharacterEntity &character,
                                          float delta_time) {
 
+#ifdef GIEWONT_HAS_GRAPHICS
   CharacterMovementCommand command = CharacterMovementCommand::NONE;
   if (IsKeyDown(KEY_A)) {
     command |= CharacterMovementCommand::MOVE_LEFT;
@@ -110,6 +118,7 @@ void KeyboardCharacterController::update(Game &game, CharacterEntity &character,
   }
 
   character.perform_movement(game, delta_time, command);
+#endif
 }
 
 void DumbAICharacterController::update(Game &game, CharacterEntity &character,
@@ -139,7 +148,7 @@ void DumbAICharacterController::update(Game &game, CharacterEntity &character,
             (moving_right ? 1.0f : -1.0f);
 
         if (!tilemap->check_allow_jump(pos_to_check)) {
-          
+
           dwell_time = 1.0f;
           moving_right = !moving_right;
           break;

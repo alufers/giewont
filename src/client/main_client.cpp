@@ -1,7 +1,7 @@
 #include "CharacterEntity.h"
 #include "raylib.h"
 
-#include "Game.h"
+#include "ClientGame.h"
 #include "PhysEntity.h"
 #include "TilemapEntity.h"
 #include <chrono>
@@ -16,7 +16,7 @@
 
 #define WINDOW_TITLE "GIEWONT"
 
-static std::unique_ptr<giewont::Game> g = std::make_unique<giewont::Game>();
+static std::unique_ptr<giewont::ClientGame> g = std::make_unique<giewont::ClientGame>();
 
 static void main_loop() {
   static std::chrono::time_point<std::chrono::system_clock> last_frame_time =

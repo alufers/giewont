@@ -7,7 +7,9 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
+#ifdef GIEWONT_HAS_GRAPHICS
 #include "raylib.h"
+#endif
 
 #ifndef GIEWONT_ASSETS_PATH
 #define GIEWONT_ASSETS_PATH "assets/"
@@ -40,19 +42,24 @@ public:
 
   /**
    * @brief Loads a texture into the resource manager.
-   * A file loaded twice from the same path will have the same ID. 
+   * A file loaded twice from the same path will have the same ID.
    *
    * @param path The path to the texture file.
    * @return res_id The ID of the loaded resource.
    */
   res_id load_texture(std::string path);
+
+#ifdef GIEWONT_HAS_GRAPHICS
   std::shared_ptr<Texture2D> get_texture(res_id id);
+#endif
 
 private:
   std::map<std::string, res_id> json_paths;
   std::map<std::string, res_id> texture_paths;
   std::vector<std::shared_ptr<nlohmann::json>> jsons;
+  #ifdef GIEWONT_HAS_GRAPHICS
   std::vector<std::shared_ptr<Texture2D>> textures;
+  #endif
 };
 } // namespace giewont
 
