@@ -34,10 +34,15 @@ endif()
 
 
 set(CMAKE_PROJECT_VERSION "AAAAA")
-add_subdirectory(libs/libdatachannel)
 
-# Add nlohmann/json
-# add_subdirectory(libs/json)
+if(EMSCRIPTEN)
+    # Add nlohmann/json
+    add_subdirectory(libs/json)
+else()
+    set(NO_TESTS ON)
+    add_subdirectory(libs/libdatachannel)
+endif()
+
 
 # List common sources between client and server
 set(COMMON_SOURCES
@@ -51,6 +56,7 @@ set(COMMON_SOURCES
     src/ResourceManager.cpp
     src/SpawnEntity.cpp
     src/TilemapEntity.cpp
+    src/net/NetBuffer.cpp
 )
 set(COMMON_INCLUDES
     "${CMAKE_CURRENT_LIST_DIR}/src/"  
