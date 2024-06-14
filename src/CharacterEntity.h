@@ -15,13 +15,11 @@ class CharacterController;
 class KeyboardCharacterController;
 
 enum class CharacterMovementCommand {
-    NONE = 0,
-    MOVE_LEFT = 1 << 0,
-    MOVE_RIGHT = 1 << 1,
-    JUMP = 1 << 2,
+  NONE = 0,
+  MOVE_LEFT = 1 << 0,
+  MOVE_RIGHT = 1 << 1,
+  JUMP = 1 << 2,
 };
-
-
 
 /**
  * @brief Entiity for player and non-player characters.
@@ -41,7 +39,8 @@ public:
 
   AABB &get_aabb() override { return character_aabb; }
 
-  void perform_movement(const Game &game, float delta_time, CharacterMovementCommand command);
+  void perform_movement(const Game &game, float delta_time,
+                        CharacterMovementCommand command);
 
 private:
   res_id _texture_id;
@@ -53,14 +52,24 @@ private:
  */
 class CharacterController {
 public:
-  virtual void update(const Game &game, CharacterEntity &character,
+  virtual void update(Game &game, CharacterEntity &character,
                       float delta_time) = 0;
 };
 
 class KeyboardCharacterController : public CharacterController {
 public:
-  void update(const Game &game, CharacterEntity &character,
+  void update(Game &game, CharacterEntity &character,
               float delta_time) override;
+};
+
+class DumbAICharacterController : public CharacterController {
+public:
+  void update(Game &game, CharacterEntity &character,
+              float delta_time) override;
+
+private:
+  float dwell_time = 0.0;
+  bool moving_right = false;
 };
 
 } // namespace giewont

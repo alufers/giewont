@@ -55,6 +55,24 @@
                  "width":0,
                  "x":172.975592029556,
                  "y":875.052994973048
+                }, 
+                {
+                 "height":0,
+                 "id":2,
+                 "name":"",
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"entity_type",
+                         "type":"string",
+                         "value":"dumb_ai_character"
+                        }],
+                 "rotation":0,
+                 "type":"spawn_entity",
+                 "visible":true,
+                 "width":0,
+                 "x":890.909090909091,
+                 "y":321.212121212121
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -63,7 +81,7 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":2,
+ "nextobjectid":3,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.10.2",

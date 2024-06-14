@@ -2,6 +2,7 @@
 #include "CharacterEntity.h"
 #include "Log.h"
 #include <exception>
+#include <memory>
 
 using namespace giewont;
 
@@ -36,7 +37,8 @@ void SpawnEntity::update(Game &game, float delta_time) {
   if (!did_spawn) {
     did_spawn = true;
     auto entity = construct_entity(game);
-
+    entity->position = this->position;
+    entity->load_assets(game);
     if (entity != nullptr) {
       game.entities.push_back(std::move(entity));
     }
@@ -48,9 +50,13 @@ void SpawnEntity::draw(const Game &game) {}
 std::unique_ptr<Entity> SpawnEntity::construct_entity(const Game &game) {
   if (entity_type == "player_character") {
     auto player = std::make_unique<CharacterEntity>();
-    player->position = this->position;
-    player->load_assets(game);
     return std::move(player);
+  }
+
+  if (entity_type == "dumb_ai_character") {
+    auto dumb_ai = std::make_unique<CharacterEntity>();
+    dumb_ai->controller = std::make_unique<DumbAICharacterController>();
+    return std::move(dumb_ai);
   }
 
   LOG_ERROR() << "Unknown entity type: " << entity_type << std::endl;

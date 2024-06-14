@@ -30,7 +30,7 @@ CharacterEntity::CharacterEntity() : PhysEntity() {
 }
 
 void CharacterEntity::load_assets(const Game &game) {
-  
+
   _texture_id = game.rm->load_texture("entites/slime.png");
 
   auto tex = game.rm->get_texture(_texture_id);
@@ -96,8 +96,7 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
   }
 }
 
-void KeyboardCharacterController::update(const Game &game,
-                                         CharacterEntity &character,
+void KeyboardCharacterController::update(Game &game, CharacterEntity &character,
                                          float delta_time) {
 
   CharacterMovementCommand command = CharacterMovementCommand::NONE;
@@ -108,6 +107,51 @@ void KeyboardCharacterController::update(const Game &game,
   }
   if (IsKeyDown(KEY_SPACE)) {
     command |= CharacterMovementCommand::JUMP;
+  }
+
+  character.perform_movement(game, delta_time, command);
+}
+
+void DumbAICharacterController::update(Game &game, CharacterEntity &character,
+                                       float delta_time) {
+
+  CharacterMovementCommand command = CharacterMovementCommand::NONE;
+  if (dwell_time > 0.0) {
+    dwell_time -= delta_time;
+  } else {
+    Vec2 feet_pos =
+        character.position +
+        Vec2((character.get_aabb().min.x + character.get_aabb().max.x) / 2.0f,
+             character.get_aabb().max.y + 1.0f);
+
+    for (auto &entity : game.entities) {
+      if (entity->id == character.id || entity == nullptr ||
+          entity->marked_for_deletion) {
+        continue;
+      }
+
+      if (TilemapEntity *tilemap =
+              dynamic_cast<TilemapEntity *>(entity.get())) {
+        Vec2 pos_to_check = feet_pos;
+        pos_to_check.x +=
+            ((character.get_aabb().min.x + character.get_aabb().max.x) / 2.0f +
+             tilemap->tile_size.x / 2.0f) *
+            (moving_right ? 1.0f : -1.0f);
+
+        if (!tilemap->check_allow_jump(pos_to_check)) {
+          
+          dwell_time = 1.0f;
+          moving_right = !moving_right;
+          break;
+        }
+      }
+    }
+
+    if (moving_right) {
+      command |= CharacterMovementCommand::MOVE_RIGHT;
+    } else {
+      command |= CharacterMovementCommand::MOVE_LEFT;
+    }
   }
 
   character.perform_movement(game, delta_time, command);
