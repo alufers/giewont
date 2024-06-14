@@ -37,6 +37,8 @@ res_id ResourceManager::load_texture(std::string path) {
   }
   textures.push_back(std::move(tex));
   return texture_paths[full_path];
+#else
+  return 0;
 #endif
 }
 

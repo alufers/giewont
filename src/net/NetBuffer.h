@@ -32,6 +32,8 @@ public:
 
   NetBuffer &operator<<(const std::string &value);
   NetBuffer &operator>>(std::string &value);
+
+  void debug_hexdump() const;
 };
 
 };     // namespace giewont

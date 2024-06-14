@@ -98,24 +98,27 @@ endif()
 
 
 ### Server build
+if(NOT EMSCRIPTEN)
+    
+    set(SERVER_EXE_NAME "giewont_server")
 
-set(SERVER_EXE_NAME "giewont_server")
+    set(SERVER_SOURCES 
+        src/server/main_server.cpp
+        src/server/ServerGame.cpp
+    )
 
-set(SERVER_SOURCES 
-    src/server/main_server.cpp
-    src/server/ServerGame.cpp
-)
+    set (SERVER_INCLUDES
+        "${CMAKE_CURRENT_LIST_DIR}/src/server"
+    )
 
-set (SERVER_INCLUDES
-    "${CMAKE_CURRENT_LIST_DIR}/src/server"
-)
+    add_executable(${SERVER_EXE_NAME})
+    target_compile_definitions(${SERVER_EXE_NAME} PUBLIC -DGIEWONT_IS_SERVER)
+    target_sources(${SERVER_EXE_NAME} PRIVATE ${COMMON_SOURCES} ${SERVER_SOURCES})
+    target_include_directories(${SERVER_EXE_NAME} PRIVATE ${COMMON_INCLUDES} ${SERVER_INCLUDES})
+    target_include_directories(${SERVER_EXE_NAME} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/libs/nbnet")
+    target_compile_definitions(${SERVER_EXE_NAME} PUBLIC -DGIEWONT_ASSETS_PATH="../assets/")
 
-add_executable(${SERVER_EXE_NAME})
-target_compile_definitions(${SERVER_EXE_NAME} PUBLIC -DGIEWONT_IS_SERVER)
-target_sources(${SERVER_EXE_NAME} PRIVATE ${COMMON_SOURCES} ${SERVER_SOURCES})
-target_include_directories(${SERVER_EXE_NAME} PRIVATE ${COMMON_INCLUDES} ${SERVER_INCLUDES})
-target_include_directories(${SERVER_EXE_NAME} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/libs/nbnet")
-
-target_link_libraries(${SERVER_EXE_NAME} PRIVATE nlohmann_json::nlohmann_json LibDataChannel::LibDataChannel)
-target_compile_options(${SERVER_EXE_NAME} PRIVATE -ggdb)
+    target_link_libraries(${SERVER_EXE_NAME} PRIVATE nlohmann_json::nlohmann_json LibDataChannel::LibDataChannel)
+    target_compile_options(${SERVER_EXE_NAME} PRIVATE -ggdb)
+endif()
 

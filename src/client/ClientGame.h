@@ -3,6 +3,10 @@
 
 #include "Game.h"
 
+extern "C" {
+#include "nbnet.h"
+}
+
 namespace giewont {
 
 enum class ClientGameState {
@@ -27,6 +31,8 @@ private:
   std::string error_message;
   std::string server_address;
   int server_port;
+
+  void handle_incoming_nbnet_message(NBN_MessageInfo msg_info);
 };
 } // namespace giewont
 

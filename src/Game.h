@@ -6,6 +6,7 @@
 #include "Vec2.h"
 #include <memory>
 #include <vector>
+#include <string>
 
 #define PHYS_EPSILON 0.00001f
 
@@ -28,7 +29,7 @@ public:
   // Debug
   bool debug_overlay = false;
 
-  void load_assets();
+  void load_level(std::string tmj_path);
   virtual void update(float delta_time);
 
   // Multiplayer
