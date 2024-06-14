@@ -6,6 +6,7 @@
 #include <format>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
+#include "LevelLoader.h"
 
 using namespace giewont;
 
@@ -76,6 +77,10 @@ EntityRef Game::push_entity(std::unique_ptr<Entity> entity) {
 }
 
 void Game::load_assets() {
+
+  LevelLoader level_loader("level1.tmj");
+  level_loader.load_level(*this);
+
   for (auto &entity : entities) {
     if (entity != nullptr) {
       entity->load_assets(*this);

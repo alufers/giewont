@@ -6,8 +6,10 @@
 #include "Game.h"
 #include "ResourceManager.h"
 #include "Vec2.h"
+#include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 namespace giewont {
 
@@ -56,8 +58,18 @@ public:
  */
 class TilemapEntity : public Entity {
 public:
-  TilemapEntity(std::string tilemap_json_path);
-  void load_assets(const Game &game) override;
+/**
+ * @brief Construct a new Tilemap Entity object
+ * 
+ * @param level_parent_folder The folder from which the level is loaded.
+ * @param tile_layer_data 
+ * @param level_data 
+ * @param game 
+ */
+  TilemapEntity(const std::filesystem::path &level_parent_folder,
+                const nlohmann::json &tile_layer_data,
+                const nlohmann::json &level_data, const Game &game);
+
   void update(const Game &game, float delta_time) override;
   void draw(const Game &game) override;
 
@@ -73,8 +85,6 @@ private:
 
   std::vector<int> tilemap_data;
 
-  std::string tilemap_json_path;
-  res_id tilemap_res_id;
   std::vector<TilesetData> tilesets = {
       TilesetData(0)}; // 0 is the air tileset, it is always present
 

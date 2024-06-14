@@ -28,6 +28,8 @@ public:
   /** @brief Position in world-space of the entity. */
   Vec2 position = {0.0f, 0.0f};
 
+  bool is_static = false;
+
   /**
    * @brief Load assets needed fro this entity.
    *

@@ -30,9 +30,9 @@ class CharacterEntity : public PhysEntity {
 public:
   std::unique_ptr<CharacterController> controller;
 
-  float max_horiz_speed = 100.0f;
-  float horiz_accel = 1000.0f;
-  float jump_speed = 200.0f;
+  float max_horiz_speed = 300.0f;
+  float horiz_accel = 2000.0f;
+  float jump_speed = 500.0f;
 
   CharacterEntity();
   void load_assets(const Game &game) override;

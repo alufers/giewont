@@ -26,7 +26,7 @@ public:
   Vec2 gravity = {0.0f, 9.81f * 70}; // y is positive down, and 1m = 70 units
 
   // Debug
-  bool debug_overlay = true;
+  bool debug_overlay = false;
 
   void load_assets();
   void update(float delta_time);

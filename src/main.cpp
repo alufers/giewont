@@ -43,7 +43,7 @@ int main() {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_TITLE);
   SetTargetFPS(60);
 
-  g->push_entity(std::make_unique<giewont::TilemapEntity>("level1.tmj"));
+
 
   auto phys_ent = std::make_unique<giewont::CharacterEntity>();
   phys_ent->position = {100, 100};
