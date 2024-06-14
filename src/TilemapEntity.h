@@ -70,7 +70,7 @@ public:
                 const nlohmann::json &tile_layer_data,
                 const nlohmann::json &level_data, const Game &game);
 
-  void update(const Game &game, float delta_time) override;
+  void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
 
   std::vector<TilemapCollisionManifold> check_collision_aabb(const AABB &aabb);

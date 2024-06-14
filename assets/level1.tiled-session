@@ -43,6 +43,7 @@
     "openFiles": [
     ],
     "project": "level1.tiled-project",
+    "property.type": "object",
     "recentFiles": [
         "level1.tmj",
         "level1.tmx",

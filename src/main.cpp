@@ -44,12 +44,6 @@ int main() {
   SetTargetFPS(60);
 
 
-
-  auto phys_ent = std::make_unique<giewont::CharacterEntity>();
-  phys_ent->position = {100, 100};
-  // phys_ent->velocity = {50.0f, 0};
-  g->push_entity(std::move(phys_ent));
-
   // Load assets
   g->load_assets();
 

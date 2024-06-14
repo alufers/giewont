@@ -56,7 +56,7 @@ TilemapEntity::TilemapEntity(const std::filesystem::path &level_parent_folder,
   }
 };
 
-void TilemapEntity::update(const Game &game, float delta_time) {}
+void TilemapEntity::update(Game &game, float delta_time) {}
 
 void TilemapEntity::draw(const Game &game) {
 

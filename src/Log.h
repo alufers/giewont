@@ -7,4 +7,6 @@
 
 #define LOG_DEBUG() std::cerr << __FILE__ << ":" << __LINE__ << " [DEBUG] "
 
+#define LOG_ERROR() std::cerr << __FILE__ << ":" << __LINE__ << " [ERROR] "
+
 #endif // LOG_H_

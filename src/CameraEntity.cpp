@@ -12,7 +12,7 @@ CameraEntity::CameraEntity() {
 
 void CameraEntity::load_assets(const Game &game) {}
 
-void CameraEntity::update(const Game &game, float delta_time) {
+void CameraEntity::update(Game &game, float delta_time) {
  // check scroll
 
 }

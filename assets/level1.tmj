@@ -43,8 +43,14 @@
                  "id":1,
                  "name":"",
                  "point":true,
+                 "properties":[
+                        {
+                         "name":"entity_type",
+                         "type":"string",
+                         "value":"player_character"
+                        }],
                  "rotation":0,
-                 "type":"player_spawn",
+                 "type":"spawn_entity",
                  "visible":true,
                  "width":0,
                  "x":172.975592029556,

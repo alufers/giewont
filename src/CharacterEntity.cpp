@@ -1,6 +1,7 @@
 #include "CharacterEntity.h"
 #include "AABB.h"
 #include "Game.h"
+#include "PhysEntity.h"
 #include "TilemapEntity.h"
 #include <cmath>
 #include <raylib.h>
@@ -29,6 +30,7 @@ CharacterEntity::CharacterEntity() : PhysEntity() {
 }
 
 void CharacterEntity::load_assets(const Game &game) {
+  
   _texture_id = game.rm->load_texture("entites/slime.png");
 
   auto tex = game.rm->get_texture(_texture_id);
@@ -36,7 +38,7 @@ void CharacterEntity::load_assets(const Game &game) {
       AABB::from_min_and_size(Vec2(0, 0), Vec2(tex->width, tex->height));
 }
 
-void CharacterEntity::update(const Game &game, float delta_time) {
+void CharacterEntity::update(Game &game, float delta_time) {
   this->controller->update(game, *this, delta_time);
   PhysEntity::update(game, delta_time);
 }

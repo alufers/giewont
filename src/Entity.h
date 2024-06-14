@@ -42,7 +42,7 @@ public:
    *
    * @param game
    */
-  virtual void update(const Game &game, float delta_time) = 0;
+  virtual void update(Game &game, float delta_time) = 0;
 
   /**
    * @brief Render the entity to the screen.

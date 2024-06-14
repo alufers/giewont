@@ -36,7 +36,7 @@ public:
 
   CharacterEntity();
   void load_assets(const Game &game) override;
-  void update(const Game &game, float delta_time) override;
+  void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
 
   AABB &get_aabb() override { return character_aabb; }

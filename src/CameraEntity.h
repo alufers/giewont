@@ -16,7 +16,7 @@ class CameraEntity : public Entity {
 public:
   CameraEntity();
   void load_assets(const Game &game) override;
-  void update(const Game &game, float delta_time) override;
+  void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
 
   void begin_mode2d();

@@ -14,7 +14,7 @@ PhysEntity::PhysEntity() : Entity() {}
 
 void PhysEntity::load_assets(const Game &game) {}
 
-void PhysEntity::update(const Game &game, float delta_time) {
+void PhysEntity::update(Game &game, float delta_time) {
   this->velocity += game.gravity * delta_time;
 
   this->position += this->velocity * delta_time;
