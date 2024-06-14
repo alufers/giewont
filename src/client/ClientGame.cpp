@@ -156,3 +156,8 @@ void ClientGame::handle_incoming_nbnet_message(NBN_MessageInfo msg_info) {
 
   NBN_ByteArrayMessage_Destroy(msg);
 }
+
+void ClientGame::send_message(const NetBuffer &buffer) {
+  NBN_GameClient_SendReliableByteArray(
+      (unsigned char *)buffer.buffer.data(), buffer.buffer.size());
+}

@@ -2,6 +2,7 @@
 #define CLIENTGAME_H_
 
 #include "Game.h"
+#include "NetBuffer.h"
 
 extern "C" {
 #include "nbnet.h"
@@ -33,6 +34,8 @@ private:
   int server_port;
 
   void handle_incoming_nbnet_message(NBN_MessageInfo msg_info);
+
+  void send_message(const NetBuffer &buffer);
 };
 } // namespace giewont
 
