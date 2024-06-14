@@ -34,7 +34,8 @@ void SpawnEntity::load_assets(const Game &game) {
 
 void SpawnEntity::update(Game &game, float delta_time) {
 
-  if (!did_spawn) {
+  // Only spawn once and on the server
+  if (!did_spawn && game.is_server()) {
     did_spawn = true;
     auto entity = construct_entity(game);
     entity->position = this->position;

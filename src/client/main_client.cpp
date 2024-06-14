@@ -43,10 +43,6 @@ int main() {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_TITLE);
   SetTargetFPS(60);
 
-
-  // Load assets
-  g->load_assets();
-
   g->init_net_client();
 
 #if defined(PLATFORM_WEB)

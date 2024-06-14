@@ -55,9 +55,8 @@ EntityRef Game::push_entity(std::unique_ptr<Entity> entity) {
   return entities[idx]->get_ref();
 }
 
-void Game::load_assets() {
-
-  LevelLoader level_loader("level1.tmj");
+void Game::load_level(std::string tmj_path) {
+  LevelLoader level_loader(tmj_path);
   level_loader.load_level(*this);
 
   for (auto &entity : entities) {

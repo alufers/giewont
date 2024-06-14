@@ -106,3 +106,29 @@ NetBuffer &NetBuffer::operator>>(std::string &value) {
   read_pos += size;
   return *this;
 }
+
+void NetBuffer::debug_hexdump() const {
+  // Print hexdump with 16 bytes per line, ASCII representation on the right
+  for (size_t i = 0; i < buffer.size(); i += 16) {
+    printf("%08lx: ", i);
+    for (size_t j = 0; j < 16; j++) {
+      if (i + j < buffer.size()) {
+        printf("%02x ", buffer[i + j]);
+      } else {
+        printf("   ");
+      }
+    }
+    printf(" ");
+    for (size_t j = 0; j < 16; j++) {
+      if (i + j < buffer.size()) {
+        char c = buffer[i + j];
+        if (c >= 32 && c <= 126) {
+          printf("%c", c);
+        } else {
+          printf(".");
+        }
+      }
+    }
+    printf("\n");
+  }
+}

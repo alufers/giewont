@@ -1,9 +1,12 @@
 #include "ClientGame.h"
 #include "CameraEntity.h"
 #include "Log.h"
+#include "NetBuffer.h"
 #include "net_common.h"
+#include "net_messages.h"
 #include "raylib.h"
 #include <format>
+#include <stdexcept>
 #include <stdlib.h>
 
 extern "C" {
@@ -101,7 +104,9 @@ void ClientGame::update(float delta_time) {
 
       // A message has been received from the server
     case NBN_MESSAGE_RECEIVED:
+      NBN_MessageInfo msg_info = NBN_GameClient_GetMessageInfo();
       LOG_INFO() << "Message received from server" << std::endl;
+      handle_incoming_nbnet_message(msg_info);
       break;
     }
   }
@@ -121,4 +126,38 @@ void ClientGame::init_net_client() {
   NBN_WebRTC_C_Register(NBN_WebRTC_C_Config{
       .enable_tls = false,
   });
+}
+
+void ClientGame::handle_incoming_nbnet_message(NBN_MessageInfo msg_info) {
+  if (msg_info.type != NBN_BYTE_ARRAY_MESSAGE_TYPE) {
+    throw std::runtime_error("Unexpected byte array message type");
+  }
+
+  NBN_ByteArrayMessage *msg = (NBN_ByteArrayMessage *)msg_info.data;
+
+  NetBuffer buffer(msg->bytes, msg->length);
+  
+  uint32_t message_type_int;
+
+  buffer >> message_type_int;
+
+  net::BaseMessageTypes message_type = (net::BaseMessageTypes)message_type_int;
+
+  switch (message_type) {
+  case net::BaseMessageTypes::LOAD_LEVEL: {
+
+    auto load_level_message = net::LoadLevelMessage::deserialize(buffer);
+    LOG_INFO() << "Received LOAD_LEVEL message (" << load_level_message.tmj_path
+               << ")" << std::endl;
+
+    load_level(load_level_message.tmj_path);
+  } break;
+  }
+
+  NBN_ByteArrayMessage_Destroy(msg);
+}
+
+void ClientGame::send_message(const NetBuffer &buffer) {
+  NBN_GameClient_SendReliableByteArray(
+      (unsigned char *)buffer.buffer.data(), buffer.buffer.size());
 }
