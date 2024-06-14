@@ -1,7 +1,9 @@
 #ifndef VEC2_H_
 #define VEC2_H_
 
+#ifdef GIEWONT_HAS_GRAPHICS
 #include "raylib.h"
+#endif
 #include <cmath>
 #include <iostream>
 
@@ -66,8 +68,10 @@ public:
   Vec2 project(const Vec2 &other) const {
     return other * (dot(other) / other.dot(other));
   }
-
+  
+#ifdef GIEWONT_HAS_GRAPHICS
   Vector2 to_raylib() const { return {x, y}; }
+#endif
 
   friend auto operator<<(std::ostream &os, const Vec2 &v) -> std::ostream & {
     os << "(" << v.x << ", " << v.y << ")";
