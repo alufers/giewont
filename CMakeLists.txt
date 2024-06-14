@@ -13,8 +13,6 @@ endif ()
 set(RAYLIB_VERSION 5.0)
 find_package(raylib ${RAYLIB_VERSION} QUIET) # QUIET or REQUIRED
 
-find_package(LibDataChannel REQUIRED)
-
 if(NOT raylib_FOUND) # If there's none, fetch and build raylib
     set(FETCHCONTENT_QUIET FALSE)
     include(FetchContent)
@@ -35,8 +33,11 @@ if(NOT raylib_FOUND) # If there's none, fetch and build raylib
 endif()
 
 
+set(CMAKE_PROJECT_VERSION "AAAAA")
+add_subdirectory(libs/libdatachannel)
+
 # Add nlohmann/json
-add_subdirectory(libs/json)
+# add_subdirectory(libs/json)
 
 # List common sources between client and server
 set(COMMON_SOURCES
