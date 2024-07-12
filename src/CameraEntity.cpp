@@ -1,5 +1,6 @@
 #include "CameraEntity.h"
-
+#include "Log.h"
+#include "raylib.h"
 using namespace giewont;
 
 CameraEntity::CameraEntity() {
@@ -16,7 +17,15 @@ CameraEntity::CameraEntity() {
 void CameraEntity::load_assets(const Game &game) {}
 
 void CameraEntity::update(Game &game, float delta_time) {
-  // check scroll
+#ifdef GIEWONT_HAS_GRAPHICS
+  if (entity_to_follow.valid(game)) {
+   
+    auto &entity = entity_to_follow.get_as<Entity>(game);
+    camera.target = entity.position.to_raylib();
+    camera.offset = {(float)(GetScreenWidth() / 2.0),
+                     (float)(GetScreenHeight() / 2.0)};
+  }
+#endif
 }
 
 void CameraEntity::draw(const Game &game) {
