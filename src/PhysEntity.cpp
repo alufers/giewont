@@ -1,7 +1,8 @@
 #include "PhysEntity.h"
-#include "Vec2.h"
+#include "Entity.h"
 #include "Log.h"
 #include "TilemapEntity.h"
+#include "Vec2.h"
 #include <cmath>
 #include <memory>
 #ifdef GIEWONT_HAS_GRAPHICS
@@ -64,3 +65,12 @@ void PhysEntity::draw_debug(const Game &game) {
 }
 
 AABB &PhysEntity::get_aabb() { return _default_aabb; }
+
+void PhysEntity::update_from_sync_message(
+    Game const &game, const net::SyncEntityNetMessage::Reader &sync_message) {
+  Entity::update_from_sync_message(game, sync_message);
+  if (game.my_peer_id != this->net_owner_peer_id || is_being_created) {
+
+    this->velocity = sync_message.getVelocity();
+  }
+}

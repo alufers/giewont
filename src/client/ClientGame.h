@@ -2,6 +2,14 @@
 #define CLIENTGAME_H_
 
 #include "Game.h"
+#include <capnp/message.h>
+#include <capnp/serialize.h>
+
+#include "schema.capnp.h"
+
+extern "C" {
+#include "nbnet.h"
+}
 
 namespace giewont {
 
@@ -27,6 +35,12 @@ private:
   std::string error_message;
   std::string server_address;
   int server_port;
+
+  void handle_incoming_nbnet_message(NBN_MessageInfo msg_info);
+
+  void handle_incoming_message(const net::BaseNetMessage::Reader &message);
+  void sync_my_entities_to_server();
+  void send_reliable(::capnp::MallocMessageBuilder &message_builder);
 };
 } // namespace giewont
 

@@ -29,10 +29,16 @@ CharacterMovementCommand operator|=(CharacterMovementCommand &a,
 }
 
 CharacterEntity::CharacterEntity() : PhysEntity() {
-  this->controller = std::make_unique<KeyboardCharacterController>();
+  this->controller = std::make_unique<
+      RemoteCharacterController>(); // Set to remote by default, the server will
+                                    // change it when spawning anyway
 }
 
 void CharacterEntity::load_assets(const Game &game) {
+
+  if (this->net_owner_peer_id == game.my_peer_id) {
+    this->controller = std::make_unique<KeyboardCharacterController>();
+  }
 
   _texture_id = game.rm->load_texture("entites/slime.png");
 #ifdef GIEWONT_HAS_GRAPHICS
@@ -40,6 +46,9 @@ void CharacterEntity::load_assets(const Game &game) {
   auto tex = game.rm->get_texture(_texture_id);
   character_aabb =
       AABB::from_min_and_size(Vec2(0, 0), Vec2(tex->width, tex->height));
+#else
+  character_aabb =
+      AABB::from_min_and_size(Vec2(0, 0), Vec2(70, 70)); // TODO handle this
 #endif
 }
 
@@ -164,4 +173,8 @@ void DumbAICharacterController::update(Game &game, CharacterEntity &character,
   }
 
   character.perform_movement(game, delta_time, command);
+}
+
+net::EntityType CharacterEntity::get_net_type() {
+  return net::EntityType::CHARACTER;
 }

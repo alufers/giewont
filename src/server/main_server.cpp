@@ -9,7 +9,7 @@ const float TARGET_UPS = 60.0f;
 int main() {
   LOG_INFO() << "GIEWONT game server starting" << std::endl;
   std::unique_ptr<giewont::ServerGame> g =
-      std::make_unique<giewont::ServerGame>();
+      std::make_unique<giewont::ServerGame>("level1.tmj");
 
   g->init_net_server();
 

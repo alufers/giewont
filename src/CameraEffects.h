@@ -1,0 +1,6 @@
+#ifndef CAMERAEFFECTS_H_
+#define CAMERAEFFECTS_H_
+
+
+
+#endif // CAMERAEFFECTS_H_

@@ -1,12 +1,11 @@
 #ifndef PHYSENTITY_H_
 #define PHYSENTITY_H_
 
+#include "AABB.h"
 #include "Entity.h"
 #include "Game.h"
-#include "AABB.h"
 #include "ResourceManager.h"
 #include "Vec2.h"
-
 
 namespace giewont {
 
@@ -25,10 +24,12 @@ public:
   void draw(const Game &game) override;
   void draw_debug(const Game &game) override;
 
-  private:
-    AABB _default_aabb = AABB(Vec2(0, 0), Vec2(70, 70));
-    Vec2 _resolution_vector_debug = {0, 0};
+  void update_from_sync_message(Game const &game,
+      const net::SyncEntityNetMessage::Reader &sync_message) override;
 
+private:
+  AABB _default_aabb = AABB(Vec2(0, 0), Vec2(70, 70));
+  Vec2 _resolution_vector_debug = {0, 0};
 };
 
 } // namespace giewont
