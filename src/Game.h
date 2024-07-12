@@ -4,9 +4,10 @@
 #include "Entity.h"
 #include "ResourceManager.h"
 #include "Vec2.h"
+#include "schema.capnp.h"
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #define PHYS_EPSILON 0.00001f
 
@@ -34,15 +35,20 @@ public:
 
   // Multiplayer
 
+  uint32_t my_peer_id = 0;
+
   virtual bool is_server() const { return false; }
 
-  EntityRef push_entity(std::unique_ptr<Entity> entity);
+  virtual EntityRef push_entity(std::unique_ptr<Entity> entity);
 
   std::vector<std::unique_ptr<Entity>> entities;
 
 protected:
   /** @brief Last update per second. */
   float last_ups = 0.0;
+
+  virtual void
+  apply_sync_entity(const net::SyncEntityNetMessage::Reader &message);
 
 private:
   uint32_t generation_counter = 0;

@@ -44,8 +44,15 @@ else()
 endif()
 
 
+
+### Capnproto
+find_package(CapnProto REQUIRED)
+
+capnp_generate_cpp(CAPNP_SRCS CAPNP_HDRS "${CMAKE_CURRENT_LIST_DIR}/src/net/schema.capnp")
+
 # List common sources between client and server
 set(COMMON_SOURCES
+    ${CAPNP_SRCS}
     src/CameraEntity.cpp
     src/CharacterEntity.cpp
     src/Entity.cpp
@@ -56,13 +63,14 @@ set(COMMON_SOURCES
     src/ResourceManager.cpp
     src/SpawnEntity.cpp
     src/TilemapEntity.cpp
-    src/net/NetBuffer.cpp
 )
 set(COMMON_INCLUDES
     "${CMAKE_CURRENT_LIST_DIR}/src/"  
     "${CMAKE_CURRENT_LIST_DIR}/src/math"
     "${CMAKE_CURRENT_LIST_DIR}/src/net"
-) 
+    ${CAPNP_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_BINARY_DIR}/src/net # capnproto generated files
+)
 
 ### Client build
 
@@ -83,7 +91,14 @@ target_sources(${CLIENT_EXE_NAME} PRIVATE ${COMMON_SOURCES} ${CLIENT_SOURCES})
 target_include_directories(${CLIENT_EXE_NAME} PRIVATE ${COMMON_INCLUDES} ${CLIENT_INCLUDES})
 target_include_directories(${CLIENT_EXE_NAME} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/libs/nbnet")
 
-target_link_libraries(${CLIENT_EXE_NAME} PRIVATE raylib nlohmann_json::nlohmann_json)
+target_link_libraries(${CLIENT_EXE_NAME} PRIVATE raylib nlohmann_json::nlohmann_json ${CAPNP_LIBRARIES})
+
+
+
+# target_compile_definitions(${CLIENT_EXE_NAME} ${CAPNP_DEFINITIONS})
+
+
+
 target_compile_options(${CLIENT_EXE_NAME} PRIVATE -ggdb)
 
 if (EMSCRIPTEN)
@@ -117,8 +132,9 @@ if(NOT EMSCRIPTEN)
     target_include_directories(${SERVER_EXE_NAME} PRIVATE ${COMMON_INCLUDES} ${SERVER_INCLUDES})
     target_include_directories(${SERVER_EXE_NAME} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/libs/nbnet")
     target_compile_definitions(${SERVER_EXE_NAME} PUBLIC -DGIEWONT_ASSETS_PATH="../assets/")
+    # target_compile_definitions(${SERVER_EXE_NAME} ${CAPNP_DEFINITIONS})
 
-    target_link_libraries(${SERVER_EXE_NAME} PRIVATE nlohmann_json::nlohmann_json LibDataChannel::LibDataChannel)
+    target_link_libraries(${SERVER_EXE_NAME} PRIVATE nlohmann_json::nlohmann_json LibDataChannel::LibDataChannel ${CAPNP_LIBRARIES})
     target_compile_options(${SERVER_EXE_NAME} PRIVATE -ggdb)
 endif()
 

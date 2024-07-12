@@ -2,7 +2,10 @@
 #define CLIENTGAME_H_
 
 #include "Game.h"
-#include "NetBuffer.h"
+#include <capnp/message.h>
+#include <capnp/serialize.h>
+
+#include "schema.capnp.h"
 
 extern "C" {
 #include "nbnet.h"
@@ -35,7 +38,9 @@ private:
 
   void handle_incoming_nbnet_message(NBN_MessageInfo msg_info);
 
-  void send_message(const NetBuffer &buffer);
+  void handle_incoming_message(const net::BaseNetMessage::Reader &message);
+  void sync_my_entities_to_server();
+  void send_reliable(::capnp::MallocMessageBuilder &message_builder);
 };
 } // namespace giewont
 

@@ -6,6 +6,7 @@
 #endif
 #include <cmath>
 #include <iostream>
+#include "schema.capnp.h"
 
 namespace giewont {
 
@@ -14,6 +15,8 @@ public:
   float x;
   float y;
   Vec2(float x, float y) : x(x), y(y) {}
+
+  Vec2(net::NetVec2::Reader reader) : x(reader.getX()), y(reader.getY()) {}
 
   Vec2 operator+(const Vec2 &other) const {
     return Vec2(x + other.x, y + other.y);
@@ -76,6 +79,11 @@ public:
   friend auto operator<<(std::ostream &os, const Vec2 &v) -> std::ostream & {
     os << "(" << v.x << ", " << v.y << ")";
     return os;
+  }
+
+  void serialize(net::NetVec2::Builder &builder) const {
+    builder.setX(x);
+    builder.setY(y);
   }
 };
 } // namespace giewont

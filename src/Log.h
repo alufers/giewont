@@ -6,7 +6,7 @@
 #define COLOR_RED 
 
 
-#define LOG_WARN() std::cerr << __FILE__ << ":" << __LINE__ << " [WARN] "
+#define LOG_WARN() std::cerr << "\033[33m" << __FILE__ << ":" << __LINE__ << " [WARN] " << "\033[0m"
 
 #define LOG_DEBUG() std::cerr << __FILE__ << ":" << __LINE__ << " [DEBUG] "
 

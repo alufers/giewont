@@ -41,6 +41,8 @@ public:
   void perform_movement(const Game &game, float delta_time,
                         CharacterMovementCommand command);
 
+  net::EntityType get_net_type() override;
+
 private:
   res_id _texture_id;
   AABB character_aabb;
@@ -53,6 +55,15 @@ class CharacterController {
 public:
   virtual void update(Game &game, CharacterEntity &character,
                       float delta_time) = 0;
+};
+
+/**
+ * @brief Character controller that does nothing, used on the client for characters owned by the server.
+ * 
+ */
+class RemoteCharacterController : public CharacterController {
+public:
+  void update(Game &game, CharacterEntity &character, float delta_time) override {};
 };
 
 class KeyboardCharacterController : public CharacterController {

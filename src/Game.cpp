@@ -4,23 +4,18 @@
 #include "NullEntity.h"
 #include <exception>
 
+#include "CharacterEntity.h"
+#include "LevelLoader.h"
+#include <memory>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
-#include "LevelLoader.h"
 
 using namespace giewont;
 
 Game::Game() { this->entities.push_back(std::make_unique<NullEntity>()); }
 
-
 void Game::update(float delta_time) {
   destroy_marked_entities();
-
-  if (!this->camera_ref.valid(*this)) {
-    LOG_WARN() << "Camera not set, creating a new one" << std::endl;
-    auto camera = std::make_unique<CameraEntity>();
-    this->camera_ref = this->push_entity(std::move(camera));
-  }
 
   for (auto &entity : entities) {
     if (entity != nullptr) {
@@ -53,6 +48,55 @@ EntityRef Game::push_entity(std::unique_ptr<Entity> entity) {
   entities[idx] = std::move(entity);
 
   return entities[idx]->get_ref();
+}
+
+void Game::apply_sync_entity(const net::SyncEntityNetMessage::Reader &message) {
+  EntityRef ref;
+
+  for (auto &entity : entities) {
+    if (entity != nullptr && entity->net_id == message.getNetId()) {
+      ref = entity->get_ref();
+    }
+  }
+
+  if (!ref.valid(*this)) {
+    // Entity not found
+
+    if (this->is_server()) {
+      LOG_WARN() << "apply_sync_entity: Entity with net_id "
+                 << message.getNetId() << " not found, ignoring" << std::endl;
+      return;
+    } else {
+
+      std::unique_ptr<Entity> entToCreate;
+
+      switch (message.getEntityType()) {
+      case net::EntityType::CHARACTER:
+        entToCreate = std::make_unique<CharacterEntity>();
+        break;
+      default:
+        LOG_WARN() << "apply_sync_entity: Unknown entity type" << std::endl;
+        return;
+      }
+
+      entToCreate->net_id = message.getNetId();
+      entToCreate->is_being_created = true;
+      if (!this->is_server()) {
+        entToCreate->net_owner_peer_id = message.getNetOwnerId();
+      }
+
+      entToCreate->load_assets(*this);
+
+      ref = this->push_entity(std::move(entToCreate));
+    }
+  }
+
+  if (!this->is_server()) {
+    ref.get(*this).net_owner_peer_id = message.getNetOwnerId();
+  }
+
+  ref.get(*this).update_from_sync_message(*this, message);
+  ref.get(*this).is_being_created = false;
 }
 
 void Game::load_level(std::string tmj_path) {
