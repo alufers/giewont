@@ -21,6 +21,9 @@ public:
   void load_assets(const Game &game) override;
   void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
+
+  EntityRef entity_to_follow;
+
 #ifdef GIEWONT_HAS_GRAPHICS
   void begin_mode2d();
   void end_mode2d();

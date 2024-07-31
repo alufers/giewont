@@ -61,6 +61,12 @@ void ClientGame::draw() {
 
 void ClientGame::update(float delta_time) {
 
+  if (!this->camera_ref.valid(*this)) {
+    LOG_WARN() << "Camera not set, creating a new one" << std::endl;
+    auto camera = std::make_unique<CameraEntity>();
+    this->camera_ref = this->push_entity(std::move(camera));
+  }
+
   if (state == ClientGameState::INITIAL) {
     state = ClientGameState::PRE_CONNECTING;
     return;
@@ -111,11 +117,7 @@ void ClientGame::update(float delta_time) {
 
   // Only update the game if the client is connected to the server
   if (state == ClientGameState::CONNECTED) {
-    if (!this->camera_ref.valid(*this)) {
-      LOG_WARN() << "Camera not set, creating a new one" << std::endl;
-      auto camera = std::make_unique<CameraEntity>();
-      this->camera_ref = this->push_entity(std::move(camera));
-    }
+
     Game::update(delta_time);
   }
 
@@ -168,6 +170,16 @@ void ClientGame::handle_incoming_message(
   case net::BaseNetMessage::Which::SYNC_ENTITY: {
 
     apply_sync_entity(message.getSyncEntity());
+    break;
+  }
+
+  case net::BaseNetMessage::Which::SET_CAMERA_FOLLOWED_ENTITY: {
+    LOG_INFO() << "Camera followed entity set" << std::endl;
+    auto &camera = camera_ref.get_as<CameraEntity>(*this);
+    camera.entity_to_follow = this->get_entity_by_net_id(
+        message.getSetCameraFollowedEntity().getNetId());
+
+      LOG_INFO() << " camera.entity_to_follow = " << camera.entity_to_follow.id << std::endl;
     break;
   }
 

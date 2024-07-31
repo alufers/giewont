@@ -8,6 +8,7 @@ struct BaseNetMessage {
         loadLevel @1 :LoadLevelNetMessage; # server -> client
         levelLoaded @2 :Void; # client -> server
         syncEntity @3 :SyncEntityNetMessage;
+        setCameraFollowedEntity @4 :SetCameraFollowedEntityNetMessage;
     }
 }
 
@@ -34,4 +35,8 @@ struct SyncEntityNetMessage {
 struct NetVec2 {
     x @0 :Float32;
     y @1 :Float32;
+}
+
+struct SetCameraFollowedEntityNetMessage {
+    netId @0 :UInt32;
 }

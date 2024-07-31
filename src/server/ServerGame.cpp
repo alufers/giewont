@@ -121,6 +121,23 @@ void ServerGame::sync_entities_to_clients() {
       }
     }
   }
+
+  for (auto &client : clients) {
+    if (client.set_camera_target_countdown >= 0) {
+      client.set_camera_target_countdown--;
+
+      if (client.set_camera_target_countdown == 0) {
+        ::capnp::MallocMessageBuilder message;
+
+        auto root = message.initRoot<net::BaseNetMessage>();
+
+        auto setCameraFollowedEntity = root.initSetCameraFollowedEntity();
+        setCameraFollowedEntity.setNetId(client.camera_target_net_id);
+
+        client.send_reliable(message);
+      }
+    }
+  }
 }
 
 void ServerGame::handle_incoming_nbnet_message(NBN_MessageInfo msg_info) {
@@ -198,6 +215,9 @@ void ServerGame::spawn_player_character(ClientPeer &peer) {
   character->load_assets(*this);
 
   EntityRef ref = this->push_entity(std::move(character));
+
+  peer.camera_target_net_id = ref.get(*this).net_id;
+  peer.set_camera_target_countdown = 30;
 }
 
 void ClientPeer::send_reliable(capnp::MallocMessageBuilder &message_builder) {

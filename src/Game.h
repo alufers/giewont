@@ -45,6 +45,8 @@ public:
 
   std::vector<std::unique_ptr<Entity>> entities;
 
+  EntityRef get_entity_by_net_id(uint32_t net_id);
+
 protected:
   /** @brief Last update per second. */
   float last_ups = 0.0;

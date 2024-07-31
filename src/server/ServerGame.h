@@ -48,6 +48,10 @@ public:
   NBN_ConnectionHandle connection;
   bool level_loaded;
 
+  uint32_t camera_target_net_id;
+
+  int set_camera_target_countdown = -1;
+
   void send_reliable(
       ::capnp::MallocMessageBuilder &message_builder); // TODO: can be const?
 };
