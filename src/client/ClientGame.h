@@ -28,6 +28,7 @@ public:
   void update(float delta_time) override;
   void init_net_client();
   bool is_server() const override { return false; }
+  void shutdown() override;
 
   ClientGameState state = ClientGameState::INITIAL;
 

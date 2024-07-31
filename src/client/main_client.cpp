@@ -56,7 +56,7 @@ int main() {
     main_loop();
   }
 #endif
-
+  g->shutdown();
   CloseWindow();
   return 0;
 }

@@ -41,6 +41,8 @@ public:
 
   virtual EntityRef push_entity(std::unique_ptr<Entity> entity);
 
+  virtual void shutdown() {};
+
   std::vector<std::unique_ptr<Entity>> entities;
 
 protected:
