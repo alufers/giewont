@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "CameraEntity.h"
+#include "Entity.h"
 #include "Log.h"
 #include "NullEntity.h"
 #include <exception>
@@ -116,4 +117,14 @@ void Game::destroy_marked_entities() {
       entities[i] = nullptr;
     }
   }
+}
+
+EntityRef Game::get_entity_by_net_id(uint32_t net_id) {
+  for (auto &entity : entities) {
+    if (entity != nullptr && entity->net_id == net_id) {
+      return entity->get_ref();
+    }
+  }
+  LOG_WARN() << "get_entity_by_net_id: Entity with net_id " << net_id << " not found" << std::endl;
+  return EntityRef();
 }

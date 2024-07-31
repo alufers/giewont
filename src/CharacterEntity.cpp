@@ -1,10 +1,10 @@
 #include "CharacterEntity.h"
 #include "AABB.h"
 #include "Game.h"
+#include "Log.h"
 #include "PhysEntity.h"
 #include "TilemapEntity.h"
 #include <cmath>
-
 #ifdef GIEWONT_HAS_GRAPHICS
 #include <raylib.h>
 #endif
@@ -36,7 +36,7 @@ CharacterEntity::CharacterEntity() : PhysEntity() {
 
 void CharacterEntity::load_assets(const Game &game) {
 
-  if (this->net_owner_peer_id == game.my_peer_id) {
+  if (!game.is_server() && this->net_owner_peer_id == game.my_peer_id) {
     this->controller = std::make_unique<KeyboardCharacterController>();
   }
 
@@ -115,6 +115,10 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
 void KeyboardCharacterController::update(Game &game, CharacterEntity &character,
                                          float delta_time) {
 
+  if (game.is_server()) {
+    LOG_WARN() << "KeyboardCharacterController::update: called on server"
+               << std::endl;
+  }
 #ifdef GIEWONT_HAS_GRAPHICS
   CharacterMovementCommand command = CharacterMovementCommand::NONE;
   if (IsKeyDown(KEY_A)) {
@@ -132,7 +136,6 @@ void KeyboardCharacterController::update(Game &game, CharacterEntity &character,
 
 void DumbAICharacterController::update(Game &game, CharacterEntity &character,
                                        float delta_time) {
-
   CharacterMovementCommand command = CharacterMovementCommand::NONE;
   if (dwell_time > 0.0) {
     dwell_time -= delta_time;
