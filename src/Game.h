@@ -41,6 +41,8 @@ public:
 
   virtual EntityRef push_entity(std::unique_ptr<Entity> entity);
 
+  virtual void shutdown() {};
+
   std::vector<std::unique_ptr<Entity>> entities;
 
   EntityRef get_entity_by_net_id(uint32_t net_id);

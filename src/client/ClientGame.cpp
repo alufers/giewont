@@ -212,3 +212,9 @@ void ClientGame::sync_my_entities_to_server() {
     }
   }
 }
+
+void ClientGame::shutdown() {
+  LOG_INFO() << "Shutting down ClientGame" << std::endl;
+  NBN_GameClient_Stop();
+  
+}

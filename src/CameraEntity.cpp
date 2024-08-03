@@ -1,6 +1,8 @@
 #include "CameraEntity.h"
 #include "Log.h"
+#ifdef GIEWONT_HAS_GRAPHICS
 #include "raylib.h"
+#endif
 using namespace giewont;
 
 CameraEntity::CameraEntity() {
