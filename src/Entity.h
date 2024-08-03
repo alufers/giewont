@@ -90,6 +90,8 @@ public:
   EntityRef get_ref() const;
 
   void destroy();
+
+  virtual ~Entity() = default;
 };
 
 /**
