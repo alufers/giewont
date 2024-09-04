@@ -32,9 +32,8 @@ public:
    */
   uint32_t net_owner_peer_id = 0;
 
-
   bool is_being_created = false;
-  
+
   /** @brief Whether the entity should be deleted in the next frame. */
   bool marked_for_deletion = false;
 
@@ -42,6 +41,8 @@ public:
   Vec2 position = {0.0f, 0.0f};
 
   bool is_static = false;
+
+  virtual const char *get_type_name() const;
 
   /**
    * @brief Load assets needed fro this entity.
@@ -90,6 +91,8 @@ public:
   EntityRef get_ref() const;
 
   void destroy();
+
+  virtual ~Entity() = default;
 };
 
 /**

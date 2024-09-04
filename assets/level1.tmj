@@ -73,6 +73,34 @@
                  "width":0,
                  "x":890.909090909091,
                  "y":321.212121212121
+                }, 
+                {
+                 "height":0,
+                 "id":3,
+                 "name":"",
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"emission_rate",
+                         "type":"float",
+                         "value":100.0
+                        }, 
+                        {
+                         "name":"initial_velocity_angle",
+                         "type":"float",
+                         "value":0.40
+                        }, 
+                        {
+                         "name":"particle_texture_path",
+                         "type":"string",
+                         "value":"stone_particle.png"
+                        }],
+                 "rotation":0,
+                 "type":"particle_system",
+                 "visible":true,
+                 "width":0,
+                 "x":1239.39393939394,
+                 "y":875.757575757576
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -81,7 +109,7 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":3,
+ "nextobjectid":5,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.10.2",

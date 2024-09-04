@@ -63,6 +63,7 @@ set(COMMON_SOURCES
     src/ResourceManager.cpp
     src/SpawnEntity.cpp
     src/TilemapEntity.cpp
+    src/ParticleSystemEntity.cpp
 )
 set(COMMON_INCLUDES
     "${CMAKE_CURRENT_LIST_DIR}/src/"  

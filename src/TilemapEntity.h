@@ -69,10 +69,13 @@ public:
                 const nlohmann::json &tile_layer_data,
                 const nlohmann::json &level_data, const Game &game);
 
+  const char *get_type_name() const override { return "TilemapEntity"; }
+
   void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
 
   std::vector<TilemapCollisionManifold> check_collision_aabb(const AABB &aabb);
+  bool check_collision_point(const Vec2 &point);
 
   bool check_allow_jump(const Vec2 &feet_pos);
 
