@@ -16,6 +16,8 @@ class PhysEntity : public Entity {
 public:
   PhysEntity();
 
+  const char *get_type_name() const override { return "PhysEntity"; }
+
   Vec2 velocity = {0, 0};
 
   virtual AABB &get_aabb();
@@ -24,7 +26,8 @@ public:
   void draw(const Game &game) override;
   void draw_debug(const Game &game) override;
 
-  void update_from_sync_message(Game const &game,
+  void update_from_sync_message(
+      Game const &game,
       const net::SyncEntityNetMessage::Reader &sync_message) override;
 
 private:

@@ -83,7 +83,12 @@
                         {
                          "name":"emission_rate",
                          "type":"float",
-                         "value":1
+                         "value":100.0
+                        }, 
+                        {
+                         "name":"initial_velocity_angle",
+                         "type":"float",
+                         "value":0.40
                         }, 
                         {
                          "name":"particle_texture_path",

@@ -9,6 +9,9 @@ namespace giewont {
 class SpawnEntity : public Entity {
 public:
   SpawnEntity(const nlohmann::json &data);
+
+  const char *get_type_name() const override { return "SpawnEntity"; }
+
   void load_assets(const Game &game) override;
   void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;

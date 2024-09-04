@@ -104,6 +104,11 @@ void ServerGame::sync_entities_to_clients() {
   for (auto &entity : entities) {
     if (entity != nullptr && !entity->marked_for_deletion &&
         !entity->is_static) {
+      if (entity->net_id == 0) {
+        LOG_ERROR() << "Trying to sync entity with net_id 0 ("
+                    << entity->get_type_name() << ", id: " << entity->id << ")" << std::endl;
+        throw std::runtime_error("Trying to sync entity with net_id 0");
+      }
       ::capnp::MallocMessageBuilder message;
 
       auto root = message.initRoot<net::BaseNetMessage>();

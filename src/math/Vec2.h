@@ -76,6 +76,12 @@ public:
   Vector2 to_raylib() const { return {x, y}; }
 #endif
 
+  Vec2 rotated(float angle) const {
+    float new_x = x * std::cos(angle) - y * std::sin(angle);
+    float new_y = x * std::sin(angle) + y * std::cos(angle);
+    return Vec2(new_x, new_y);
+  }
+
   friend auto operator<<(std::ostream &os, const Vec2 &v) -> std::ostream & {
     os << "(" << v.x << ", " << v.y << ")";
     return os;

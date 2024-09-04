@@ -36,9 +36,10 @@ void LevelLoader::load_level(Game &game) {
           game.push_entity(std::move(spawn));
         }
         if(object["type"] == "particle_system") {
-          // auto particle_system = std::make_unique<ParticleSystemEntity>(object);
-          // particle_system->load_assets(game);
-          // game.push_entity(std::move(particle_system));
+          auto particle_system = std::make_unique<ParticleSystemEntity>(object);
+          particle_system->is_static = true;
+          particle_system->load_assets(game);
+          game.push_entity(std::move(particle_system));
         }
       }
     }
