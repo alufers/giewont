@@ -64,6 +64,7 @@ set(COMMON_SOURCES
     src/SpawnEntity.cpp
     src/TilemapEntity.cpp
     src/ParticleSystemEntity.cpp
+    src/BackdropEntity.cpp
 )
 set(COMMON_INCLUDES
     "${CMAKE_CURRENT_LIST_DIR}/src/"  

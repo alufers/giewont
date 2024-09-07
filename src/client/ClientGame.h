@@ -6,6 +6,7 @@
 #include <capnp/message.h>
 #include <capnp/serialize.h>
 
+#include "raylib.h"
 #include "schema.capnp.h"
 
 extern "C" {
@@ -30,6 +31,8 @@ public:
   void init_net_client();
   bool is_server() const override { return false; }
   void shutdown() override;
+
+  Camera2D get_currently_rendering_camera_data() const override;
 
   ClientGameState state = ClientGameState::INITIAL;
 

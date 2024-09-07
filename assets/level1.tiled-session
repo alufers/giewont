@@ -43,7 +43,7 @@
     "openFiles": [
     ],
     "project": "level1.tiled-project",
-    "property.type": "float",
+    "property.type": "string",
     "recentFiles": [
         "level1.tmj",
         "level1.tmx",

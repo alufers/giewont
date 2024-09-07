@@ -83,12 +83,12 @@
                         {
                          "name":"emission_rate",
                          "type":"float",
-                         "value":100.0
+                         "value":100
                         }, 
                         {
                          "name":"initial_velocity_angle",
                          "type":"float",
-                         "value":0.40
+                         "value":0.4
                         }, 
                         {
                          "name":"particle_texture_path",
@@ -101,6 +101,24 @@
                  "width":0,
                  "x":1239.39393939394,
                  "y":875.757575757576
+                }, 
+                {
+                 "height":0,
+                 "id":12,
+                 "name":"",
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"texture_path",
+                         "type":"string",
+                         "value":"background\/blue_grass.png"
+                        }],
+                 "rotation":0,
+                 "type":"backdrop",
+                 "visible":true,
+                 "width":0,
+                 "x":960.606060606061,
+                 "y":221.212121212121
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -109,10 +127,10 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":5,
+ "nextobjectid":13,
  "orientation":"orthogonal",
  "renderorder":"right-down",
- "tiledversion":"1.10.2",
+ "tiledversion":"1.11.0",
  "tileheight":70,
  "tilesets":[
         {

@@ -9,6 +9,7 @@
 #include "rlImGui.h"
 #include "rlgl.h"
 #include "schema.capnp.h"
+#include <algorithm>
 #include <cstring>
 #include <format>
 #include <stdexcept>
@@ -46,17 +47,32 @@ void ClientGame::draw() {
   }
   auto &camera = camera_ref.get_as<CameraEntity>(*this);
   camera.begin_mode2d();
+
+  // Todo: cache this
+  std::vector<EntityRef> entity_draw_list;
+
+  entity_draw_list.reserve(entities.size());
+
   for (auto &entity : entities) {
-    if (entity != nullptr) {
-      entity->draw(*this);
+    if (entity != nullptr && entity->id != 0) {
+      entity_draw_list.push_back(entity->get_ref());
     }
   }
 
+  std::sort(entity_draw_list.begin(), entity_draw_list.end(),
+            [&](const EntityRef &a, const EntityRef &b) {
+              auto &ent_a = a.get_as<Entity>(*this);
+              auto &ent_b = b.get_as<Entity>(*this);
+              return ent_a.get_z_index() < ent_b.get_z_index();
+            });
+
+  for (auto &entity_ref : entity_draw_list) {
+    entity_ref.get(*this).draw(*this);
+  }
+
   if (debug_overlay) {
-    for (auto &entity : entities) {
-      if (entity != nullptr) {
-        entity->draw_debug(*this);
-      }
+    for (auto &entity_ref : entity_draw_list) {
+      entity_ref.get(*this).draw_debug(*this);
     }
   }
 
@@ -83,7 +99,8 @@ void ClientGame::draw_ui() {
     ImGui::InputTextWithHint("Filter", "Filter", &filter);
 
     if (ImGui::BeginTable("entities_table", 4,
-                          ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY, ImVec2(0, 320))) {
+                          ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY,
+                          ImVec2(0, 320))) {
       ImGui::TableSetupColumn("Local ID");
       ImGui::TableSetupColumn("Net ID");
       ImGui::TableSetupColumn("Type name");
@@ -299,4 +316,12 @@ void ClientGame::sync_my_entities_to_server() {
 void ClientGame::shutdown() {
   LOG_INFO() << "Shutting down ClientGame" << std::endl;
   NBN_GameClient_Stop();
+}
+
+Camera2D ClientGame::get_currently_rendering_camera_data() const {
+  if (this->camera_ref.valid(*this)) {
+    auto &camera = camera_ref.get_as<CameraEntity>((Game &)*this);
+    return camera.camera_after_effects;
+  }
+  return {0};
 }

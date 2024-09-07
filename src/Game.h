@@ -4,6 +4,9 @@
 #include "Entity.h"
 #include "ResourceManager.h"
 #include "Vec2.h"
+#ifdef GIEWONT_HAS_GRAPHICS
+#include "raylib.h"
+#endif
 #include "schema.capnp.h"
 #include <memory>
 #include <string>
@@ -47,6 +50,11 @@ public:
   std::vector<std::unique_ptr<Entity>> entities;
 
   EntityRef get_entity_by_net_id(uint32_t net_id);
+
+#ifdef GIEWONT_HAS_GRAPHICS
+
+  virtual Camera2D get_currently_rendering_camera_data() const { return {0}; }
+#endif
 
 protected:
   /** @brief Last update per second. */

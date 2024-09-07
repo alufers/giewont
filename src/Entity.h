@@ -73,9 +73,17 @@ public:
   virtual void draw_debug(const Game &game) {}
 
   /**
-   * @brief Draw controls when the entity is selected in the inspector.
+   * @brief Get the z index of the entity. It will determine the order in which
+   * entities are drawn.
    * 
-   * @param game 
+   * @return int32_t The z index.
+   */
+  virtual int32_t get_z_index() { return 0; }
+
+  /**
+   * @brief Draw controls when the entity is selected in the inspector.
+   *
+   * @param game
    */
   virtual void draw_inspector_ui(Game &game);
 
