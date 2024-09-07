@@ -1,12 +1,13 @@
 #include "LevelLoader.h"
+#include "BackdropEntity.h"
 #include "Game.h"
+#include "Log.h"
+#include "ParticleSystemEntity.h"
+#include "SpawnEntity.h"
 #include "TilemapEntity.h"
 #include <filesystem>
 #include <nlohmann/json.hpp>
-#include "SpawnEntity.h"
-#include "Log.h"
 #include <stdexcept>
-#include "ParticleSystemEntity.h"
 
 using namespace giewont;
 
@@ -28,28 +29,36 @@ void LevelLoader::load_level(Game &game) {
     } else if (tile_layer["type"] == "objectgroup") {
       LOG_DEBUG() << "Object group" << std::endl;
       for (auto &object : tile_layer["objects"]) {
-        
+
         // detect entity type
         if (object["type"] == "spawn_entity") {
           auto spawn = std::make_unique<SpawnEntity>(object);
           spawn->is_static = true;
           game.push_entity(std::move(spawn));
-        }
-        if(object["type"] == "particle_system") {
+        } else if (object["type"] == "particle_system") {
           auto particle_system = std::make_unique<ParticleSystemEntity>(object);
           particle_system->is_static = true;
           particle_system->load_assets(game);
           game.push_entity(std::move(particle_system));
+        } else if (object["type"] == "backdrop") {
+          auto backdrop = std::make_unique<BackdropEntity>(object);
+          backdrop->is_static = true;
+          backdrop->load_assets(game);
+          game.push_entity(std::move(backdrop));
+        } else {
+          LOG_ERROR() << "Unknown object type in level data: " << object["type"]
+                      << std::endl;
         }
       }
     }
   }
 }
 
-nlohmann::json LevelLoader::tmjPropertiesToObj(const nlohmann::json &tmj_properties) {
+nlohmann::json
+LevelLoader::tmjPropertiesToObj(const nlohmann::json &tmj_properties) {
   nlohmann::json obj;
   for (auto &prop : tmj_properties) {
-    if(!prop.contains("name") || !prop["name"].is_string()) {
+    if (!prop.contains("name") || !prop["name"].is_string()) {
       throw std::runtime_error("tmjPropertiesToObj: name is not a string");
     }
     obj[prop["name"]] = prop["value"];

@@ -70,11 +70,12 @@ public:
   void end_mode2d();
 #endif
 
-private:
 #ifdef GIEWONT_HAS_GRAPHICS
   Camera2D camera = {0};
   Camera2D camera_after_effects = {0};
 #endif
+
+private:
 };
 
 } // namespace giewont
