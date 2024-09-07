@@ -74,3 +74,10 @@ void PhysEntity::update_from_sync_message(
     this->velocity = sync_message.getVelocity();
   }
 }
+
+void PhysEntity::build_sync_message(
+    net::SyncEntityNetMessage::Builder &sync_message) {
+  Entity::build_sync_message(sync_message);
+  auto net_velocity = sync_message.initVelocity();
+  velocity.serialize(net_velocity);
+}

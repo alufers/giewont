@@ -5,6 +5,8 @@
 #include "PhysEntity.h"
 #include "TilemapEntity.h"
 #include <cmath>
+#include <cstring>
+#include <nlohmann/json.hpp>
 #ifdef GIEWONT_HAS_GRAPHICS
 #include <raylib.h>
 #endif
@@ -40,27 +42,124 @@ void CharacterEntity::load_assets(const Game &game) {
     this->controller = std::make_unique<KeyboardCharacterController>();
   }
 
-  _texture_id = game.rm->load_texture("entites/slime.png");
-#ifdef GIEWONT_HAS_GRAPHICS
-  // TODO: remove this, can't load texture on the server
-  auto tex = game.rm->get_texture(_texture_id);
-  character_aabb =
-      AABB::from_min_and_size(Vec2(0, 0), Vec2(tex->width, tex->height));
-#else
-  character_aabb =
-      AABB::from_min_and_size(Vec2(0, 0), Vec2(70, 70)); // TODO handle this
-#endif
+  _texture_id = game.rm->load_texture("entities/p1_spritesheet.png");
+  _spritesheet_data_id = game.rm->load_json("entities/p1_spritesheet.json");
+  // #ifdef GIEWONT_HAS_GRAPHICS
+  //   // TODO: remove this, can't load texture on the server
+  //   auto tex = game.rm->get_texture(_texture_id);
+  //   character_aabb =
+  //       AABB::from_min_and_size(Vec2(0, 0), Vec2(tex->width, tex->height));
+  // #else
+  //   character_aabb =
+  //       AABB::from_min_and_size(Vec2(0, 0), Vec2(70, 70)); // TODO handle
+  //       this
+  // #endif
+
+  load_spritesheet_data(game);
+}
+
+void CharacterEntity::build_sync_message(
+    net::SyncEntityNetMessage::Builder &sync_message) {
+  PhysEntity::build_sync_message(sync_message);
+  auto characterData = sync_message.initExtraData().initCharacterData();
+
+  characterData.setAnimationState(static_cast<uint32_t>(anim_state));
+  characterData.setDirection(static_cast<uint32_t>(direction));
+}
+
+void CharacterEntity::update_from_sync_message(
+    Game const &game, const net::SyncEntityNetMessage::Reader &sync_message) {
+  PhysEntity::update_from_sync_message(game, sync_message);
+  auto characterData = sync_message.getExtraData().getCharacterData();
+
+  anim_state =
+      static_cast<CharacterAnimState>(characterData.getAnimationState());
+  direction = static_cast<CharacterDirection>(characterData.getDirection());
+}
+
+void CharacterEntity::load_spritesheet_data(const Game &game) {
+  auto data = game.rm->get_json(_spritesheet_data_id);
+
+  // check if it is a dictionary
+  if (!data->is_object()) {
+    throw std::runtime_error("Spritesheet data is not a dictionary");
+  }
+
+  for (auto &[key, value] : data->items()) {
+    if (!value.is_array() || value.size() != 4) {
+      throw std::runtime_error(
+          "Spritesheet data is not an array of four elements (x, y, w, h)");
+    }
+
+    CharacterAnimState state = CharacterAnimState::STAND;
+    if (strcasestr(key.c_str(), "stand")) {
+      state = CharacterAnimState::STAND;
+    } else if (strcasestr(key.c_str(), "walk")) {
+      state = CharacterAnimState::WALK;
+    } else if (strcasestr(key.c_str(), "jump")) {
+      state = CharacterAnimState::JUMP;
+    } else {
+      continue;
+    }
+
+    if (anim_frames.find(state) == anim_frames.end()) {
+      anim_frames[state] = std::vector<CharacterAnimFrame>();
+    }
+
+    CharacterAnimFrame frame;
+    frame.spritesheet_x = value[0].get<int>();
+    frame.spritesheet_y = value[1].get<int>();
+    frame.spritesheet_w = value[2].get<int>();
+    frame.spritesheet_h = value[3].get<int>();
+    frame.flip = false;
+
+    anim_frames[state].push_back(frame);
+  }
+
+  // Copy size from first frame of stand
+  if (anim_frames.find(CharacterAnimState::STAND) != anim_frames.end() &&
+      anim_frames[CharacterAnimState::STAND].size() > 0) {
+    auto &frame = anim_frames[CharacterAnimState::STAND][0];
+    character_aabb = AABB::from_min_and_size(
+        Vec2(0, 0), Vec2(frame.spritesheet_w, frame.spritesheet_h));
+  } else {
+    character_aabb = AABB::from_min_and_size(Vec2(0, 0), Vec2(70, 70));
+  }
 }
 
 void CharacterEntity::update(Game &game, float delta_time) {
   this->controller->update(game, *this, delta_time);
   PhysEntity::update(game, delta_time);
+  anim_frame_timer += delta_time;
+  if (anim_frame_timer >= anim_frame_duration) {
+    anim_frame_timer = 0.0f;
+    anim_frame++;
+  }
 }
 
 void CharacterEntity::draw(const Game &game) {
 #ifdef GIEWONT_HAS_GRAPHICS
   auto tex = game.rm->get_texture(_texture_id);
-  DrawTexture(*tex, position.x, position.y, WHITE);
+
+  auto &frames = anim_frames[anim_state];
+
+  auto &frame = frames[anim_frame % frames.size()];
+
+  Rectangle src_rect = {static_cast<float>(frame.spritesheet_x),
+                        static_cast<float>(frame.spritesheet_y),
+                        static_cast<float>(frame.spritesheet_w),
+                        static_cast<float>(frame.spritesheet_h)};
+  Rectangle dest_rect = {this->position.x, this->position.y,
+                         static_cast<float>(frame.spritesheet_w),
+                         static_cast<float>(frame.spritesheet_h)};
+  bool flip = frame.flip;
+  if (this->direction == CharacterDirection::LEFT) {
+    flip = !flip;
+  }
+  if (flip) {
+    src_rect.width *= -1;
+  }
+  DrawTexturePro(*tex, src_rect, dest_rect, {0, 0}, 0.0f, WHITE);
 #endif
 }
 
@@ -90,17 +189,29 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
   }
 
   if (command & CharacterMovementCommand::MOVE_LEFT) {
+    this->direction = CharacterDirection::LEFT;
+    if (on_ground_or_ladder) {
+      this->anim_state = CharacterAnimState::WALK;
+    }
     this->velocity.x -= this->horiz_accel * delta_time;
     if (this->velocity.x < -this->max_horiz_speed) {
       this->velocity.x = -this->max_horiz_speed;
     }
   } else if (command & CharacterMovementCommand::MOVE_RIGHT) {
+    this->direction = CharacterDirection::RIGHT;
+    if (on_ground_or_ladder) {
+      this->anim_state = CharacterAnimState::WALK;
+    }
     this->velocity.x += this->horiz_accel * delta_time;
     if (this->velocity.x > this->max_horiz_speed) {
       this->velocity.x = this->max_horiz_speed;
     }
   } else {
     if (on_ground_or_ladder) {
+      if (anim_state == CharacterAnimState::WALK ||
+          anim_state == CharacterAnimState::JUMP) {
+        anim_state = CharacterAnimState::STAND;
+      }
       if (std::fabs(this->velocity.x) > PHYS_EPSILON) {
         float sign = this->velocity.x > 0 ? 1.0f : -1.0f;
         this->velocity.x -= sign * this->horiz_accel * delta_time;
@@ -109,6 +220,11 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
         }
       }
     }
+  }
+
+  // overwrite anim state if jumping
+  if (command & CharacterMovementCommand::JUMP && on_ground_or_ladder) {
+    anim_state = CharacterAnimState::JUMP;
   }
 }
 

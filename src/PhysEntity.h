@@ -30,6 +30,9 @@ public:
       Game const &game,
       const net::SyncEntityNetMessage::Reader &sync_message) override;
 
+  void
+  build_sync_message(net::SyncEntityNetMessage::Builder &sync_message) override;
+
 private:
   AABB _default_aabb = AABB(Vec2(0, 0), Vec2(70, 70));
   Vec2 _resolution_vector_debug = {0, 0};
