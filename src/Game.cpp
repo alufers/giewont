@@ -7,6 +7,7 @@
 
 #include "CharacterEntity.h"
 #include "LevelLoader.h"
+#include "raylib.h"
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
@@ -125,6 +126,7 @@ EntityRef Game::get_entity_by_net_id(uint32_t net_id) {
       return entity->get_ref();
     }
   }
-  LOG_WARN() << "get_entity_by_net_id: Entity with net_id " << net_id << " not found" << std::endl;
+  LOG_WARN() << "get_entity_by_net_id: Entity with net_id " << net_id
+             << " not found" << std::endl;
   return EntityRef();
 }

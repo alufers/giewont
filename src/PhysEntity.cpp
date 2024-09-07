@@ -23,7 +23,7 @@ void PhysEntity::update(Game &game, float delta_time) {
   this->_resolution_vector_debug = {0, 0};
 
   for (auto &entity : game.entities) {
-    if (entity->id == this->id || entity == nullptr ||
+    if (entity == nullptr || entity->id == this->id ||
         entity->marked_for_deletion) {
       continue;
     }

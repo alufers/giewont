@@ -73,6 +73,13 @@ public:
   virtual void draw_debug(const Game &game) {}
 
   /**
+   * @brief Draw controls when the entity is selected in the inspector.
+   * 
+   * @param game 
+   */
+  virtual void draw_inspector_ui(Game &game);
+
+  /**
    * @brief Add data to the SyncEntityNetMessage.
    */
   virtual void
@@ -111,6 +118,10 @@ public:
 
   template <typename T> bool valid_as(Game &game) const {
     return valid(game) && dynamic_cast<T *>(get(game)) != nullptr;
+  }
+
+  bool operator==(const EntityRef &other) const {
+    return id == other.id && generation == other.generation;
   }
 };
 

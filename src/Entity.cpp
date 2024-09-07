@@ -1,6 +1,10 @@
 #include "Entity.h"
 #include "Game.h"
 
+#ifdef GIEWONT_HAS_GRAPHICS
+#include "imgui.h"
+#endif
+
 using namespace giewont;
 
 const char *Entity::get_type_name() const { return "Entity"; }
@@ -54,3 +58,31 @@ Entity &EntityRef::get(Game &game) const {
     throw std::runtime_error("EntityRef is not valid");
   }
 }
+
+#ifdef GIEWONT_HAS_GRAPHICS
+void Entity::draw_inspector_ui(Game &game) {
+  ImGui::BeginGroup();
+  ImGui::Text("ID: %d", id);
+  ImGui::SameLine();
+  ImGui::Text("Type: %s", get_type_name());
+  ImGui::EndGroup();
+
+  ImGui::Text("Position: (%f, %f)", position.x, position.y);
+  ImGui::Text("Net ID: %d", net_id);
+  ImGui::Text("Owner Peer: %d", net_owner_peer_id);
+
+  ImGui::BeginGroup();
+  ImGui::Text("Generation: %d", generation);
+  ImGui::SameLine();
+  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0, 0.0, 0.0, 1.0));
+  if (ImGui::Button("Destroy locally")) {
+    this->destroy();
+  }
+  ImGui::PopStyleColor();
+  ImGui::EndGroup();
+
+  ImGui::Separator();
+}
+#else
+void Entity::draw_inspector_ui(Game &game) {}
+#endif

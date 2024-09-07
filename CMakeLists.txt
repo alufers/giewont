@@ -75,6 +75,11 @@ set(COMMON_INCLUDES
 
 ### Client build
 
+
+add_subdirectory("${CMAKE_SOURCE_DIR}/libs/imgui" imgui EXCLUDE_FROM_ALL)
+add_subdirectory("${CMAKE_SOURCE_DIR}/libs/rlImGui" rlImGui EXCLUDE_FROM_ALL)
+
+
 set(CLIENT_EXE_NAME "giewont_client")
 
 set(CLIENT_SOURCES 
@@ -92,7 +97,7 @@ target_sources(${CLIENT_EXE_NAME} PRIVATE ${COMMON_SOURCES} ${CLIENT_SOURCES})
 target_include_directories(${CLIENT_EXE_NAME} PRIVATE ${COMMON_INCLUDES} ${CLIENT_INCLUDES})
 target_include_directories(${CLIENT_EXE_NAME} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/libs/nbnet")
 
-target_link_libraries(${CLIENT_EXE_NAME} PRIVATE raylib nlohmann_json::nlohmann_json ${CAPNP_LIBRARIES})
+target_link_libraries(${CLIENT_EXE_NAME} PRIVATE raylib nlohmann_json::nlohmann_json imgui rlImGui ${CAPNP_LIBRARIES})
 
 
 

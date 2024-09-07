@@ -72,7 +72,7 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
                   Vec2((this->get_aabb().min.x + this->get_aabb().max.x) / 2.0f,
                        this->get_aabb().max.y + 1.0f);
   for (auto &entity : game.entities) {
-    if (entity->id == this->id || entity == nullptr ||
+    if (entity == nullptr || entity->id == this->id ||
         entity->marked_for_deletion) {
       continue;
     }
