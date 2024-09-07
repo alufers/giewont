@@ -7,6 +7,8 @@
 #include "PhysEntity.h"
 #include "ResourceManager.h"
 #include <memory>
+#include <unordered_map>
+#include <vector>
 
 namespace giewont {
 
@@ -20,6 +22,19 @@ enum class CharacterMovementCommand {
   JUMP = 1 << 2,
 };
 
+enum class CharacterAnimState { STAND, WALK, JUMP };
+
+enum class CharacterDirection { LEFT, RIGHT };
+
+class CharacterAnimFrame {
+public:
+  int spritesheet_x;
+  int spritesheet_y;
+  int spritesheet_w;
+  int spritesheet_h;
+  bool flip;
+};
+
 /**
  * @brief Entiity for player and non-player characters.
  */
@@ -30,6 +45,12 @@ public:
   float max_horiz_speed = 300.0f;
   float horiz_accel = 2000.0f;
   float jump_speed = 500.0f;
+
+  CharacterAnimState anim_state = CharacterAnimState::STAND;
+  CharacterDirection direction = CharacterDirection::RIGHT;
+  int anim_frame = 0;
+  float anim_frame_duration = 0.03f;
+  float anim_frame_timer = 0.0f;
 
   CharacterEntity();
 
@@ -46,9 +67,21 @@ public:
 
   net::EntityType get_net_type() override;
 
+  // Netcode
+  void
+  build_sync_message(net::SyncEntityNetMessage::Builder &sync_message) override;
+  void update_from_sync_message(
+      Game const &game,
+      const net::SyncEntityNetMessage::Reader &sync_message) override;
+
 private:
   res_id _texture_id;
+  res_id _spritesheet_data_id;
+  std::unordered_map<CharacterAnimState, std::vector<CharacterAnimFrame>>
+      anim_frames;
   AABB character_aabb;
+
+  void load_spritesheet_data(const Game &game);
 };
 
 /**

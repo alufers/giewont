@@ -30,6 +30,17 @@ struct SyncEntityNetMessage {
     position @4 :NetVec2;
     velocity @5 :NetVec2;
 
+    extraData :union {
+        characterData @6 :SyncCharacterEntityData;
+
+        dummy @7 :Void;
+    }
+}
+
+struct SyncCharacterEntityData {
+    animationState @0 :UInt32;
+    direction @1 :UInt32;
+
 }
 
 struct NetVec2 {
