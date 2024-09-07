@@ -32,6 +32,9 @@ public:
   float jump_speed = 500.0f;
 
   CharacterEntity();
+
+  const char *get_type_name() const override { return "CharacterEntity"; }
+
   void load_assets(const Game &game) override;
   void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
@@ -58,12 +61,14 @@ public:
 };
 
 /**
- * @brief Character controller that does nothing, used on the client for characters owned by the server.
- * 
+ * @brief Character controller that does nothing, used on the client for
+ * characters owned by the server.
+ *
  */
 class RemoteCharacterController : public CharacterController {
 public:
-  void update(Game &game, CharacterEntity &character, float delta_time) override {};
+  void update(Game &game, CharacterEntity &character,
+              float delta_time) override {};
 };
 
 class KeyboardCharacterController : public CharacterController {

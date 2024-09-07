@@ -1,7 +1,12 @@
 #include "CameraEntity.h"
+
+#include "Entity.h"
 #include "Log.h"
+#include <algorithm>
 #ifdef GIEWONT_HAS_GRAPHICS
+#include "imgui.h"
 #include "raylib.h"
+
 #endif
 using namespace giewont;
 
@@ -21,11 +26,24 @@ void CameraEntity::load_assets(const Game &game) {}
 void CameraEntity::update(Game &game, float delta_time) {
 #ifdef GIEWONT_HAS_GRAPHICS
   if (entity_to_follow.valid(game)) {
-   
+
     auto &entity = entity_to_follow.get_as<Entity>(game);
     camera.target = entity.position.to_raylib();
     camera.offset = {(float)(GetScreenWidth() / 2.0),
                      (float)(GetScreenHeight() / 2.0)};
+  }
+
+  this->camera_after_effects = camera;
+  for (auto it = effects.begin(); it != effects.end();) {
+    auto &effect = *it;
+    effect->duration_left -= delta_time;
+    if (effect->duration_left <= 0) {
+      it = effects.erase(it);
+    } else {
+      camera_after_effects =
+          effect->modify_camera(delta_time, camera_after_effects);
+      ++it;
+    }
   }
 #endif
 }
@@ -42,10 +60,92 @@ void CameraEntity::draw(const Game &game) {
 #endif
 }
 
+void CameraEntity::draw_inspector_ui(Game &game) {
+#ifdef GIEWONT_HAS_GRAPHICS
+  Entity::draw_inspector_ui(game);
+  ImGui::Text("Target: %f, %f", camera.target.x, camera.target.y);
+  ImGui::Text("Offset: %f, %f", camera.offset.x, camera.offset.y);
+  ImGui::Text("Rotation: %f", camera.rotation);
+  ImGui::Text("Zoom: %f", camera.zoom);
+  ImGui::Text("Effects: %zu", effects.size());
+
+  ImGui::Separator();
+  if (ImGui::Button("Add Shake Effect")) {
+    auto effect = std::make_unique<CameraShakeEffect>();
+    effect->duration = 0.5f;
+    effect->duration_left = 0.5f;
+    effect->intensity = 20.0f;
+    effect->falloff_time = 0.2f;
+    effect->speed = 150.0;
+    effects.push_back(std::move(effect));
+  }
+  if (ImGui::Button("Add Vignette Effect")) {
+    auto effect = std::make_unique<VignetteEffect>();
+    effect->duration = 0.5f;
+    effect->duration_left = 0.5f;
+    effect->intensity = 0.5f;
+    effect->falloff_time = 0.2f;
+
+    effects.push_back(std::move(effect));
+  }
+#endif
+}
+
 #ifdef GIEWONT_HAS_GRAPHICS
 
-void CameraEntity::begin_mode2d() { BeginMode2D(camera); }
+void CameraEntity::begin_mode2d() {
 
-void CameraEntity::end_mode2d() { EndMode2D(); }
+  for (auto &effect : effects) {
+    effect->on_before_begin_mode2d();
+  }
+
+  BeginMode2D(camera_after_effects);
+}
+
+void CameraEntity::end_mode2d() {
+  EndMode2D();
+
+  for (auto &effect : effects) {
+    effect->on_after_end_mode2d();
+  }
+}
+
+float CameraEffect::computed_intensity() {
+  if (duration_left > falloff_time) {
+    return intensity;
+  }
+  return intensity * (duration_left / falloff_time);
+}
+
+Camera2D CameraEffect::modify_camera(float delta_time, const Camera2D &input) {
+  return input;
+}
+
+Camera2D CameraShakeEffect::modify_camera(float delta_time,
+                                          const Camera2D &input) {
+  if (duration_left > 0) {
+    auto intensity = computed_intensity();
+    float shake_x = sinf((duration - duration_left) * speed) * intensity;
+    float shake_y =
+        cosf((duration - duration_left) * speed + 30.4f) * intensity;
+
+    Camera2D result = input;
+    result.target.x += shake_x;
+    result.target.y += shake_y;
+    return result;
+  }
+  return input;
+}
+
+void VignetteEffect::on_after_end_mode2d() {
+  LOG_DEBUG() << "VignetteEffect::on_before_begin_mode2d" << std::endl;
+  float radius = std::sqrt(GetScreenWidth() * GetScreenWidth() +
+                           GetScreenHeight() * GetScreenHeight()) *
+                 0.5f;
+
+  uint8_t alpha = (uint8_t)(computed_intensity() * 255);
+  DrawCircleGradient(GetScreenWidth() / 2, GetScreenHeight() / 2, radius,
+                     Color{0, 0, 0, 0}, Color{0, 0, 0, alpha});
+}
 
 #endif

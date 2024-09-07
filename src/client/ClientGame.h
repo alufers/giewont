@@ -1,6 +1,7 @@
 #ifndef CLIENTGAME_H_
 #define CLIENTGAME_H_
 
+#include "Entity.h"
 #include "Game.h"
 #include <capnp/message.h>
 #include <capnp/serialize.h>
@@ -42,6 +43,10 @@ private:
   void handle_incoming_message(const net::BaseNetMessage::Reader &message);
   void sync_my_entities_to_server();
   void send_reliable(::capnp::MallocMessageBuilder &message_builder);
+
+  EntityRef inspector_selected_entity;
+
+  void draw_ui();
 };
 } // namespace giewont
 

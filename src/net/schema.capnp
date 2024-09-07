@@ -40,3 +40,16 @@ struct NetVec2 {
 struct SetCameraFollowedEntityNetMessage {
     netId @0 :UInt32;
 }
+
+enum CameraEffectType {
+    none @0;
+    shake @1;
+    vignette @2;
+}
+
+struct CameraEffect {
+    type @0 :CameraEffectType;
+    intensity @1 :Float32;
+    duration @2 :Float32;
+    falloffDuration @3 :Float32;
+}

@@ -29,6 +29,7 @@ public:
 
   // Debug
   bool debug_overlay = false;
+  bool debug_ui = false;
 
   void load_level(std::string tmj_path);
   virtual void update(float delta_time);

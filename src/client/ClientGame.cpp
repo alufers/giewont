@@ -1,13 +1,18 @@
 #include "ClientGame.h"
 #include "CameraEntity.h"
+#include "Entity.h"
 #include "Log.h"
+#include "imgui.h"
+#include "misc/cpp/imgui_stdlib.h"
 #include "net_common.h"
 #include "raylib.h"
+#include "rlImGui.h"
+#include "rlgl.h"
 #include "schema.capnp.h"
+#include <cstring>
 #include <format>
 #include <stdexcept>
 #include <stdlib.h>
-
 extern "C" {
 #include "nbnet.h"
 #ifdef PLATFORM_WEB
@@ -25,6 +30,7 @@ ClientGame::ClientGame(std::string server_address, int server_port) : Game() {
 }
 
 void ClientGame::draw() {
+
   if (state != ClientGameState::CONNECTED) {
     std::string message = "Connecting to server...";
     if (state == ClientGameState::ERROR) {
@@ -54,12 +60,89 @@ void ClientGame::draw() {
     }
   }
 
+  if (inspector_selected_entity.valid(*this)) {
+
+    auto &ent = inspector_selected_entity.get_as<Entity>(*this);
+    DrawCircleV(ent.position.to_raylib(), 25.0f, RED);
+  }
+
   camera.end_mode2d();
 
   DrawText(std::format("UPS: {:.2f}", last_ups).c_str(), 10, 10, 20, BLACK);
+
+  draw_ui();
+}
+
+void ClientGame::draw_ui() {
+  rlImGuiBegin();
+  if (debug_ui) {
+
+    ImGui::Begin("Entities", &debug_ui, 0);
+
+    std::string filter = "";
+    ImGui::InputTextWithHint("Filter", "Filter", &filter);
+
+    if (ImGui::BeginTable("entities_table", 4,
+                          ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY, ImVec2(0, 320))) {
+      ImGui::TableSetupColumn("Local ID");
+      ImGui::TableSetupColumn("Net ID");
+      ImGui::TableSetupColumn("Type name");
+      ImGui::TableSetupColumn("Flags");
+      ImGui::TableHeadersRow();
+      for (size_t idx = 0; idx < entities.size(); idx++) {
+        auto &ent = entities[idx];
+        if (ent != nullptr) {
+          if (!filter.empty() &&
+              strcasestr(ent->get_type_name(), filter.c_str()) == nullptr) {
+            continue;
+          }
+          ImGui::TableNextRow();
+          if (ent->is_static) {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5, 0.5, 0.5, 1.0));
+          }
+          ImGui::TableNextColumn();
+          bool is_row_selected =
+              this->inspector_selected_entity == ent->get_ref();
+          char label[256];
+          snprintf(label, sizeof(label), "%zu", idx);
+          ImGui::Selectable(label, &is_row_selected,
+                            ImGuiSelectableFlags_SpanAllColumns);
+          if (is_row_selected) {
+            this->inspector_selected_entity = ent->get_ref();
+          }
+          ImGui::TableNextColumn();
+          ImGui::Text("%u", ent->net_id);
+          ImGui::TableNextColumn();
+          ImGui::Text("%s", ent->get_type_name());
+          ImGui::TableNextColumn();
+          ImGui::Text("%s", ent->is_static ? "static" : "");
+          if (ent->is_static) {
+            ImGui::PopStyleColor();
+          }
+        }
+      }
+      ImGui::EndTable();
+    }
+
+    if (inspector_selected_entity.valid(*this)) {
+      auto &ent = inspector_selected_entity.get_as<Entity>(*this);
+      ImGui::BeginChild("Inspector", ImVec2(0, 0), true);
+      ent.draw_inspector_ui(*this);
+      ImGui::EndChild();
+    }
+
+    ImGui::End();
+  }
+
+  rlImGuiEnd();
 }
 
 void ClientGame::update(float delta_time) {
+
+  // Check global keybinds
+  if (IsKeyReleased(KEY_F11)) {
+    debug_ui = !debug_ui;
+  }
 
   if (!this->camera_ref.valid(*this)) {
     LOG_WARN() << "Camera not set, creating a new one" << std::endl;
@@ -117,7 +200,6 @@ void ClientGame::update(float delta_time) {
 
   // Only update the game if the client is connected to the server
   if (state == ClientGameState::CONNECTED) {
-
     Game::update(delta_time);
   }
 
@@ -179,7 +261,8 @@ void ClientGame::handle_incoming_message(
     camera.entity_to_follow = this->get_entity_by_net_id(
         message.getSetCameraFollowedEntity().getNetId());
 
-      LOG_INFO() << " camera.entity_to_follow = " << camera.entity_to_follow.id << std::endl;
+    LOG_INFO() << " camera.entity_to_follow = " << camera.entity_to_follow.id
+               << std::endl;
     break;
   }
 
@@ -216,5 +299,4 @@ void ClientGame::sync_my_entities_to_server() {
 void ClientGame::shutdown() {
   LOG_INFO() << "Shutting down ClientGame" << std::endl;
   NBN_GameClient_Stop();
-  
 }
