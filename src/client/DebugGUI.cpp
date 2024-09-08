@@ -6,9 +6,18 @@
 using namespace giewont;
 
 void DebugGUI::draw_ui(Game &game) {
-  if (show) {
-    ImGui::Begin("Entities", &show, 0);
 
+  if (show) {
+    ImGui::BeginMainMenuBar();
+    if (ImGui::BeginMenu("Debug")) {
+      ImGui::MenuItem("Show Debug Overlay", nullptr, &show_debug_overlay);
+      ImGui::MenuItem("Show Entity Inspector", nullptr, &show_entity_inspector);
+      ImGui::EndMenu();
+    }
+    ImGui::EndMainMenuBar();
+  }
+  if (show_entity_inspector) {
+    ImGui::Begin("Entities", &show, 0);
     ImGui::InputTextWithHint("Filter", "Filter", &inspector_filter, 0);
 
     if (ImGui::BeginTable("entities_table", 4,
@@ -84,5 +93,8 @@ void DebugGUI::update(Game &game) {
   // Check global keybinds
   if (IsKeyReleased(KEY_F11)) {
     show = !show;
+  }
+  if (IsKeyReleased(KEY_F10)) {
+    show_entity_inspector = !show_entity_inspector;
   }
 }
