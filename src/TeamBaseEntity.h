@@ -34,6 +34,9 @@ public:
 
   GColor color = GColor(1.0f, 0.0f, 0.0f, 1.0f);
 
+
+  float activation_level = 0.0f;
+
   GW_DATABINDER_DECLARE(TeamBaseEntity);
   GW_DATABINDER_AUTO_INSPECTOR(klass);
 
