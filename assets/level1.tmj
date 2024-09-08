@@ -191,6 +191,18 @@
                  "width":0,
                  "x":550.666666666667,
                  "y":838.666666666667
+                }, 
+                {
+                 "height":0,
+                 "id":18,
+                 "name":"",
+                 "point":true,
+                 "rotation":0,
+                 "type":"team_base",
+                 "visible":true,
+                 "width":0,
+                 "x":210,
+                 "y":923.333333333333
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -199,7 +211,7 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":18,
+ "nextobjectid":19,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.0",

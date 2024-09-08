@@ -273,10 +273,6 @@ void ServerGame::handle_interact_message(
     allEntities.push_back(entity->get_ref());
   }
 
-  for(EntityRef &entity : allEntities) {
-    LOG_INFO() << "Entity: " << entity.valid(*this) << std::endl;
-  }
-
   std::sort(allEntities.begin(), allEntities.end(),
             [&](EntityRef a, EntityRef b) {
               return a.get(*this).position.distance(interactor_pos) <

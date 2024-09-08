@@ -9,7 +9,7 @@
 #include <filesystem>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
-
+#include "TeamBaseEntity.h"
 using namespace giewont;
 
 LevelLoader::LevelLoader(std::string tmj_path) : tmj_path(tmj_path) {}
@@ -48,6 +48,12 @@ void LevelLoader::load_level(Game &game) {
           game.push_entity(std::move(backdrop));
         } else if (object["type"] == "flag") {
           auto flag = std::make_unique<FlagEntity>(object);
+          flag->is_static = true;
+          flag->load_assets(game);
+          game.push_entity(std::move(flag));
+
+        } else if (object["type"] == "team_base") {
+          auto flag = std::make_unique<TeamBaseEntity>(object);
           flag->is_static = true;
           flag->load_assets(game);
           game.push_entity(std::move(flag));
