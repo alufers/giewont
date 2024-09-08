@@ -45,7 +45,6 @@ void CharacterEntity::load_assets(const Game &game) {
   _texture_id = game.rm->load_texture("entities/p1_spritesheet.png");
   _spritesheet_data_id = game.rm->load_json("entities/p1_spritesheet.json");
 
-
   load_spritesheet_data(game);
 }
 
@@ -244,6 +243,15 @@ void KeyboardCharacterController::update(Game &game, CharacterEntity &character,
 void DumbAICharacterController::update(Game &game, CharacterEntity &character,
                                        float delta_time) {
   CharacterMovementCommand command = CharacterMovementCommand::NONE;
+  time_since_last_jump += delta_time;
+  if (dir_change_time > 0.0f) {
+    dir_change_time -= delta_time;
+  } else if (dir_change_time > -1000.0f) {
+    dir_change_time = -10000.0f;
+    moving_right = !moving_right;
+    dwell_time = 1.5f;
+  }
+
   if (dwell_time > 0.0) {
     dwell_time -= delta_time;
   } else {
@@ -251,6 +259,11 @@ void DumbAICharacterController::update(Game &game, CharacterEntity &character,
         character.position +
         Vec2((character.get_aabb().min.x + character.get_aabb().max.x) / 2.0f,
              character.get_aabb().max.y + 1.0f);
+    Vec2 head_pos =
+        character.position +
+        Vec2((character.get_aabb().min.x + character.get_aabb().max.x) / 2.0f,
+             (character.get_aabb().max.y + character.get_aabb().min.y) / 2.0f +
+                 1.0f);
 
     for (auto &entity : game.entities) {
       if (entity->id == character.id || entity == nullptr ||
@@ -266,11 +279,25 @@ void DumbAICharacterController::update(Game &game, CharacterEntity &character,
              tilemap->tile_size.x / 2.0f) *
             (moving_right ? 1.0f : -1.0f);
 
-        if (!tilemap->check_allow_jump(pos_to_check)) {
+        Vec2 head_pos_to_check = head_pos;
+        head_pos_to_check.x +=
+            ((character.get_aabb().min.x + character.get_aabb().max.x) / 2.0f +
+             tilemap->tile_size.x / 2.0f) *
+            (moving_right ? 1.0f : -1.0f);
+        if (!tilemap->check_allow_jump(pos_to_check) &&
+            dir_change_time <= 0.0f) {
 
           dwell_time = 1.0f;
           moving_right = !moving_right;
           break;
+        }
+
+        if (tilemap->check_allow_jump(head_pos_to_check) &&
+            dir_change_time <= 0.0f && time_since_last_jump > 7.0f) {
+          time_since_last_jump = 0.0f;
+          command |= CharacterMovementCommand::JUMP;
+          // moving_right = !moving_right;
+          dir_change_time = 2.0f;
         }
       }
     }

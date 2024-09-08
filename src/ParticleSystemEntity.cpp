@@ -1,4 +1,5 @@
 #include "ParticleSystemEntity.h"
+#include "DataBinder.h"
 #include "Game.h"
 #include "LevelLoader.h"
 #include "Log.h"
@@ -11,6 +12,15 @@
 #endif
 
 using namespace giewont;
+
+GW_DATABINDER_DEFINE(
+    ParticleSystemEntity,
+    GW_DATABINDER_FIELD_RANGE(float, emission_rate, 0.0, 1000.0),
+    GW_DATABINDER_FIELD_RANGE(float, initial_velocity_angle, 0.0,
+                              2.0 * std::numbers::pi),
+    GW_DATABINDER_FIELD(Vec2, initial_velocity),
+    GW_DATABINDER_FIELD_RANGE(float, max_lifetime, 0.0, 1000.0),
+    GW_DATABINDER_FIELD_RANGE(float, gravity_factor, 0.0, 3.0));
 
 ParticleSystemEntity::ParticleSystemEntity(const nlohmann::json &data)
     : Entity() {
@@ -46,7 +56,6 @@ ParticleSystemEntity::ParticleSystemEntity(const nlohmann::json &data)
 
   this->position.x = data["x"].get<float>();
   this->position.y = data["y"].get<float>();
-
 }
 
 void ParticleSystemEntity::load_assets(const Game &game) {

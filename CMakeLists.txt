@@ -66,6 +66,7 @@ set(COMMON_SOURCES
     src/ParticleSystemEntity.cpp
     src/BackdropEntity.cpp
     src/FlagEntity.cpp
+    src/DataBinder.cpp
 )
 set(COMMON_INCLUDES
     "${CMAKE_CURRENT_LIST_DIR}/src/"  

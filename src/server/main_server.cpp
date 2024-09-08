@@ -13,9 +13,6 @@ int main() {
 
   g->init_net_server();
 
-
-
-  
   std::chrono::time_point<std::chrono::system_clock> last_frame_time =
       std::chrono::system_clock::now();
 
@@ -40,6 +37,10 @@ int main() {
               current_time - last_frame_time)
               .count() /
           1000;
+    }
+
+    if (delta_time > 0.2f) {
+      delta_time = 0.2f;
     }
 
     g->update(delta_time);

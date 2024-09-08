@@ -7,6 +7,9 @@
 
 using namespace giewont;
 
+
+GW_DATABINDER_DEFINE(FlagEntity, GW_DATABINDER_FIELD(GColor, color));
+
 FlagEntity::FlagEntity() : PhysEntity() {}
 
 FlagEntity::FlagEntity(nlohmann::json data) : PhysEntity() {
@@ -96,20 +99,8 @@ void FlagEntity::draw(const Game &game) {
                          get_aabb().height()};
   auto tex = game.rm->get_texture(_texture_id);
 
-  Color raylib_color = {(unsigned char)(flag_color[0] * 255),
-                        (unsigned char)(flag_color[1] * 255),
-                        (unsigned char)(flag_color[2] * 255), 255};
-
   DrawTexturePro(*tex, src_rect_pole, dest_rect, {0, 0}, 0.0f, WHITE);
-  DrawTexturePro(*tex, src_rect_wave, dest_rect, {0, 0}, 0.0f, raylib_color);
-#endif
-}
-
-void FlagEntity::draw_inspector_ui(Game &game) {
-#ifdef GIEWONT_HAS_GRAPHICS
-
-  ImGui::Text("FlagEntity");
-
-  ImGui::ColorEdit3("Flag color", flag_color);
+  DrawTexturePro(*tex, src_rect_wave, dest_rect, {0, 0}, 0.0f,
+                 color.to_raylib_color());
 #endif
 }

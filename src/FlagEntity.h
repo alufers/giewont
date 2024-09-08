@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <vector>
 #include <nlohmann/json.hpp>
+#include "math/Color.h"
+#include "DataBinder.h"
 
 namespace giewont {
 
@@ -28,13 +30,16 @@ public:
   void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
 
-  void draw_inspector_ui(Game &game) override;
+  
 
   int32_t get_z_index() override { return 500; }
 
   AABB &get_aabb() override;
 
-  float flag_color[3] = {1.0f, 1.0f, 1.0f};
+  GColor color = GColor(1.0f, 0.0f, 0.0f, 1.0f);
+
+  GW_DATABINDER_DECLARE(FlagEntity);
+  GW_DATABINDER_AUTO_INSPECTOR(klass);
 
 private:
   std::unordered_map<FlagEntitySpriteType, std::vector<FLagEntitySprite>>

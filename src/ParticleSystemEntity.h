@@ -8,6 +8,8 @@
 #include <numbers>
 #include <vector>
 
+#include "DataBinder.h"
+
 namespace giewont {
 
 enum class ParticleTilemapCollisionAction { NONE, KILL, BOUNCE };
@@ -34,7 +36,12 @@ public:
   std::string particle_texture_path;
 
   size_t max_particles = 500;
-  float emission_rate = 0.0f;
+
+  GW_DATABINDER_DECLARE(ParticleSystemEntity);
+
+  GW_DATABINDER_AUTO_INSPECTOR(klass);
+
+  float emission_rate = 100.0f;
 
   /**
    * @brief The maximum angle that the initial velocity can be rotated from the

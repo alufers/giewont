@@ -31,6 +31,10 @@ static void main_loop() {
           .count() /
       1000;
 
+    if(delta_time > 0.2f) {
+        delta_time = 0.2f;
+    }
+
   g->update(delta_time);
   BeginDrawing();
 
