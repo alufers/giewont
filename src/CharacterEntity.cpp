@@ -44,16 +44,7 @@ void CharacterEntity::load_assets(const Game &game) {
 
   _texture_id = game.rm->load_texture("entities/p1_spritesheet.png");
   _spritesheet_data_id = game.rm->load_json("entities/p1_spritesheet.json");
-  // #ifdef GIEWONT_HAS_GRAPHICS
-  //   // TODO: remove this, can't load texture on the server
-  //   auto tex = game.rm->get_texture(_texture_id);
-  //   character_aabb =
-  //       AABB::from_min_and_size(Vec2(0, 0), Vec2(tex->width, tex->height));
-  // #else
-  //   character_aabb =
-  //       AABB::from_min_and_size(Vec2(0, 0), Vec2(70, 70)); // TODO handle
-  //       this
-  // #endif
+
 
   load_spritesheet_data(game);
 }

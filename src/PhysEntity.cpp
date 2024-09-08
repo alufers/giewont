@@ -16,11 +16,9 @@ PhysEntity::PhysEntity() : Entity() {}
 void PhysEntity::load_assets(const Game &game) {}
 
 void PhysEntity::update(Game &game, float delta_time) {
-  this->velocity += game.gravity * delta_time;
-
-  this->position += this->velocity * delta_time;
-
   this->_resolution_vector_debug = {0, 0};
+  this->velocity += game.gravity * delta_time;
+  this->position += this->velocity * delta_time;
 
   for (auto &entity : game.entities) {
     if (entity == nullptr || entity->id == this->id ||
@@ -38,11 +36,12 @@ void PhysEntity::update(Game &game, float delta_time) {
         }
         float e = 0.1f;
         float j = -(1 + e) * velAlongNormal;
-        j /= 1.0 / 1.0 + 1.0 / 1.0;
+        j /= 1.0 / 1.0 + 1.0 / 1.0; // inverse mass
         Vec2 impulse = manifold.normal * j;
-        this->velocity += impulse;
+
+        this->velocity += impulse * 1.9; // 1.9 prevents oscillation
         this->_resolution_vector_debug = impulse;
-        this->position += manifold.normal * manifold.penetration;
+        this->position += manifold.normal * manifold.penetration * 1;
       }
     }
   }
@@ -58,7 +57,10 @@ void PhysEntity::draw_debug(const Game &game) {
                      GREEN);
   // draw resolution vector
   Vec2 reso = this->_resolution_vector_debug * 10.0;
-  LOG_DEBUG() << "Resolution vector: " << reso << std::endl;
+
+  char text_buffer[100];
+  snprintf(text_buffer, 100, "V: %f %f", reso.x, reso.y);
+  DrawText(text_buffer, this->position.x, this->position.y - 20, 10, RED);
   DrawLine(this->position.x, this->position.y, this->position.x + reso.x,
            this->position.y + reso.y, RED);
 #endif
