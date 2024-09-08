@@ -87,6 +87,7 @@ set(CLIENT_EXE_NAME "giewont_client")
 set(CLIENT_SOURCES 
     src/client/main_client.cpp
     src/client/ClientGame.cpp
+    src/client/DebugGUI.cpp
 )
 
 set (CLIENT_INCLUDES

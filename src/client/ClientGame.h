@@ -5,6 +5,7 @@
 #include "Game.h"
 #include <capnp/message.h>
 #include <capnp/serialize.h>
+#include <memory>
 
 #include "raylib.h"
 #include "schema.capnp.h"
@@ -23,6 +24,8 @@ enum class ClientGameState {
   ERROR,
 };
 
+class DebugGUI;
+
 class ClientGame : public Game {
 public:
   ClientGame(std::string server_address, int server_port);
@@ -35,6 +38,10 @@ public:
   Camera2D get_currently_rendering_camera_data() const override;
 
   ClientGameState state = ClientGameState::INITIAL;
+
+  std::unique_ptr<DebugGUI> debug_gui;
+
+  ~ClientGame();
 
 private:
   std::string error_message;

@@ -2,8 +2,8 @@
 #include "CameraEntity.h"
 #include "Entity.h"
 #include "Log.h"
-#include "imgui.h"
-#include "misc/cpp/imgui_stdlib.h"
+
+#include "DebugGUI.h"
 #include "net_common.h"
 #include "raylib.h"
 #include "rlImGui.h"
@@ -28,6 +28,7 @@ using namespace giewont;
 ClientGame::ClientGame(std::string server_address, int server_port) : Game() {
   this->server_address = server_address;
   this->server_port = server_port;
+  debug_gui = std::make_unique<DebugGUI>();
 }
 
 void ClientGame::draw() {
@@ -70,17 +71,7 @@ void ClientGame::draw() {
     entity_ref.get(*this).draw(*this);
   }
 
-  if (debug_overlay) {
-    for (auto &entity_ref : entity_draw_list) {
-      entity_ref.get(*this).draw_debug(*this);
-    }
-  }
-
-  if (inspector_selected_entity.valid(*this)) {
-
-    auto &ent = inspector_selected_entity.get_as<Entity>(*this);
-    DrawCircleV(ent.position.to_raylib(), 25.0f, RED);
-  }
+  debug_gui->draw(*this, entity_draw_list);
 
   camera.end_mode2d();
 
@@ -91,75 +82,12 @@ void ClientGame::draw() {
 
 void ClientGame::draw_ui() {
   rlImGuiBegin();
-  if (debug_ui) {
 
-    ImGui::Begin("Entities", &debug_ui, 0);
-
-    std::string filter = "";
-    ImGui::InputTextWithHint("Filter", "Filter", &filter);
-
-    if (ImGui::BeginTable("entities_table", 4,
-                          ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY,
-                          ImVec2(0, 320))) {
-      ImGui::TableSetupColumn("Local ID");
-      ImGui::TableSetupColumn("Net ID");
-      ImGui::TableSetupColumn("Type name");
-      ImGui::TableSetupColumn("Flags");
-      ImGui::TableHeadersRow();
-      for (size_t idx = 0; idx < entities.size(); idx++) {
-        auto &ent = entities[idx];
-        if (ent != nullptr) {
-          if (!filter.empty() &&
-              strcasestr(ent->get_type_name(), filter.c_str()) == nullptr) {
-            continue;
-          }
-          ImGui::TableNextRow();
-          if (ent->is_static) {
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5, 0.5, 0.5, 1.0));
-          }
-          ImGui::TableNextColumn();
-          bool is_row_selected =
-              this->inspector_selected_entity == ent->get_ref();
-          char label[256];
-          snprintf(label, sizeof(label), "%zu", idx);
-          ImGui::Selectable(label, &is_row_selected,
-                            ImGuiSelectableFlags_SpanAllColumns);
-          if (is_row_selected) {
-            this->inspector_selected_entity = ent->get_ref();
-          }
-          ImGui::TableNextColumn();
-          ImGui::Text("%u", ent->net_id);
-          ImGui::TableNextColumn();
-          ImGui::Text("%s", ent->get_type_name());
-          ImGui::TableNextColumn();
-          ImGui::Text("%s", ent->is_static ? "static" : "");
-          if (ent->is_static) {
-            ImGui::PopStyleColor();
-          }
-        }
-      }
-      ImGui::EndTable();
-    }
-
-    if (inspector_selected_entity.valid(*this)) {
-      auto &ent = inspector_selected_entity.get_as<Entity>(*this);
-      ImGui::BeginChild("Inspector", ImVec2(0, 0), true);
-      ent.draw_inspector_ui(*this);
-      ImGui::EndChild();
-    }
-
-    ImGui::End();
-  }
-
+  debug_gui->draw_ui(*this);
   rlImGuiEnd();
 }
 
 void ClientGame::update(float delta_time) {
-
-  // Check global keybinds
-  if (IsKeyReleased(KEY_F11)) {
-    debug_ui = !debug_ui;
-  }
 
   if (!this->camera_ref.valid(*this)) {
     LOG_WARN() << "Camera not set, creating a new one" << std::endl;
@@ -220,6 +148,7 @@ void ClientGame::update(float delta_time) {
     Game::update(delta_time);
   }
 
+  debug_gui->update(*this);
   sync_my_entities_to_server();
 
   if (NBN_GameClient_SendPackets() < 0) {
@@ -325,3 +254,5 @@ Camera2D ClientGame::get_currently_rendering_camera_data() const {
   }
   return {0};
 }
+
+ClientGame::~ClientGame() = default;

@@ -30,9 +30,6 @@ public:
   // Physics
   Vec2 gravity = {0.0f, 9.81f * 70}; // y is positive down, and 1m = 70 units
 
-  // Debug
-  bool debug_overlay = false;
-  bool debug_ui = false;
 
   void load_level(std::string tmj_path);
   virtual void update(float delta_time);
