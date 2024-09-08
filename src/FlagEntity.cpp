@@ -1,4 +1,5 @@
 #include "FlagEntity.h"
+#include "PhysEntity.h"
 
 #ifdef GIEWONT_HAS_GRAPHICS
 #include "imgui.h"
@@ -6,7 +7,6 @@
 #endif
 
 using namespace giewont;
-
 
 GW_DATABINDER_DEFINE(FlagEntity, GW_DATABINDER_FIELD(GColor, color));
 
@@ -78,6 +78,12 @@ AABB &FlagEntity::get_aabb() { return flag_aabb; }
 
 void FlagEntity::update(Game &game, float delta_time) {
   PhysEntity::update(game, delta_time);
+  if (flag_holder.valid(game)) {
+    position = flag_holder.get(game).position;
+    if (flag_holder.valid_as<PhysEntity>(game)) {
+      velocity = flag_holder.get_as<PhysEntity>(game).velocity;
+    }
+  }
 }
 
 void FlagEntity::draw(const Game &game) {
@@ -103,4 +109,21 @@ void FlagEntity::draw(const Game &game) {
   DrawTexturePro(*tex, src_rect_wave, dest_rect, {0, 0}, 0.0f,
                  color.to_raylib_color());
 #endif
+}
+
+bool FlagEntity::handle_interaction(
+    Game &game, const net::InteractNetMessage::Reader interaction) {
+  EntityRef interactor =
+      game.get_entity_by_net_id(interaction.getInteractorNetId());
+  if (flag_holder.valid(game)) {
+    if (flag_holder == interactor) {
+      flag_holder = EntityRef();
+      this->velocity *= 2;  // Throw the flag
+      return true;
+    }
+    return false;
+  }
+
+  flag_holder = interactor;
+  return true;
 }

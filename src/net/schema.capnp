@@ -8,7 +8,8 @@ struct BaseNetMessage {
         loadLevel @1 :LoadLevelNetMessage; # server -> client
         levelLoaded @2 :Void; # client -> server
         syncEntity @3 :SyncEntityNetMessage;
-        setCameraFollowedEntity @4 :SetCameraFollowedEntityNetMessage;
+        setCameraFollowedEntity @4 :SetCameraFollowedEntityNetMessage; # server -> client
+        interact @5 :InteractNetMessage; # client -> server
     }
 }
 
@@ -20,6 +21,7 @@ struct LoadLevelNetMessage {
 enum EntityType {
     unknown @0;
     character @1;
+    flag @2;
 }
 
 struct SyncEntityNetMessage {
@@ -32,9 +34,13 @@ struct SyncEntityNetMessage {
 
     extraData :union {
         characterData @6 :SyncCharacterEntityData;
-
-        dummy @7 :Void;
+        flagData @7 :SyncFlagEntityData;
     }
+}
+
+struct SyncFlagEntityData {
+    holderNetId @0 :UInt32;
+    color @1 :UInt32;
 }
 
 struct SyncCharacterEntityData {
@@ -63,4 +69,8 @@ struct CameraEffect {
     intensity @1 :Float32;
     duration @2 :Float32;
     falloffDuration @3 :Float32;
+}
+
+struct InteractNetMessage {
+   interactorNetId @0 :Int32;
 }

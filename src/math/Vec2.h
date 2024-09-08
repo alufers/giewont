@@ -91,6 +91,10 @@ public:
     builder.setX(x);
     builder.setY(y);
   }
+
+  float distance(const Vec2 &other) const {
+    return (*this - other).length();
+  }
 };
 } // namespace giewont
 

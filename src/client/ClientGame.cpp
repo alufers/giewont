@@ -192,7 +192,7 @@ void ClientGame::handle_incoming_message(
     ::capnp::MallocMessageBuilder message_builder;
     auto root = message_builder.initRoot<net::BaseNetMessage>();
     root.setLevelLoaded();
-    send_reliable(message_builder);
+    send_reliable_to_peer(0, message_builder);
     break;
   }
   case net::BaseNetMessage::Which::SYNC_ENTITY: {
@@ -217,7 +217,10 @@ void ClientGame::handle_incoming_message(
   }
 }
 
-void ClientGame::send_reliable(::capnp::MallocMessageBuilder &message_builder) {
+void ClientGame::send_reliable_to_peer(uint32_t peer_id, ::capnp::MallocMessageBuilder &message_builder) {
+  if (peer_id != 0) {
+    throw std::runtime_error("ClientGame::send_reliable_to_peer: peer_id must be 0"); 
+  }
   auto encoded_array = capnp::messageToFlatArray(message_builder);
   auto charArray = encoded_array.asChars();
   NBN_GameClient_SendReliableByteArray((unsigned char *)charArray.begin(),
@@ -237,7 +240,7 @@ void ClientGame::sync_my_entities_to_server() {
 
       entity->build_sync_message(syncEntities);
 
-      send_reliable(message);
+      send_reliable_to_peer(0, message);
     }
   }
 }

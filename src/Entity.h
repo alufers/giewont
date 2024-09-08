@@ -75,7 +75,7 @@ public:
   /**
    * @brief Get the z index of the entity. It will determine the order in which
    * entities are drawn.
-   * 
+   *
    * @return int32_t The z index.
    */
   virtual int32_t get_z_index() { return 0; }
@@ -101,6 +101,12 @@ public:
   virtual void update_from_sync_message(
       Game const &game, const net::SyncEntityNetMessage::Reader &sync_message);
 
+  virtual bool
+  handle_interaction(Game &game,
+                     const net::InteractNetMessage::Reader interaction) {
+    return false;
+  }
+
   virtual net::EntityType get_net_type() { return net::EntityType::UNKNOWN; }
 
   EntityRef get_ref() const;
@@ -119,13 +125,14 @@ public:
   uint32_t generation = 0;
   bool valid(Game const &game) const;
   Entity &get(Game &game) const;
+  Entity *get_ptr(Game &game) const;
 
   template <typename T> T &get_as(Game &game) const {
     return dynamic_cast<T &>(get(game));
   }
 
   template <typename T> bool valid_as(Game &game) const {
-    return valid(game) && dynamic_cast<T *>(get(game)) != nullptr;
+    return valid(game) && dynamic_cast<T *>(get_ptr(game)) != nullptr;
   }
 
   bool operator==(const EntityRef &other) const {

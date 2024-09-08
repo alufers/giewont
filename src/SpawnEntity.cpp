@@ -1,5 +1,6 @@
 #include "SpawnEntity.h"
 #include "CharacterEntity.h"
+#include "FlagEntity.h"
 #include "Log.h"
 #include <exception>
 #include <memory>
@@ -60,6 +61,11 @@ std::unique_ptr<Entity> SpawnEntity::construct_entity(const Game &game) {
     auto dumb_ai = std::make_unique<CharacterEntity>();
     dumb_ai->controller = std::make_unique<DumbAICharacterController>();
     return std::move(dumb_ai);
+  }
+
+  if (entity_type == "flag") {
+    auto flag = std::make_unique<FlagEntity>();
+    return std::move(flag);
   }
 
   LOG_ERROR() << "Unknown entity type: " << entity_type << std::endl;

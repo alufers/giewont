@@ -1,9 +1,13 @@
 #include "CharacterEntity.h"
 #include "AABB.h"
+
+#include "FlagEntity.h"
 #include "Game.h"
 #include "Log.h"
 #include "PhysEntity.h"
 #include "TilemapEntity.h"
+#include "schema.capnp.h"
+#include <capnp/message.h>
 #include <cmath>
 #include <cstring>
 #include <nlohmann/json.hpp>
@@ -234,6 +238,17 @@ void KeyboardCharacterController::update(Game &game, CharacterEntity &character,
   }
   if (IsKeyDown(KEY_SPACE)) {
     command |= CharacterMovementCommand::JUMP;
+  }
+
+  if (IsKeyReleased(KEY_E)) {
+    if (!game.is_server()) {
+
+      capnp::MallocMessageBuilder message;
+      auto base_msg = message.initRoot<net::BaseNetMessage>();
+      auto interact = base_msg.initInteract();
+      interact.setInteractorNetId(character.net_id);
+      game.send_reliable_to_peer(0, message);
+    }
   }
 
   character.perform_movement(game, delta_time, command);

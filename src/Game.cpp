@@ -1,6 +1,7 @@
 #include "Game.h"
 #include "CameraEntity.h"
 #include "Entity.h"
+#include "FlagEntity.h"
 #include "Log.h"
 #include "NullEntity.h"
 #include <exception>
@@ -74,6 +75,9 @@ void Game::apply_sync_entity(const net::SyncEntityNetMessage::Reader &message) {
       switch (message.getEntityType()) {
       case net::EntityType::CHARACTER:
         entToCreate = std::make_unique<CharacterEntity>();
+        break;
+      case net::EntityType::FLAG:
+        entToCreate = std::make_unique<FlagEntity>();
         break;
       default:
         LOG_WARN() << "apply_sync_entity: Unknown entity type" << std::endl;

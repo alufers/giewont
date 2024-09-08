@@ -41,6 +41,10 @@ public:
 
   std::unique_ptr<DebugGUI> debug_gui;
 
+  void send_reliable_to_peer(
+      uint32_t peer_id,
+      ::capnp::MallocMessageBuilder &message_builder) override;
+
   ~ClientGame();
 
 private:
@@ -52,7 +56,7 @@ private:
 
   void handle_incoming_message(const net::BaseNetMessage::Reader &message);
   void sync_my_entities_to_server();
-  void send_reliable(::capnp::MallocMessageBuilder &message_builder);
+
 
   EntityRef inspector_selected_entity;
 

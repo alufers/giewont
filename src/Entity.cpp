@@ -59,6 +59,14 @@ Entity &EntityRef::get(Game &game) const {
   }
 }
 
+Entity *EntityRef::get_ptr(Game &game) const {
+  if (valid(game)) {
+    return game.entities[id].get();
+  } else {
+    return nullptr;
+  }
+}
+
 #ifdef GIEWONT_HAS_GRAPHICS
 void Entity::draw_inspector_ui(Game &game) {
   ImGui::BeginGroup();
