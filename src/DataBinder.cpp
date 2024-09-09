@@ -3,6 +3,7 @@
 #include "GameplayManager.h"
 #include "Vec2.h"
 #include <stdexcept>
+#include "Log.h"
 #ifdef GIEWONT_HAS_GRAPHICS
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
@@ -53,6 +54,7 @@ void DataBinderBase::draw_inspector_ui_impl(void *instance) {
     }
     case DataBinderType::INT: {
       int *i = (int *)((char *)instance + field.offset);
+      // Log::info("DataBinder") << "Drawing int field: " << field.name << std::endl;
       ImGui::InputInt(field.name.c_str(), i);
       break;
     }

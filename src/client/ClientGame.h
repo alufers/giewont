@@ -45,6 +45,9 @@ public:
       uint32_t peer_id,
       ::capnp::MallocMessageBuilder &message_builder) override;
 
+  void
+  broadcast_reliable(::capnp::MallocMessageBuilder &message_builder) override;
+
   ~ClientGame();
 
 private:
@@ -56,7 +59,6 @@ private:
 
   void handle_incoming_message(const net::BaseNetMessage::Reader &message);
   void sync_my_entities_to_server();
-
 
   EntityRef inspector_selected_entity;
 

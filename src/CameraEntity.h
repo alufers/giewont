@@ -6,6 +6,7 @@
 #include "schema.capnp.h"
 #include <memory>
 #include <vector>
+#include "Color.h"
 
 #ifdef GIEWONT_HAS_GRAPHICS
 #include "raylib.h"
@@ -20,6 +21,8 @@ public:
   float intensity = 0.0f;
   float falloff_time = 0.0f;
   float speed = 0.0f;
+
+  GColor color ;
 
 #ifdef GIEWONT_HAS_GRAPHICS
   virtual Camera2D modify_camera(float delta_time, const Camera2D &input);
@@ -61,6 +64,8 @@ public:
   void draw(const Game &game) override;
 
   void draw_inspector_ui(Game &game) override;
+
+  void handle_add_camera_effect(const net::AddCameraEffectNetMessage::Reader &message);
 
   EntityRef entity_to_follow;
   std::vector<std::unique_ptr<CameraEffect>> effects;

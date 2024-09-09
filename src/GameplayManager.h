@@ -15,6 +15,7 @@ GColor gameplay_team_to_color(GameplayTeam team);
 
 class GaemplayTeamState {
 public:
+  bool did_create_flag_first_time = false;
   int score = 0;
   EntityRef base;
   EntityRef flag;
@@ -31,6 +32,21 @@ public:
   void load_assets(const Game &game) override;
   void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
+  void draw_raylib_ui(const Game &game) override;
+
+  // synced state
+  int blue_team_score = 0;
+  int red_team_score = 0;
+  std::string message = "";
+  float message_time = 0.0f;
+
+  void update_from_sync_message(
+      Game &game,
+      const net::SyncEntityNetMessage::Reader &sync_message) override;
+
+  void
+  build_sync_message(Game &game,
+                     net::SyncEntityNetMessage::Builder &sync_message) override;
 
   GW_DATABINDER_DECLARE(GameplayManager);
   GW_DATABINDER_AUTO_INSPECTOR(klass);

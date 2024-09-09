@@ -45,6 +45,10 @@ public:
   send_reliable_to_peer(uint32_t peer_id,
                         ::capnp::MallocMessageBuilder &message_builder) = 0;
 
+  // virtual void handle_incoming_message(const net::BaseNetMessage::Reader &message) = 0;
+
+  virtual void broadcast_reliable(::capnp::MallocMessageBuilder &message_builder) = 0;                      
+
   virtual void shutdown() {};
 
   std::vector<std::unique_ptr<Entity>> entities;
@@ -68,10 +72,10 @@ protected:
 
   virtual void
   apply_sync_entity(const net::SyncEntityNetMessage::Reader &message);
+  virtual void destroy_marked_entities();
 
 private:
   uint32_t generation_counter = 0;
-  void destroy_marked_entities();
 
   friend class EntityRef;
 };

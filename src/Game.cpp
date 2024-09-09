@@ -85,6 +85,7 @@ void Game::apply_sync_entity(const net::SyncEntityNetMessage::Reader &message) {
         entToCreate = std::make_unique<TeamBaseEntity>();
         break;
       case net::EntityType::GAMEPLAY_MANAGER:
+
         entToCreate = std::make_unique<GameplayManager>();
         break;
       default:

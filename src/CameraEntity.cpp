@@ -1,5 +1,6 @@
 #include "CameraEntity.h"
 
+#include "Color.h"
 #include "Entity.h"
 #include "Log.h"
 #include <algorithm>
@@ -85,9 +86,40 @@ void CameraEntity::draw_inspector_ui(Game &game) {
     effect->duration_left = 0.5f;
     effect->intensity = 0.5f;
     effect->falloff_time = 0.2f;
+    effect->color = GColor(0.0f, 0.0f, 0.0f);
 
     effects.push_back(std::move(effect));
   }
+#endif
+}
+
+void CameraEntity::handle_add_camera_effect(
+    const net::AddCameraEffectNetMessage::Reader &message) {
+#ifdef GIEWONT_HAS_GRAPHICS
+  std::unique_ptr<CameraEffect> effect;
+
+  switch (message.getType()) {
+  case net::CameraEffectType::SHAKE:
+    effect = std::make_unique<CameraEffect>();
+    break;
+  case net::CameraEffectType::VIGNETTE:
+    effect = std::make_unique<VignetteEffect>();
+    break;
+  default:
+    LOG_ERROR() << "Unknown camera effect type: " << (int)message.getType()
+                << std::endl;
+    return;
+  }
+
+  effect->duration = message.getDuration();
+  effect->duration_left = message.getDuration();
+  effect->intensity = message.getIntensity();
+  effect->falloff_time = message.getFalloffDuration();
+  effect->speed = message.getSpeed();
+  effect->color = GColor::from_uint32(message.getColor());
+
+  effects.push_back(std::move(effect));
+
 #endif
 }
 
@@ -144,8 +176,13 @@ void VignetteEffect::on_after_end_mode2d() {
                  0.5f;
 
   uint8_t alpha = (uint8_t)(computed_intensity() * 255);
-  DrawCircleGradient(GetScreenWidth() / 2, GetScreenHeight() / 2, radius,
-                     Color{0, 0, 0, 0}, Color{0, 0, 0, alpha});
+
+  Color raylib_color = color.to_raylib_color();
+
+  DrawCircleGradient(
+      GetScreenWidth() / 2, GetScreenHeight() / 2, radius,
+      Color{raylib_color.r, raylib_color.g, raylib_color.b, 0},
+      Color{raylib_color.r, raylib_color.g, raylib_color.b, alpha});
 }
 
 #endif

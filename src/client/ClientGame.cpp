@@ -75,7 +75,11 @@ void ClientGame::draw() {
 
   camera.end_mode2d();
 
-  DrawText(std::format("UPS: {:.2f}", last_ups).c_str(), 10, 10, 20, BLACK);
+  for (auto &entity_ref : entity_draw_list) {
+    entity_ref.get(*this).draw_raylib_ui(*this);
+  }
+
+  // DrawText(std::format("UPS: {:.2f}", last_ups).c_str(), 10, 10, 20, BLACK);
 
   draw_ui();
 }
@@ -212,6 +216,21 @@ void ClientGame::handle_incoming_message(
     break;
   }
 
+  case net::BaseNetMessage::Which::DESTROY_ENTITY: {
+    auto net_id = message.getDestroyEntity().getNetId();
+    auto entity = get_entity_by_net_id(net_id);
+    if (entity.valid(*this)) {
+      entity.get(*this).destroy();
+    }
+    break;
+  }
+
+  case net::BaseNetMessage::Which::ADD_CAMERA_EFFECT: {
+    auto &camera = camera_ref.get_as<CameraEntity>(*this);
+    camera.handle_add_camera_effect(message.getAddCameraEffect());
+    break;
+  }
+
   default:
     LOG_WARN() << "Unknown message type received from the server" << std::endl;
   }
@@ -227,6 +246,11 @@ void ClientGame::send_reliable_to_peer(
   auto charArray = encoded_array.asChars();
   NBN_GameClient_SendReliableByteArray((unsigned char *)charArray.begin(),
                                        charArray.size());
+}
+
+void ClientGame::broadcast_reliable(
+    ::capnp::MallocMessageBuilder &message_builder) {
+  throw std::runtime_error("ClientGame::broadcast_reliable: not implemented");
 }
 
 void ClientGame::sync_my_entities_to_server() {

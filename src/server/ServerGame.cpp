@@ -286,6 +286,41 @@ void ServerGame::handle_interact_message(
   }
 }
 
+void ServerGame::destroy_marked_entities() {
+
+  for (auto &entity : entities) {
+    if (entity == nullptr)
+      continue;
+    if (entity->marked_for_deletion) {
+      LOG_INFO()
+          << "Notyfiing about the destruction of entity entity  with net_id="
+          << entity->net_id << std::endl;
+
+      ::capnp::MallocMessageBuilder message;
+      auto root = message.initRoot<net::BaseNetMessage>();
+      auto destroyEntity = root.initDestroyEntity();
+      destroyEntity.setNetId(entity->net_id);
+
+      for (auto &client : clients) {
+        if (client.level_loaded) {
+          client.send_reliable(message);
+        }
+      }
+    }
+  }
+
+  Game::destroy_marked_entities();
+}
+
+void ServerGame::broadcast_reliable(
+    capnp::MallocMessageBuilder &message_builder) {
+  for (auto &client : clients) {
+    if (client.level_loaded) {
+      client.send_reliable(message_builder);
+    }
+  }
+}
+
 void ClientPeer::send_reliable(capnp::MallocMessageBuilder &message_builder) {
   auto encoded_array = capnp::messageToFlatArray(message_builder);
   auto charArray = encoded_array.asChars();

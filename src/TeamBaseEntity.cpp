@@ -110,9 +110,10 @@ void TeamBaseEntity::update(Game &game, float delta_time) {
     }
   }
   if (activation_level > 2.0f) {
-    activation_level = 0.0f;
-    if (captured_flag.valid(game)) {
-      // Destory the flag
+    activation_level = 0.95f;
+
+    if (captured_flag.valid(game) || game.is_server()) {
+      // Destory the flag on the server
       captured_flag.get(game).destroy();
     }
   }
