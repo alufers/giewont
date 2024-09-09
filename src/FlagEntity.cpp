@@ -1,6 +1,6 @@
 #include "FlagEntity.h"
+#include "Log.h"
 #include "PhysEntity.h"
-
 #ifdef GIEWONT_HAS_GRAPHICS
 #include "imgui.h"
 #include <raylib.h>
@@ -8,7 +8,8 @@
 
 using namespace giewont;
 
-GW_DATABINDER_DEFINE(FlagEntity, GW_DATABINDER_FIELD(GColor, color));
+GW_DATABINDER_DEFINE(FlagEntity, GW_DATABINDER_FIELD(GColor, color),
+                     GW_DATABINDER_FIELD(GameplayTeam, team));
 
 FlagEntity::FlagEntity() : PhysEntity() {}
 
@@ -46,6 +47,8 @@ void FlagEntity::load_spritesheet_data(const Game &game) {
       state = FlagEntitySpriteType::WAVING;
     } else if (strcasestr(key.c_str(), "deform_up")) {
       state = FlagEntitySpriteType::DEFORM_UP;
+    } else if (strcasestr(key.c_str(), "deform_down")) {
+      state = FlagEntitySpriteType::DEFORM_DOWN;
     } else {
       continue;
     }
@@ -79,10 +82,30 @@ AABB &FlagEntity::get_aabb() { return flag_aabb; }
 void FlagEntity::update(Game &game, float delta_time) {
   PhysEntity::update(game, delta_time);
   if (flag_holder.valid(game)) {
-    position = flag_holder.get(game).position;
+    position = flag_holder.get(game).get_flag_attachment_pos();
     if (flag_holder.valid_as<PhysEntity>(game)) {
       velocity = flag_holder.get_as<PhysEntity>(game).velocity;
     }
+  }
+
+  needs_flip = velocity.x < 0;
+
+  if (velocity.y < -30.0f) {
+    needs_deform_up = true;
+    needs_deform_down = false;
+  } else if (velocity.y > 30.0f) {
+    needs_deform_up = false;
+    needs_deform_down = true;
+  } else {
+    needs_deform_up = false;
+    needs_deform_down = false;
+  }
+
+  anim_frame_timer += delta_time;
+  if (anim_frame_timer > 2.0f) {
+    anim_frame_timer = 0.0f;
+    anim_frame =
+        (anim_frame + 1) % sprites[FlagEntitySpriteType::WAVING].size();
   }
 }
 
@@ -91,7 +114,15 @@ void FlagEntity::draw(const Game &game) {
 #ifdef GIEWONT_HAS_GRAPHICS
   auto pole_spr = sprites[FlagEntitySpriteType::POLE][0];
 
-  auto wave_spr = sprites[FlagEntitySpriteType::WAVING][0];
+  auto wave_spr =
+      sprites[FlagEntitySpriteType::WAVING]
+             [anim_frame % sprites[FlagEntitySpriteType::WAVING].size()];
+
+  if (needs_deform_up) {
+    wave_spr = sprites[FlagEntitySpriteType::DEFORM_UP][0];
+  } else if (needs_deform_down) {
+    wave_spr = sprites[FlagEntitySpriteType::DEFORM_DOWN][0];
+  }
 
   Rectangle src_rect_pole = {static_cast<float>(pole_spr.spritesheet_x),
                              static_cast<float>(pole_spr.spritesheet_y),
@@ -103,6 +134,12 @@ void FlagEntity::draw(const Game &game) {
                              static_cast<float>(wave_spr.spritesheet_h)};
   Rectangle dest_rect = {position.x, position.y, get_aabb().width(),
                          get_aabb().height()};
+
+  if (needs_flip) {
+    src_rect_pole.width *= -1;
+    src_rect_wave.width *= -1;
+    dest_rect.x -= get_aabb().width() - 6.0;
+  }
   auto tex = game.rm->get_texture(_texture_id);
 
   DrawTexturePro(*tex, src_rect_pole, dest_rect, {0, 0}, 0.0f, WHITE);
@@ -118,7 +155,7 @@ bool FlagEntity::handle_interaction(
   if (flag_holder.valid(game)) {
     if (flag_holder == interactor) {
       flag_holder = EntityRef();
-      this->velocity *= 2;  // Throw the flag
+      this->velocity *= 2; // Throw the flag
       return true;
     }
     return false;
@@ -126,4 +163,33 @@ bool FlagEntity::handle_interaction(
 
   flag_holder = interactor;
   return true;
+}
+
+void FlagEntity::update_from_sync_message(
+    Game &game, const net::SyncEntityNetMessage::Reader &sync_message) {
+  Entity::update_from_sync_message(game, sync_message);
+
+  if (sync_message.getExtraData().which() !=
+      net::SyncEntityNetMessage::ExtraData::Which::FLAG_DATA) {
+    LOG_WARN() << "FlagEntity: ExtraData is not FLAG_DATA, but"
+               << sync_message.getExtraData().which() << std::endl;
+    throw std::runtime_error("FlagEntity: ExtraData is not FLAG_DATA");
+  }
+
+  auto flag_data = sync_message.getExtraData().getFlagData();
+  team = static_cast<GameplayTeam>(flag_data.getTeam());
+  color = GColor::from_uint32(flag_data.getColor());
+
+  flag_holder = game.get_entity_by_net_id(flag_data.getHolderNetId());
+}
+
+void FlagEntity::build_sync_message(
+    Game &game, net::SyncEntityNetMessage::Builder &sync_message) {
+  PhysEntity::build_sync_message(game, sync_message);
+
+  auto flag_data = sync_message.getExtraData().initFlagData();
+  flag_data.setTeam(static_cast<uint32_t>(team));
+  flag_data.setColor(color.to_uint32());
+  flag_data.setHolderNetId(
+      flag_holder.valid(game) ? flag_holder.get(game).net_id : 0);
 }

@@ -51,7 +51,7 @@ public:
 
   auto valid_entities() const {
     return entities | std::views::filter([](const auto &e) {
-             return e != nullptr && e->id != 0;
+             return e != nullptr && e->id != 0 && !e->marked_for_deletion;
            });
   }
 

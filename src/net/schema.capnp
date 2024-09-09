@@ -22,6 +22,8 @@ enum EntityType {
     unknown @0;
     character @1;
     flag @2;
+    teamBase @3;
+    gameplayManager @4;
 }
 
 struct SyncEntityNetMessage {
@@ -35,12 +37,19 @@ struct SyncEntityNetMessage {
     extraData :union {
         characterData @6 :SyncCharacterEntityData;
         flagData @7 :SyncFlagEntityData;
+        teamBaseData @8 :SyncTeamBaseEntityData;
     }
 }
 
 struct SyncFlagEntityData {
     holderNetId @0 :UInt32;
     color @1 :UInt32;
+    team @2 :UInt32;
+}
+
+struct SyncTeamBaseEntityData {
+    color @0 :UInt32;
+    team @1 :UInt32;
 }
 
 struct SyncCharacterEntityData {

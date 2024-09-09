@@ -91,7 +91,8 @@ public:
    * @brief Add data to the SyncEntityNetMessage.
    */
   virtual void
-  build_sync_message(net::SyncEntityNetMessage::Builder &sync_message);
+  build_sync_message(Game &game,
+                     net::SyncEntityNetMessage::Builder &sync_message);
 
   /**
    * @brief Update this entity from a SyncEntityNetMessage.
@@ -99,13 +100,15 @@ public:
    * @param sync_message The message to update from.
    */
   virtual void update_from_sync_message(
-      Game const &game, const net::SyncEntityNetMessage::Reader &sync_message);
+      Game &game, const net::SyncEntityNetMessage::Reader &sync_message);
 
   virtual bool
   handle_interaction(Game &game,
                      const net::InteractNetMessage::Reader interaction) {
     return false;
   }
+
+  virtual Vec2 get_flag_attachment_pos() { return position; }
 
   virtual net::EntityType get_net_type() { return net::EntityType::UNKNOWN; }
 

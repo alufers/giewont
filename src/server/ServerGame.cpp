@@ -118,7 +118,7 @@ void ServerGame::sync_entities_to_clients() {
 
       auto syncEntities = root.initSyncEntity();
 
-      entity->build_sync_message(syncEntities);
+      entity->build_sync_message(*this, syncEntities);
 
       for (auto &client : clients) {
         // Sync only to clients which have loaded the level
@@ -269,7 +269,7 @@ void ServerGame::handle_interact_message(
   for (auto &entity : this->valid_entities()) {
     if (entity->get_ref() == interactor)
       continue;
-    
+
     allEntities.push_back(entity->get_ref());
   }
 

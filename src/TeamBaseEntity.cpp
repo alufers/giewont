@@ -11,7 +11,8 @@
 using namespace giewont;
 
 GW_DATABINDER_DEFINE(TeamBaseEntity, GW_DATABINDER_FIELD(GColor, color),
-                     GW_DATABINDER_FIELD(float, activation_level));
+                     GW_DATABINDER_FIELD(float, activation_level),
+                     GW_DATABINDER_FIELD(GameplayTeam, team));
 
 TeamBaseEntity::TeamBaseEntity() : Entity() {}
 
@@ -73,26 +74,46 @@ void TeamBaseEntity::load_spritesheet_data(const Game &game) {
 void TeamBaseEntity::update(Game &game, float delta_time) {
 
   float smallest_dist_to_flag = 999999.0f;
+  FlagEntity *the_flag = nullptr;
   for (auto &entity : game.valid_entities()) {
     if (FlagEntity *flag = dynamic_cast<FlagEntity *>(entity.get())) {
+      if (flag->team == team)
+        continue; // Ignore our own flags
       float dist = flag->position.distance(position);
       if (dist < smallest_dist_to_flag) {
         smallest_dist_to_flag = dist;
+        the_flag = flag;
       }
     }
   }
 
+  if (activation_level > 1.0 && the_flag != nullptr) {
+    the_flag->flag_holder = get_ref();
+    the_flag->velocity = Vec2(0, 0);
+    captured_flag = the_flag->get_ref();
+  }
+
   float activation_dist = 70.0f * 2.0f;
 
-  if (smallest_dist_to_flag < activation_dist) {
+  if (activation_level > 0.99f) {
+    activation_level += delta_time * 0.2f;
+  } else if (smallest_dist_to_flag < activation_dist) {
     float activation_from_dist = smallest_dist_to_flag / activation_dist;
-    if (activation_level < activation_from_dist) {
+    if (activation_level < activation_from_dist || activation_level > 0.5f) {
       activation_level += delta_time * 0.2f;
     }
+
   } else {
     activation_level -= delta_time * 0.2f;
     if (activation_level < 0.0f) {
       activation_level = 0.0f;
+    }
+  }
+  if (activation_level > 2.0f) {
+    activation_level = 0.0f;
+    if (captured_flag.valid(game)) {
+      // Destory the flag
+      captured_flag.get(game).destroy();
     }
   }
 }
@@ -119,11 +140,48 @@ void TeamBaseEntity::draw(const Game &game) {
 
   activation_color.a = 0.4;
 
-  DrawCircleV(position.to_raylib(), activation_level * 210.0f,
+  float activation_level_clamped = activation_level;
+  if (activation_level_clamped > 1.0f) {
+    activation_level_clamped = 1.0f;
+  }
+
+  DrawCircleV((position + Vec2(base_aabb.width() / 2, 0)).to_raylib(),
+              activation_level_clamped * 210.0f,
               activation_color.to_raylib_color());
 
   DrawTexturePro(*tex, src_rect_orb, dest_rect, {0, 0}, 0.0f,
                  color.to_raylib_color());
   DrawTexturePro(*tex, src_rect_stand, dest_rect, {0, 0}, 0.0f, WHITE);
 #endif
+}
+
+void TeamBaseEntity::update_from_sync_message(
+    Game &game, const net::SyncEntityNetMessage::Reader &sync_message) {
+  Entity::update_from_sync_message(game, sync_message);
+
+  auto team_base_data = sync_message.getExtraData().getTeamBaseData();
+  team = static_cast<GameplayTeam>(team_base_data.getTeam());
+  color = GColor::from_uint32(team_base_data.getColor());
+}
+
+void TeamBaseEntity::build_sync_message(
+    Game &game, net::SyncEntityNetMessage::Builder &sync_message) {
+  Entity::build_sync_message(game, sync_message);
+
+  auto team_base_data = sync_message.getExtraData().initTeamBaseData();
+  team_base_data.setTeam(static_cast<uint32_t>(team));
+  team_base_data.setColor(color.to_uint32());
+}
+
+Vec2 TeamBaseEntity::get_flag_spawn_pos() {
+  return position + Vec2(base_aabb.width() / 2.0, -190.0f);
+}
+
+Vec2 TeamBaseEntity::get_flag_attachment_pos() {
+  float activation_level_over_2 = activation_level - 1.0f;
+  if (activation_level_over_2 < 0.0f) {
+    activation_level_over_2 = 0.0f;
+  }
+  return position + Vec2(base_aabb.width() / 2.0,
+                         -140.0f - activation_level_over_2 * 140.f);
 }

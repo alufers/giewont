@@ -53,8 +53,8 @@ void CharacterEntity::load_assets(const Game &game) {
 }
 
 void CharacterEntity::build_sync_message(
-    net::SyncEntityNetMessage::Builder &sync_message) {
-  PhysEntity::build_sync_message(sync_message);
+    Game &game, net::SyncEntityNetMessage::Builder &sync_message) {
+  PhysEntity::build_sync_message(game, sync_message);
   auto characterData = sync_message.initExtraData().initCharacterData();
 
   characterData.setAnimationState(static_cast<uint32_t>(anim_state));
@@ -62,7 +62,7 @@ void CharacterEntity::build_sync_message(
 }
 
 void CharacterEntity::update_from_sync_message(
-    Game const &game, const net::SyncEntityNetMessage::Reader &sync_message) {
+    Game &game, const net::SyncEntityNetMessage::Reader &sync_message) {
   PhysEntity::update_from_sync_message(game, sync_message);
   auto characterData = sync_message.getExtraData().getCharacterData();
 
@@ -280,12 +280,7 @@ void DumbAICharacterController::update(Game &game, CharacterEntity &character,
              (character.get_aabb().max.y + character.get_aabb().min.y) / 2.0f +
                  1.0f);
 
-    for (auto &entity : game.entities) {
-      if (entity->id == character.id || entity == nullptr ||
-          entity->marked_for_deletion) {
-        continue;
-      }
-
+    for (auto &entity : game.valid_entities()) {
       if (TilemapEntity *tilemap =
               dynamic_cast<TilemapEntity *>(entity.get())) {
         Vec2 pos_to_check = feet_pos;

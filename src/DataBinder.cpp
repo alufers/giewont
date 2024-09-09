@@ -1,5 +1,6 @@
 #include "DataBinder.h"
 #include "Color.h"
+#include "GameplayManager.h"
 #include "Vec2.h"
 #include <stdexcept>
 #ifdef GIEWONT_HAS_GRAPHICS
@@ -22,6 +23,8 @@ DataBinderField::DataBinderField(std::string typeName, std::string name,
     type = DataBinderType::VEC2;
   } else if (typeName == "GColor") {
     type = DataBinderType::COLOR;
+  } else if (typeName == "GameplayTeam") {
+    type = DataBinderType::GAMEPLAY_TEAM;
   } else {
     throw std::runtime_error("Unknown type name: " + typeName);
   }
@@ -66,7 +69,19 @@ void DataBinderBase::draw_inspector_ui_impl(void *instance) {
       c->editor_ui(field.name.c_str());
       break;
     }
+    case DataBinderType::GAMEPLAY_TEAM: {
+      GameplayTeam *team = (GameplayTeam *)((char *)instance + field.offset);
+
+      const char *items[] = {"UNKNOWN_TEAM", "RED_TEAM", "BLUE_TEAM"};
+      int current_item = (int)*team;
+      ImGui::Combo(field.name.c_str(), &current_item, items,
+                   IM_ARRAYSIZE(items));
+      *team = (GameplayTeam)current_item;
+
+      break;
+    }
     }
   }
 #endif
 }
+  

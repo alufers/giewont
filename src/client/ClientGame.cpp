@@ -217,9 +217,11 @@ void ClientGame::handle_incoming_message(
   }
 }
 
-void ClientGame::send_reliable_to_peer(uint32_t peer_id, ::capnp::MallocMessageBuilder &message_builder) {
+void ClientGame::send_reliable_to_peer(
+    uint32_t peer_id, ::capnp::MallocMessageBuilder &message_builder) {
   if (peer_id != 0) {
-    throw std::runtime_error("ClientGame::send_reliable_to_peer: peer_id must be 0"); 
+    throw std::runtime_error(
+        "ClientGame::send_reliable_to_peer: peer_id must be 0");
   }
   auto encoded_array = capnp::messageToFlatArray(message_builder);
   auto charArray = encoded_array.asChars();
@@ -238,7 +240,7 @@ void ClientGame::sync_my_entities_to_server() {
 
       auto syncEntities = root.initSyncEntity();
 
-      entity->build_sync_message(syncEntities);
+      entity->build_sync_message(*this, syncEntities);
 
       send_reliable_to_peer(0, message);
     }

@@ -4,6 +4,7 @@
 #include "PhysEntity.h"
 
 #include "DataBinder.h"
+#include "GameplayManager.h"
 #include "math/Color.h"
 #include <nlohmann/json.hpp>
 #include <unordered_map>
@@ -31,12 +32,29 @@ public:
   void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
 
+  void update_from_sync_message(
+      Game &game,
+      const net::SyncEntityNetMessage::Reader &sync_message) override;
+
+  void
+  build_sync_message(Game &game,
+                     net::SyncEntityNetMessage::Builder &sync_message) override;
+
   int32_t get_z_index() override { return 500; }
   AABB &get_aabb() override;
 
-  GColor color = GColor(1.0f, 0.0f, 0.0f, 1.0f);
 
+  // Synced state
+  GColor color = GColor(1.0f, 0.0f, 0.0f, 1.0f);
+  GameplayTeam team = GameplayTeam::UNKNOWN_TEAM;
   EntityRef flag_holder;
+
+  // Local state
+  bool needs_flip = false;
+  float anim_frame_timer = 0.0f;
+  int anim_frame = 0;
+  bool needs_deform_up = false;
+  bool needs_deform_down = false;
 
   bool handle_interaction(
       Game &game, const net::InteractNetMessage::Reader interaction) override;

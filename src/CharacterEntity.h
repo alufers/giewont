@@ -69,9 +69,9 @@ public:
 
   // Netcode
   void
-  build_sync_message(net::SyncEntityNetMessage::Builder &sync_message) override;
+  build_sync_message(Game &game, net::SyncEntityNetMessage::Builder &sync_message) override;
   void update_from_sync_message(
-      Game const &game,
+      Game &game,
       const net::SyncEntityNetMessage::Reader &sync_message) override;
 
 private:

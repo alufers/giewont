@@ -12,7 +12,7 @@ const char *Entity::get_type_name() const { return "Entity"; }
 void Entity::destroy() { marked_for_deletion = true; }
 
 void Entity::build_sync_message(
-    net::SyncEntityNetMessage::Builder &sync_message) {
+    Game &game, net::SyncEntityNetMessage::Builder &sync_message) {
   sync_message.setNetId(net_id);
   sync_message.setEntityType(get_net_type());
   sync_message.setNetOwnerId(net_owner_peer_id);
@@ -21,7 +21,7 @@ void Entity::build_sync_message(
 }
 
 void Entity::update_from_sync_message(
-    Game const &game, const net::SyncEntityNetMessage::Reader &sync_message) {
+    Game &game, const net::SyncEntityNetMessage::Reader &sync_message) {
 
   if (sync_message.getNetId() != net_id) {
     throw std::runtime_error("Entity ID mismatch");

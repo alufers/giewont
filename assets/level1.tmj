@@ -53,8 +53,8 @@
                  "type":"spawn_entity",
                  "visible":true,
                  "width":0,
-                 "x":172.975592029556,
-                 "y":875.052994973048
+                 "x":190.975592029556,
+                 "y":771.052994973048
                 }, 
                 {
                  "height":0,
@@ -158,42 +158,6 @@
                 }, 
                 {
                  "height":0,
-                 "id":16,
-                 "name":"",
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"entity_type",
-                         "type":"string",
-                         "value":"flag"
-                        }],
-                 "rotation":0,
-                 "type":"spawn_entity",
-                 "visible":true,
-                 "width":0,
-                 "x":840,
-                 "y":832
-                }, 
-                {
-                 "height":0,
-                 "id":17,
-                 "name":"",
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"entity_type",
-                         "type":"string",
-                         "value":"flag"
-                        }],
-                 "rotation":0,
-                 "type":"spawn_entity",
-                 "visible":true,
-                 "width":0,
-                 "x":550.666666666667,
-                 "y":838.666666666667
-                }, 
-                {
-                 "height":0,
                  "id":18,
                  "name":"",
                  "point":true,
@@ -201,8 +165,32 @@
                  "type":"team_base",
                  "visible":true,
                  "width":0,
-                 "x":210,
-                 "y":923.333333333333
+                 "x":1890,
+                 "y":1067.33333333333
+                }, 
+                {
+                 "height":0,
+                 "id":19,
+                 "name":"",
+                 "point":true,
+                 "rotation":0,
+                 "type":"team_base",
+                 "visible":true,
+                 "width":0,
+                 "x":214,
+                 "y":934
+                }, 
+                {
+                 "height":0,
+                 "id":20,
+                 "name":"",
+                 "point":true,
+                 "rotation":0,
+                 "type":"gameplay_manager",
+                 "visible":true,
+                 "width":0,
+                 "x":-14,
+                 "y":-2
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -211,7 +199,7 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":19,
+ "nextobjectid":21,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.0",

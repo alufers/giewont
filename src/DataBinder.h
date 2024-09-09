@@ -14,7 +14,8 @@ enum class DataBinderType {
   FLOAT,
   INT,
   VEC2,
-  COLOR
+  COLOR,
+  GAMEPLAY_TEAM,
 };
 
 class DataBinderBase;

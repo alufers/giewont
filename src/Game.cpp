@@ -2,12 +2,14 @@
 #include "CameraEntity.h"
 #include "Entity.h"
 #include "FlagEntity.h"
+#include "GameplayManager.h"
 #include "Log.h"
 #include "NullEntity.h"
 #include <exception>
 
 #include "CharacterEntity.h"
 #include "LevelLoader.h"
+#include "TeamBaseEntity.h"
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
@@ -79,8 +81,15 @@ void Game::apply_sync_entity(const net::SyncEntityNetMessage::Reader &message) {
       case net::EntityType::FLAG:
         entToCreate = std::make_unique<FlagEntity>();
         break;
+      case net::EntityType::TEAM_BASE:
+        entToCreate = std::make_unique<TeamBaseEntity>();
+        break;
+      case net::EntityType::GAMEPLAY_MANAGER:
+        entToCreate = std::make_unique<GameplayManager>();
+        break;
       default:
-        LOG_WARN() << "apply_sync_entity: Unknown entity type" << std::endl;
+        LOG_WARN() << "apply_sync_entity: Unknown entity type "
+                   << (int)message.getEntityType() << ", ignoring" << std::endl;
         return;
       }
 
@@ -124,6 +133,9 @@ void Game::destroy_marked_entities() {
 }
 
 EntityRef Game::get_entity_by_net_id(uint32_t net_id) {
+  if (net_id == 0) {
+    return EntityRef();
+  }
   for (auto &entity : entities) {
     if (entity != nullptr && entity->net_id == net_id) {
       return entity->get_ref();
