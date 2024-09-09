@@ -49,6 +49,8 @@ void CharacterEntity::load_assets(const Game &game) {
   _texture_id = game.rm->load_texture("entities/p1_spritesheet.png");
   _spritesheet_data_id = game.rm->load_json("entities/p1_spritesheet.json");
 
+  _ui_bar_texture_id = game.rm->load_texture("ui_bar.png");
+
   load_spritesheet_data(game);
 }
 
@@ -146,6 +148,7 @@ void CharacterEntity::draw(const Game &game) {
   Rectangle dest_rect = {this->position.x, this->position.y,
                          static_cast<float>(frame.spritesheet_w),
                          static_cast<float>(frame.spritesheet_h)};
+
   bool flip = frame.flip;
   if (this->direction == CharacterDirection::LEFT) {
     flip = !flip;
@@ -154,6 +157,45 @@ void CharacterEntity::draw(const Game &game) {
     src_rect.width *= -1;
   }
   DrawTexturePro(*tex, src_rect, dest_rect, {0, 0}, 0.0f, WHITE);
+#endif
+}
+
+void CharacterEntity::draw_raylib_ui(const Game &game) {
+#ifdef GIEWONT_HAS_GRAPHICS
+  if (this->net_owner_peer_id != game.my_peer_id) {
+    return;
+  }
+
+  auto ui_bar_tex = game.rm->get_texture(_ui_bar_texture_id);
+
+  Rectangle full_src_rect = {0, 0, (float)ui_bar_tex->width,
+                             (float)ui_bar_tex->height};
+
+  Rectangle health_src_rect = {
+      0, 0, (float)ui_bar_tex->width * (float)health / (float)max_health,
+      (float)ui_bar_tex->height};
+
+  Rectangle dest_rect = {
+      (float)(GetScreenWidth() - ui_bar_tex->width - 30),
+      (float)(GetScreenHeight() - (float)ui_bar_tex->height - 30.0),
+      (float)ui_bar_tex->width, (float)ui_bar_tex->height};
+
+  Rectangle health_dest_rect = dest_rect;
+  health_dest_rect.width = health_src_rect.width;
+
+  Color bg_color = {255, 255, 255, 128};
+
+  DrawTexturePro(*ui_bar_tex, full_src_rect, dest_rect, {0, 0}, 0.0f, bg_color);
+
+  DrawTexturePro(*ui_bar_tex, health_src_rect, health_dest_rect, {0, 0}, 0.0f,
+                 RED);
+
+  char health_text[256];
+  snprintf(health_text, 256, "Health: %d/%d", health, max_health);
+
+  DrawText(health_text, dest_rect.x + 20,
+           dest_rect.y + dest_rect.height / 2 - 10, 20, WHITE);
+
 #endif
 }
 

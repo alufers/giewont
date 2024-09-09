@@ -52,6 +52,9 @@ public:
   float anim_frame_duration = 0.03f;
   float anim_frame_timer = 0.0f;
 
+  int health = 50;
+  int max_health = 100;
+
   CharacterEntity();
 
   const char *get_type_name() const override { return "CharacterEntity"; }
@@ -69,7 +72,8 @@ public:
 
   // Netcode
   void
-  build_sync_message(Game &game, net::SyncEntityNetMessage::Builder &sync_message) override;
+  build_sync_message(Game &game,
+                     net::SyncEntityNetMessage::Builder &sync_message) override;
   void update_from_sync_message(
       Game &game,
       const net::SyncEntityNetMessage::Reader &sync_message) override;
@@ -77,9 +81,13 @@ public:
 private:
   res_id _texture_id;
   res_id _spritesheet_data_id;
+
+  res_id _ui_bar_texture_id;
   std::unordered_map<CharacterAnimState, std::vector<CharacterAnimFrame>>
       anim_frames;
   AABB character_aabb;
+
+  void draw_raylib_ui(const Game &game) override;
 
   void load_spritesheet_data(const Game &game);
 };
