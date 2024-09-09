@@ -1,5 +1,6 @@
 #ifndef CLIENTGAME_H_
 #define CLIENTGAME_H_
+#define WIN32_LEAN_AND_MEAN
 
 #include "Entity.h"
 #include "Game.h"
