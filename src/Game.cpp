@@ -13,7 +13,7 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
-
+#include <cstdint>
 using namespace giewont;
 
 Game::Game() { this->entities.push_back(std::make_unique<NullEntity>()); }
@@ -31,7 +31,7 @@ void Game::update(float delta_time) {
 }
 
 EntityRef Game::push_entity(std::unique_ptr<Entity> entity) {
-  ssize_t idx = -1;
+  int64_t idx = -1;
   for (size_t i = 0; i < entities.size(); i++) {
     if (entities[i] == nullptr) {
       idx = i;
