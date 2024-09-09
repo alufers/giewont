@@ -35,7 +35,7 @@ void ClientGame::draw() {
 
   if (state != ClientGameState::CONNECTED) {
     std::string message = "Connecting to server...";
-    if (state == ClientGameState::ERROR) {
+    if (state == ClientGameState::GAME_STATE_ERROR) {
       message = "Error: " + error_message;
     }
 
@@ -43,7 +43,7 @@ void ClientGame::draw() {
     int text_width = MeasureText(message.c_str(), text_size);
     DrawText(message.c_str(), GetScreenWidth() / 2 - text_width / 2,
              GetScreenHeight() / 2 - text_size / 2, text_size,
-             state == ClientGameState::ERROR ? RED : BLACK);
+             state == ClientGameState::GAME_STATE_ERROR ? RED : BLACK);
     return;
   }
   auto &camera = camera_ref.get_as<CameraEntity>(*this);
@@ -109,11 +109,11 @@ void ClientGame::update(float delta_time) {
                              this->server_port) < 0) {
       LOG_ERROR() << "Failed to connect to server" << std::endl;
       error_message = "Failed to connect to server";
-      state = ClientGameState::ERROR;
+      state = ClientGameState::GAME_STATE_ERROR;
     }
 
     return;
-  } else if (state == ClientGameState::ERROR) {
+  } else if (state == ClientGameState::GAME_STATE_ERROR) {
     return;
   }
 

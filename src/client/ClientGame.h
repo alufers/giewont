@@ -20,7 +20,7 @@ enum class ClientGameState {
   PRE_CONNECTING = 1, // To render one frame before connecting
   CONNECTING = 2,
   CONNECTED = 3,
-  ERROR = 4
+  GAME_STATE_ERROR = 4
 };
 
 class DebugGUI;
