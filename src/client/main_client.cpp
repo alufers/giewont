@@ -2,7 +2,6 @@
 
 #define WIN32_LEAN_AND_MEAN
 
-#define CloseWindow
 #include "raylib.h"
 
 
