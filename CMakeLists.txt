@@ -69,6 +69,7 @@ set(COMMON_SOURCES
     src/DataBinder.cpp
     src/TeamBaseEntity.cpp
     src/GameplayManager.cpp
+    src/Util.cpp
 )
 set(COMMON_INCLUDES
     "${CMAKE_CURRENT_LIST_DIR}/src/"  

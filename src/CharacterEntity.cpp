@@ -6,6 +6,7 @@
 #include "Log.h"
 #include "PhysEntity.h"
 #include "TilemapEntity.h"
+#include "Util.h"
 #include "schema.capnp.h"
 #include <capnp/message.h>
 #include <cmath>
@@ -88,11 +89,11 @@ void CharacterEntity::load_spritesheet_data(const Game &game) {
     }
 
     CharacterAnimState state = CharacterAnimState::STAND;
-    if (strcasestr(key.c_str(), "stand")) {
+    if (string_contains_case_insensitive(key, "stand")) {
       state = CharacterAnimState::STAND;
-    } else if (strcasestr(key.c_str(), "walk")) {
+    } else if (string_contains_case_insensitive(key, "walk")) {
       state = CharacterAnimState::WALK;
-    } else if (strcasestr(key.c_str(), "jump")) {
+    } else if (string_contains_case_insensitive(key, "jump")) {
       state = CharacterAnimState::JUMP;
     } else {
       continue;

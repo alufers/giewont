@@ -5,6 +5,7 @@
 #include "imgui.h"
 #include <raylib.h>
 #endif
+#include "Util.h"
 
 using namespace giewont;
 
@@ -41,13 +42,13 @@ void FlagEntity::load_spritesheet_data(const Game &game) {
     }
 
     FlagEntitySpriteType state = FlagEntitySpriteType::WAVING;
-    if (strcasestr(key.c_str(), "pole")) {
+    if (string_contains_case_insensitive(key, "pole")) {
       state = FlagEntitySpriteType::POLE;
-    } else if (strcasestr(key.c_str(), "waving")) {
+    } else if (string_contains_case_insensitive(key, "waving")) {
       state = FlagEntitySpriteType::WAVING;
-    } else if (strcasestr(key.c_str(), "deform_up")) {
+    } else if (string_contains_case_insensitive(key, "deform_up")) {
       state = FlagEntitySpriteType::DEFORM_UP;
-    } else if (strcasestr(key.c_str(), "deform_down")) {
+    } else if (string_contains_case_insensitive(key, "deform_down")) {
       state = FlagEntitySpriteType::DEFORM_DOWN;
     } else {
       continue;

@@ -1,4 +1,5 @@
 #include "DebugGUI.h"
+#include "Util.h"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "raylib.h"
@@ -32,8 +33,8 @@ void DebugGUI::draw_ui(Game &game) {
         auto &ent = game.entities[idx];
         if (ent != nullptr) {
           if (!inspector_filter.empty() &&
-              strcasestr(ent->get_type_name(), inspector_filter.c_str()) ==
-                  nullptr) {
+              !string_contains_case_insensitive(
+                  ent->get_type_name(), inspector_filter.c_str())) {
             continue;
           }
           ImGui::TableNextRow();
