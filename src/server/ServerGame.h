@@ -28,6 +28,16 @@ public:
 
   std::vector<ClientPeer> clients;
 
+  void send_reliable_to_peer(
+      uint32_t peer_id,
+      ::capnp::MallocMessageBuilder &message_builder) override;
+
+  void
+  broadcast_reliable(::capnp::MallocMessageBuilder &message_builder) override;
+
+protected:
+  void destroy_marked_entities() override;
+
 private:
   std::string tmj_path;
   uint32_t net_id_counter = 1;
@@ -37,9 +47,13 @@ private:
 
   void handle_incoming_nbnet_message(NBN_MessageInfo msg_info);
 
-  void handle_incoming_message(ClientPeer &peer, const net::BaseNetMessage::Reader &message);
+  void handle_incoming_message(ClientPeer &peer,
+                               const net::BaseNetMessage::Reader &message);
 
   void spawn_player_character(ClientPeer &peer);
+
+  void handle_interact_message(ClientPeer &peer,
+                               const net::InteractNetMessage::Reader &message);
 };
 
 class ClientPeer {

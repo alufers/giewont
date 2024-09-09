@@ -7,8 +7,10 @@
 #include "net/net_common.h"
 #include "net_common.h"
 #include "schema.capnp.h"
+#include <algorithm>
 #include <exception>
 #include <memory>
+#include <vector>
 
 extern "C" {
 #include "nbnet.h"
@@ -106,7 +108,8 @@ void ServerGame::sync_entities_to_clients() {
         !entity->is_static) {
       if (entity->net_id == 0) {
         LOG_ERROR() << "Trying to sync entity with net_id 0 ("
-                    << entity->get_type_name() << ", id: " << entity->id << ")" << std::endl;
+                    << entity->get_type_name() << ", id: " << entity->id << ")"
+                    << std::endl;
         throw std::runtime_error("Trying to sync entity with net_id 0");
       }
       ::capnp::MallocMessageBuilder message;
@@ -115,7 +118,7 @@ void ServerGame::sync_entities_to_clients() {
 
       auto syncEntities = root.initSyncEntity();
 
-      entity->build_sync_message(syncEntities);
+      entity->build_sync_message(*this, syncEntities);
 
       for (auto &client : clients) {
         // Sync only to clients which have loaded the level
@@ -185,6 +188,10 @@ void ServerGame::handle_incoming_message(
   case net::BaseNetMessage::Which::SYNC_ENTITY: {
     apply_sync_entity(message.getSyncEntity());
   } break;
+
+  case net::BaseNetMessage::Which::INTERACT: {
+    handle_interact_message(peer, message.getInteract());
+  } break;
   default:
     LOG_WARN() << "Unknown message type received from the client" << std::endl;
   }
@@ -223,6 +230,95 @@ void ServerGame::spawn_player_character(ClientPeer &peer) {
 
   peer.camera_target_net_id = ref.get(*this).net_id;
   peer.set_camera_target_countdown = 30;
+}
+
+void ServerGame::send_reliable_to_peer(
+    uint32_t peer_id, capnp::MallocMessageBuilder &message_builder) {
+  for (auto &client : clients) {
+    if (client.peer_id == peer_id) {
+      client.send_reliable(message_builder);
+      return;
+    }
+  }
+  LOG_WARN() << "send_reliable_to_peer: peer_id " << peer_id
+             << " not found in clients" << std::endl;
+}
+
+void ServerGame::handle_interact_message(
+    ClientPeer &peer, const net::InteractNetMessage::Reader &message) {
+  EntityRef interactor =
+      this->get_entity_by_net_id(message.getInteractorNetId());
+
+  if (!interactor.valid(*this)) {
+    LOG_WARN() << "handle_interact_message: Interactor entity not found"
+               << std::endl;
+    return;
+  }
+  auto &interactor_ent = interactor.get(*this);
+
+  if (interactor_ent.net_owner_peer_id != peer.peer_id) {
+    LOG_WARN() << "handle_interact_message: Interactor entity does not belong "
+                  "to the peer"
+               << std::endl;
+    return;
+  }
+
+  Vec2 interactor_pos = interactor_ent.position;
+
+  std::vector<EntityRef> allEntities;
+  for (auto &entity : this->valid_entities()) {
+    if (entity->get_ref() == interactor)
+      continue;
+
+    allEntities.push_back(entity->get_ref());
+  }
+
+  std::sort(allEntities.begin(), allEntities.end(),
+            [&](EntityRef a, EntityRef b) {
+              return a.get(*this).position.distance(interactor_pos) <
+                     b.get(*this).position.distance(interactor_pos);
+            });
+
+  for (auto &entity_ref : allEntities) {
+    auto &entity = entity_ref.get(*this);
+    if (entity.handle_interaction(*this, message))
+      break;
+  }
+}
+
+void ServerGame::destroy_marked_entities() {
+
+  for (auto &entity : entities) {
+    if (entity == nullptr)
+      continue;
+    if (entity->marked_for_deletion) {
+      LOG_INFO()
+          << "Notyfiing about the destruction of entity entity  with net_id="
+          << entity->net_id << std::endl;
+
+      ::capnp::MallocMessageBuilder message;
+      auto root = message.initRoot<net::BaseNetMessage>();
+      auto destroyEntity = root.initDestroyEntity();
+      destroyEntity.setNetId(entity->net_id);
+
+      for (auto &client : clients) {
+        if (client.level_loaded) {
+          client.send_reliable(message);
+        }
+      }
+    }
+  }
+
+  Game::destroy_marked_entities();
+}
+
+void ServerGame::broadcast_reliable(
+    capnp::MallocMessageBuilder &message_builder) {
+  for (auto &client : clients) {
+    if (client.level_loaded) {
+      client.send_reliable(message_builder);
+    }
+  }
 }
 
 void ClientPeer::send_reliable(capnp::MallocMessageBuilder &message_builder) {

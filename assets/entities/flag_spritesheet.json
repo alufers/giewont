@@ -1,0 +1,8 @@
+{
+  "flag_pole": [0, 0, 70, 70],
+  "flag_waving01": [0, 70, 70, 70],
+  "flag_waving02": [0, 140, 70, 70],
+  "flag_limp": [0, 210, 70, 70],
+  "flag_deform_down": [70, 70, 70, 70],
+  "flag_deform_up": [70, 140, 70, 70]
+}

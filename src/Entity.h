@@ -65,6 +65,8 @@ public:
    */
   virtual void draw(const Game &game) = 0;
 
+  virtual void draw_raylib_ui(const Game &game) {}
+
   /**
    * @brief Function to draw debug information over all other entities.
    *
@@ -75,7 +77,7 @@ public:
   /**
    * @brief Get the z index of the entity. It will determine the order in which
    * entities are drawn.
-   * 
+   *
    * @return int32_t The z index.
    */
   virtual int32_t get_z_index() { return 0; }
@@ -91,7 +93,8 @@ public:
    * @brief Add data to the SyncEntityNetMessage.
    */
   virtual void
-  build_sync_message(net::SyncEntityNetMessage::Builder &sync_message);
+  build_sync_message(Game &game,
+                     net::SyncEntityNetMessage::Builder &sync_message);
 
   /**
    * @brief Update this entity from a SyncEntityNetMessage.
@@ -99,7 +102,15 @@ public:
    * @param sync_message The message to update from.
    */
   virtual void update_from_sync_message(
-      Game const &game, const net::SyncEntityNetMessage::Reader &sync_message);
+      Game &game, const net::SyncEntityNetMessage::Reader &sync_message);
+
+  virtual bool
+  handle_interaction(Game &game,
+                     const net::InteractNetMessage::Reader interaction) {
+    return false;
+  }
+
+  virtual Vec2 get_flag_attachment_pos() { return position; }
 
   virtual net::EntityType get_net_type() { return net::EntityType::UNKNOWN; }
 
@@ -119,13 +130,14 @@ public:
   uint32_t generation = 0;
   bool valid(Game const &game) const;
   Entity &get(Game &game) const;
+  Entity *get_ptr(Game &game) const;
 
   template <typename T> T &get_as(Game &game) const {
     return dynamic_cast<T &>(get(game));
   }
 
   template <typename T> bool valid_as(Game &game) const {
-    return valid(game) && dynamic_cast<T *>(get(game)) != nullptr;
+    return valid(game) && dynamic_cast<T *>(get_ptr(game)) != nullptr;
   }
 
   bool operator==(const EntityRef &other) const {

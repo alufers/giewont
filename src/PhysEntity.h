@@ -20,6 +20,11 @@ public:
 
   Vec2 velocity = {0, 0};
 
+  /**
+   * @brief If set to false the entity will nbot be affected by physics.
+   */
+  bool is_kinematic = false;
+
   virtual AABB &get_aabb();
   void load_assets(const Game &game) override;
   void update(Game &game, float delta_time) override;
@@ -27,11 +32,11 @@ public:
   void draw_debug(const Game &game) override;
 
   void update_from_sync_message(
-      Game const &game,
+      Game &game,
       const net::SyncEntityNetMessage::Reader &sync_message) override;
 
   void
-  build_sync_message(net::SyncEntityNetMessage::Builder &sync_message) override;
+  build_sync_message(Game &game, net::SyncEntityNetMessage::Builder &sync_message) override;
 
 private:
   AABB _default_aabb = AABB(Vec2(0, 0), Vec2(70, 70));

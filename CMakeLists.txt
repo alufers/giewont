@@ -65,6 +65,10 @@ set(COMMON_SOURCES
     src/TilemapEntity.cpp
     src/ParticleSystemEntity.cpp
     src/BackdropEntity.cpp
+    src/FlagEntity.cpp
+    src/DataBinder.cpp
+    src/TeamBaseEntity.cpp
+    src/GameplayManager.cpp
 )
 set(COMMON_INCLUDES
     "${CMAKE_CURRENT_LIST_DIR}/src/"  
@@ -86,6 +90,7 @@ set(CLIENT_EXE_NAME "giewont_client")
 set(CLIENT_SOURCES 
     src/client/main_client.cpp
     src/client/ClientGame.cpp
+    src/client/DebugGUI.cpp
 )
 
 set (CLIENT_INCLUDES

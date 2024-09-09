@@ -57,9 +57,9 @@ private:
   std::map<std::string, res_id> json_paths;
   std::map<std::string, res_id> texture_paths;
   std::vector<std::shared_ptr<nlohmann::json>> jsons;
-  #ifdef GIEWONT_HAS_GRAPHICS
+#ifdef GIEWONT_HAS_GRAPHICS
   std::vector<std::shared_ptr<Texture2D>> textures;
-  #endif
+#endif
 };
 } // namespace giewont
 

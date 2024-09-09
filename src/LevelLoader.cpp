@@ -1,14 +1,16 @@
 #include "LevelLoader.h"
 #include "BackdropEntity.h"
+#include "FlagEntity.h"
 #include "Game.h"
+#include "GameplayManager.h"
 #include "Log.h"
 #include "ParticleSystemEntity.h"
 #include "SpawnEntity.h"
+#include "TeamBaseEntity.h"
 #include "TilemapEntity.h"
 #include <filesystem>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
-
 using namespace giewont;
 
 LevelLoader::LevelLoader(std::string tmj_path) : tmj_path(tmj_path) {}
@@ -45,6 +47,29 @@ void LevelLoader::load_level(Game &game) {
           backdrop->is_static = true;
           backdrop->load_assets(game);
           game.push_entity(std::move(backdrop));
+        } else if (object["type"] == "flag") {
+          auto flag = std::make_unique<FlagEntity>(object);
+          flag->is_static = true;
+          flag->load_assets(game);
+          game.push_entity(std::move(flag));
+
+        } else if (object["type"] == "team_base") {
+
+          // Only spawn team bases on the server, they will get synced.
+          if (game.is_server()) {
+            auto base = std::make_unique<TeamBaseEntity>(object);
+            base->load_assets(game);
+            game.push_entity(std::move(base));
+            LOG_DEBUG() << "Team base spawned" << std::endl;
+          }
+
+        } else if (object["type"] == "gameplay_manager") {
+          if (game.is_server()) {
+            auto gameplay_manager = std::make_unique<GameplayManager>();
+            gameplay_manager->load_assets(game);
+            game.push_entity(std::move(gameplay_manager));
+          }
+
         } else {
           LOG_ERROR() << "Unknown object type in level data: " << object["type"]
                       << std::endl;

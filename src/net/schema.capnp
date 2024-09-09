@@ -8,7 +8,10 @@ struct BaseNetMessage {
         loadLevel @1 :LoadLevelNetMessage; # server -> client
         levelLoaded @2 :Void; # client -> server
         syncEntity @3 :SyncEntityNetMessage;
-        setCameraFollowedEntity @4 :SetCameraFollowedEntityNetMessage;
+        setCameraFollowedEntity @4 :SetCameraFollowedEntityNetMessage; # server -> client
+        interact @5 :InteractNetMessage; # client -> server
+        destroyEntity @6 :DestroyEntityNetMessage; # server -> client
+        addCameraEffect @7 :AddCameraEffectNetMessage; # server -> client
     }
 }
 
@@ -20,6 +23,9 @@ struct LoadLevelNetMessage {
 enum EntityType {
     unknown @0;
     character @1;
+    flag @2;
+    teamBase @3;
+    gameplayManager @4;
 }
 
 struct SyncEntityNetMessage {
@@ -32,15 +38,33 @@ struct SyncEntityNetMessage {
 
     extraData :union {
         characterData @6 :SyncCharacterEntityData;
-
-        dummy @7 :Void;
+        flagData @7 :SyncFlagEntityData;
+        teamBaseData @8 :SyncTeamBaseEntityData;
+        gameplayManagerData @9 :GameplayManagerData;
     }
+}
+
+struct SyncFlagEntityData {
+    holderNetId @0 :UInt32;
+    color @1 :UInt32;
+    team @2 :UInt32;
+}
+
+struct SyncTeamBaseEntityData {
+    color @0 :UInt32;
+    team @1 :UInt32;
 }
 
 struct SyncCharacterEntityData {
     animationState @0 :UInt32;
     direction @1 :UInt32;
+}
 
+struct GameplayManagerData {
+    blueTeamScore @0 :UInt32;
+    redTeamScore @1 :UInt32;
+    message @2 :Text;
+    messageTime @3 :Float32;
 }
 
 struct NetVec2 {
@@ -58,9 +82,19 @@ enum CameraEffectType {
     vignette @2;
 }
 
-struct CameraEffect {
+struct AddCameraEffectNetMessage {
     type @0 :CameraEffectType;
     intensity @1 :Float32;
     duration @2 :Float32;
     falloffDuration @3 :Float32;
+    color @4 :UInt32;
+    speed @5 :Float32;
 }
+
+struct InteractNetMessage {
+   interactorNetId @0 :Int32;
+}
+
+struct DestroyEntityNetMessage {
+    netId @0 :UInt32;
+}   

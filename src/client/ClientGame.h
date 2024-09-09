@@ -5,6 +5,7 @@
 #include "Game.h"
 #include <capnp/message.h>
 #include <capnp/serialize.h>
+#include <memory>
 
 #include "raylib.h"
 #include "schema.capnp.h"
@@ -23,6 +24,8 @@ enum class ClientGameState {
   ERROR,
 };
 
+class DebugGUI;
+
 class ClientGame : public Game {
 public:
   ClientGame(std::string server_address, int server_port);
@@ -36,6 +39,17 @@ public:
 
   ClientGameState state = ClientGameState::INITIAL;
 
+  std::unique_ptr<DebugGUI> debug_gui;
+
+  void send_reliable_to_peer(
+      uint32_t peer_id,
+      ::capnp::MallocMessageBuilder &message_builder) override;
+
+  void
+  broadcast_reliable(::capnp::MallocMessageBuilder &message_builder) override;
+
+  ~ClientGame();
+
 private:
   std::string error_message;
   std::string server_address;
@@ -45,7 +59,6 @@ private:
 
   void handle_incoming_message(const net::BaseNetMessage::Reader &message);
   void sync_my_entities_to_server();
-  void send_reliable(::capnp::MallocMessageBuilder &message_builder);
 
   EntityRef inspector_selected_entity;
 

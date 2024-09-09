@@ -1,9 +1,13 @@
 #include "CharacterEntity.h"
 #include "AABB.h"
+
+#include "FlagEntity.h"
 #include "Game.h"
 #include "Log.h"
 #include "PhysEntity.h"
 #include "TilemapEntity.h"
+#include "schema.capnp.h"
+#include <capnp/message.h>
 #include <cmath>
 #include <cstring>
 #include <nlohmann/json.hpp>
@@ -44,23 +48,13 @@ void CharacterEntity::load_assets(const Game &game) {
 
   _texture_id = game.rm->load_texture("entities/p1_spritesheet.png");
   _spritesheet_data_id = game.rm->load_json("entities/p1_spritesheet.json");
-  // #ifdef GIEWONT_HAS_GRAPHICS
-  //   // TODO: remove this, can't load texture on the server
-  //   auto tex = game.rm->get_texture(_texture_id);
-  //   character_aabb =
-  //       AABB::from_min_and_size(Vec2(0, 0), Vec2(tex->width, tex->height));
-  // #else
-  //   character_aabb =
-  //       AABB::from_min_and_size(Vec2(0, 0), Vec2(70, 70)); // TODO handle
-  //       this
-  // #endif
 
   load_spritesheet_data(game);
 }
 
 void CharacterEntity::build_sync_message(
-    net::SyncEntityNetMessage::Builder &sync_message) {
-  PhysEntity::build_sync_message(sync_message);
+    Game &game, net::SyncEntityNetMessage::Builder &sync_message) {
+  PhysEntity::build_sync_message(game, sync_message);
   auto characterData = sync_message.initExtraData().initCharacterData();
 
   characterData.setAnimationState(static_cast<uint32_t>(anim_state));
@@ -68,7 +62,7 @@ void CharacterEntity::build_sync_message(
 }
 
 void CharacterEntity::update_from_sync_message(
-    Game const &game, const net::SyncEntityNetMessage::Reader &sync_message) {
+    Game &game, const net::SyncEntityNetMessage::Reader &sync_message) {
   PhysEntity::update_from_sync_message(game, sync_message);
   auto characterData = sync_message.getExtraData().getCharacterData();
 
@@ -246,6 +240,17 @@ void KeyboardCharacterController::update(Game &game, CharacterEntity &character,
     command |= CharacterMovementCommand::JUMP;
   }
 
+  if (IsKeyReleased(KEY_E)) {
+    if (!game.is_server()) {
+
+      capnp::MallocMessageBuilder message;
+      auto base_msg = message.initRoot<net::BaseNetMessage>();
+      auto interact = base_msg.initInteract();
+      interact.setInteractorNetId(character.net_id);
+      game.send_reliable_to_peer(0, message);
+    }
+  }
+
   character.perform_movement(game, delta_time, command);
 #endif
 }
@@ -253,6 +258,15 @@ void KeyboardCharacterController::update(Game &game, CharacterEntity &character,
 void DumbAICharacterController::update(Game &game, CharacterEntity &character,
                                        float delta_time) {
   CharacterMovementCommand command = CharacterMovementCommand::NONE;
+  time_since_last_jump += delta_time;
+  if (dir_change_time > 0.0f) {
+    dir_change_time -= delta_time;
+  } else if (dir_change_time > -1000.0f) {
+    dir_change_time = -10000.0f;
+    moving_right = !moving_right;
+    dwell_time = 1.5f;
+  }
+
   if (dwell_time > 0.0) {
     dwell_time -= delta_time;
   } else {
@@ -260,13 +274,13 @@ void DumbAICharacterController::update(Game &game, CharacterEntity &character,
         character.position +
         Vec2((character.get_aabb().min.x + character.get_aabb().max.x) / 2.0f,
              character.get_aabb().max.y + 1.0f);
+    Vec2 head_pos =
+        character.position +
+        Vec2((character.get_aabb().min.x + character.get_aabb().max.x) / 2.0f,
+             (character.get_aabb().max.y + character.get_aabb().min.y) / 2.0f +
+                 1.0f);
 
-    for (auto &entity : game.entities) {
-      if (entity->id == character.id || entity == nullptr ||
-          entity->marked_for_deletion) {
-        continue;
-      }
-
+    for (auto &entity : game.valid_entities()) {
       if (TilemapEntity *tilemap =
               dynamic_cast<TilemapEntity *>(entity.get())) {
         Vec2 pos_to_check = feet_pos;
@@ -275,11 +289,25 @@ void DumbAICharacterController::update(Game &game, CharacterEntity &character,
              tilemap->tile_size.x / 2.0f) *
             (moving_right ? 1.0f : -1.0f);
 
-        if (!tilemap->check_allow_jump(pos_to_check)) {
+        Vec2 head_pos_to_check = head_pos;
+        head_pos_to_check.x +=
+            ((character.get_aabb().min.x + character.get_aabb().max.x) / 2.0f +
+             tilemap->tile_size.x / 2.0f) *
+            (moving_right ? 1.0f : -1.0f);
+        if (!tilemap->check_allow_jump(pos_to_check) &&
+            dir_change_time <= 0.0f) {
 
           dwell_time = 1.0f;
           moving_right = !moving_right;
           break;
+        }
+
+        if (tilemap->check_allow_jump(head_pos_to_check) &&
+            dir_change_time <= 0.0f && time_since_last_jump > 7.0f) {
+          time_since_last_jump = 0.0f;
+          command |= CharacterMovementCommand::JUMP;
+          // moving_right = !moving_right;
+          dir_change_time = 2.0f;
         }
       }
     }
