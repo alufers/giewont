@@ -1,5 +1,6 @@
 #ifndef CLIENTGAME_H_
 #define CLIENTGAME_H_
+#define WIN32_LEAN_AND_MEAN
 
 #include "Entity.h"
 #include "Game.h"
@@ -7,7 +8,6 @@
 #include <capnp/serialize.h>
 #include <memory>
 
-#include "raylib.h"
 #include "schema.capnp.h"
 
 extern "C" {
@@ -17,11 +17,11 @@ extern "C" {
 namespace giewont {
 
 enum class ClientGameState {
-  INITIAL,
-  PRE_CONNECTING, // To render one frame before connecting
-  CONNECTING,
-  CONNECTED,
-  ERROR,
+  INITIAL = 0,
+  PRE_CONNECTING = 1, // To render one frame before connecting
+  CONNECTING = 2,
+  CONNECTED = 3,
+  GAME_STATE_ERROR = 4
 };
 
 class DebugGUI;

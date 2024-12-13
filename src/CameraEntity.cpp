@@ -170,7 +170,7 @@ Camera2D CameraShakeEffect::modify_camera(float delta_time,
 }
 
 void VignetteEffect::on_after_end_mode2d() {
-  LOG_DEBUG() << "VignetteEffect::on_before_begin_mode2d" << std::endl;
+  
   float radius = std::sqrt(GetScreenWidth() * GetScreenWidth() +
                            GetScreenHeight() * GetScreenHeight()) *
                  0.5f;

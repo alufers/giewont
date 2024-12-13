@@ -45,12 +45,18 @@ public:
   send_reliable_to_peer(uint32_t peer_id,
                         ::capnp::MallocMessageBuilder &message_builder) = 0;
 
-  // virtual void handle_incoming_message(const net::BaseNetMessage::Reader &message) = 0;
+  // virtual void handle_incoming_message(const net::BaseNetMessage::Reader
+  // &message) = 0;
 
-  virtual void broadcast_reliable(::capnp::MallocMessageBuilder &message_builder) = 0;                      
+  virtual void
+  broadcast_reliable(::capnp::MallocMessageBuilder &message_builder) = 0;
 
   virtual void shutdown() {};
 
+// Font
+#ifdef GIEWONT_HAS_GRAPHICS
+  Font font;
+#endif
   std::vector<std::unique_ptr<Entity>> entities;
 
   auto valid_entities() const {

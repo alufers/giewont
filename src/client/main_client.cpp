@@ -1,9 +1,11 @@
-#include "CharacterEntity.h"
+
+
+#define WIN32_LEAN_AND_MEAN
+
 #include "raylib.h"
 
+
 #include "ClientGame.h"
-#include "PhysEntity.h"
-#include "TilemapEntity.h"
 #include "imgui.h"
 #include "rlImGui.h"
 #include <chrono>

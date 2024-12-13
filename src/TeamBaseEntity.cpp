@@ -3,6 +3,8 @@
 #include "FlagEntity.h"
 #include "PhysEntity.h"
 
+#include "Util.h"
+
 #ifdef GIEWONT_HAS_GRAPHICS
 #include "imgui.h"
 #include <raylib.h>
@@ -45,9 +47,9 @@ void TeamBaseEntity::load_spritesheet_data(const Game &game) {
     }
 
     TeamBaseSpriteType state = TeamBaseSpriteType::STAND;
-    if (strcasestr(key.c_str(), "orb")) {
+    if (string_contains_case_insensitive(key, "orb")) {
       state = TeamBaseSpriteType::ORB;
-    } else if (strcasestr(key.c_str(), "stand")) {
+    } else if (string_contains_case_insensitive(key, "stand")) {
       state = TeamBaseSpriteType::STAND;
     } else {
       continue;
