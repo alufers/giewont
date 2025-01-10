@@ -151,3 +151,20 @@ if(NOT EMSCRIPTEN)
     target_compile_options(${SERVER_EXE_NAME} PRIVATE -ggdb)
 endif()
 
+
+### GFX test build
+if(NOT EMSCRIPTEN)
+    set(GFX_TEST_EXE_NAME "giewont_gfx_test")
+
+    set(GFX_TEST_SOURCES 
+        src/gfx/gfx_test.cpp
+        src/gfx/media/BitmapImage.cpp
+    )
+    add_executable(${GFX_TEST_EXE_NAME})
+    target_sources(${GFX_TEST_EXE_NAME} PRIVATE ${GFX_TEST_SOURCES})
+    target_include_directories(${GFX_TEST_EXE_NAME} PRIVATE ${COMMON_INCLUDES})
+    target_link_libraries(${GFX_TEST_EXE_NAME} PRIVATE raylib)
+
+    target_compile_options(${GFX_TEST_EXE_NAME} PRIVATE -ggdb)
+    
+endif()
