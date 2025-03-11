@@ -46,7 +46,13 @@ endif()
 
 
 ### Capnproto
-find_package(CapnProto REQUIRED)
+find_package(CapnProto QUIET)
+if(NOT CapnProto_FOUND)
+  set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+  add_subdirectory(libs/capnproto)
+  set(${CAPNP_LIBRARIES} "CapnProto::capnp")
+#   set(${CAPNP_INCLUDE_DIRS} "${CMAKE_CURRENT_LIST_DIR}/libs/capnproto/c++/src")
+endif()
 
 capnp_generate_cpp(CAPNP_SRCS CAPNP_HDRS "${CMAKE_CURRENT_LIST_DIR}/src/net/schema.capnp")
 
@@ -76,6 +82,7 @@ set(COMMON_INCLUDES
     "${CMAKE_CURRENT_LIST_DIR}/src/math"
     "${CMAKE_CURRENT_LIST_DIR}/src/net"
     ${CAPNP_INCLUDE_DIRS}
+    "${CMAKE_CURRENT_LIST_DIR}/libs/capnproto/c++/src"
     ${CMAKE_CURRENT_BINARY_DIR}/src/net # capnproto generated files
 )
 
@@ -85,6 +92,7 @@ set(COMMON_INCLUDES
 add_subdirectory("${CMAKE_SOURCE_DIR}/libs/imgui" imgui EXCLUDE_FROM_ALL)
 add_subdirectory("${CMAKE_SOURCE_DIR}/libs/rlImGui" rlImGui EXCLUDE_FROM_ALL)
 
+add_compile_definitions(-DKJ_NO_COMPILER_CHECK=1)
 
 set(CLIENT_EXE_NAME "giewont_client")
 
@@ -104,6 +112,8 @@ target_sources(${CLIENT_EXE_NAME} PRIVATE ${COMMON_SOURCES} ${CLIENT_SOURCES})
 target_include_directories(${CLIENT_EXE_NAME} PRIVATE ${COMMON_INCLUDES} ${CLIENT_INCLUDES})
 target_include_directories(${CLIENT_EXE_NAME} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/libs/nbnet")
 
+message("CAPNP_LIBRARIES: ${CAPNP_LIBRARIES}")
+
 target_link_libraries(${CLIENT_EXE_NAME} PRIVATE raylib nlohmann_json::nlohmann_json imgui rlImGui ${CAPNP_LIBRARIES})
 
 
@@ -120,7 +130,7 @@ if (EMSCRIPTEN)
     target_compile_definitions(${CLIENT_EXE_NAME} PUBLIC -DGIEWONT_ASSETS_PATH="/assets/")
     set_target_properties(${CLIENT_EXE_NAME} PROPERTIES OUTPUT_NAME "index")
 else()
-    target_compile_definitions(${CLIENT_EXE_NAME} PUBLIC -DGIEWONT_ASSETS_PATH="../assets/")
+    target_compile_definitions(${CLIENT_EXE_NAME} PUBLIC -DGIEWONT_ASSETS_PATH="../assets/" -DKJ_NO_COMPILER_CHECK)
     target_link_libraries(${CLIENT_EXE_NAME} PUBLIC LibDataChannel::LibDataChannel)
 endif()
 
@@ -144,7 +154,7 @@ if(NOT EMSCRIPTEN)
     target_sources(${SERVER_EXE_NAME} PRIVATE ${COMMON_SOURCES} ${SERVER_SOURCES})
     target_include_directories(${SERVER_EXE_NAME} PRIVATE ${COMMON_INCLUDES} ${SERVER_INCLUDES})
     target_include_directories(${SERVER_EXE_NAME} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/libs/nbnet")
-    target_compile_definitions(${SERVER_EXE_NAME} PUBLIC -DGIEWONT_ASSETS_PATH="../assets/")
+    target_compile_definitions(${SERVER_EXE_NAME} PUBLIC -DGIEWONT_ASSETS_PATH="../assets/" -DKJ_NO_COMPILER_CHECK)
     # target_compile_definitions(${SERVER_EXE_NAME} ${CAPNP_DEFINITIONS})
 
     target_link_libraries(${SERVER_EXE_NAME} PRIVATE nlohmann_json::nlohmann_json LibDataChannel::LibDataChannel ${CAPNP_LIBRARIES})
