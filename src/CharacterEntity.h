@@ -54,6 +54,7 @@ public:
 
   int health = 100;
   int max_health = 100;
+  float immunity_time = 2.0f;
 
   float min_fall_hurt_height = 200.0f;
   float max_fall_hurt_height = 500.0f;
@@ -100,6 +101,7 @@ public:
 
 private:
   res_id _texture_id;
+  res_id _highlight_texture_id;
   res_id _spritesheet_data_id;
   res_id _ui_bar_texture_id;
   res_id _character_fall_particle_system_prefab_id;

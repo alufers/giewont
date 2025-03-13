@@ -51,6 +51,8 @@ void CharacterEntity::load_assets(const Game &game) {
   }
 
   _texture_id = game.rm->load_texture("entities/p1_spritesheet.png");
+  _highlight_texture_id =
+      game.rm->load_texture("entities/p1_higlight_spritesheet.png");
   _spritesheet_data_id = game.rm->load_json("entities/p1_spritesheet.json");
   _ui_bar_texture_id = game.rm->load_texture("ui_bar.png");
   _character_fall_particle_system_prefab_id =
@@ -68,6 +70,7 @@ void CharacterEntity::build_sync_message(
   characterData.setDirection(static_cast<uint32_t>(direction));
   characterData.setHealth(health);
   characterData.setMaxHealth(max_health);
+  characterData.setImmunityTime(immunity_time);
 }
 
 void CharacterEntity::update_from_sync_message(
@@ -80,14 +83,18 @@ void CharacterEntity::update_from_sync_message(
   direction = static_cast<CharacterDirection>(characterData.getDirection());
   health = characterData.getHealth();
   max_health = characterData.getMaxHealth();
+  immunity_time = characterData.getImmunityTime();
 }
 
 void CharacterEntity::apply_hurt_message(
     Game &game, const net::HurtEntityNetMessage::Reader &msg) {
+  if (immunity_time > 0.0f && msg.getDamage() > 0) {
+    return;
+  }
   this->health -= msg.getDamage();
   if (this->health < 0) {
     this->health = 0;
-    //TODO: handle death
+    // TODO: handle death
   }
   if (!game.is_server() && this->net_owner_peer_id == game.my_peer_id) {
     // Add some camera shake if we have been hurt
@@ -188,6 +195,12 @@ void CharacterEntity::update(Game &game, float delta_time) {
     anim_frame_timer = 0.0f;
     anim_frame++;
   }
+  if (this->net_owner_peer_id == game.my_peer_id) {
+    immunity_time -= delta_time;
+    if (immunity_time < 0.0f) {
+      immunity_time = 0.0f;
+    }
+  }
 }
 
 void CharacterEntity::on_has_landed(Game &game, Vec2 fall_delta) {
@@ -225,6 +238,7 @@ bool CharacterEntity::check_is_propped(TilemapEntity *tilemap, Vec2 feet_pos) {
 void CharacterEntity::draw(const Game &game) {
 #ifdef GIEWONT_HAS_GRAPHICS
   auto tex = game.rm->get_texture(_texture_id);
+  auto highlight_tex = game.rm->get_texture(_highlight_texture_id);
 
   auto &frames = anim_frames[anim_state];
 
@@ -245,6 +259,18 @@ void CharacterEntity::draw(const Game &game) {
   if (flip) {
     src_rect.width *= -1;
   }
+
+  if (this->immunity_time > 0.0f) {
+    Rectangle scaled_dest = dest_rect;
+    // scaled_dest.width += 3.0;
+    // scaled_dest.height += 3.0;
+    // scaled_dest.x -= 3.0;
+    // scaled_dest.y -= 3.0;
+    Color tint = BLUE;
+    tint.a = (uint8_t)(255.0 * (immunity_time / 3.0));
+    DrawTexturePro(*highlight_tex, src_rect, scaled_dest, {0, 0}, 0.0f, tint);
+  }
+
   DrawTexturePro(*tex, src_rect, dest_rect, {0, 0}, 0.0f, WHITE);
 #endif
 }

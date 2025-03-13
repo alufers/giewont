@@ -61,6 +61,7 @@ struct SyncCharacterEntityData {
     direction @1 :UInt32;
     maxHealth @2 :UInt32;
     health @3 :UInt32;
+    immunityTime @4 :Float32;
 }
 
 struct GameplayManagerData {
@@ -94,9 +95,21 @@ struct AddCameraEffectNetMessage {
     speed @5 :Float32;
 }
 
+enum InteractionType {
+    useInteraction @0;
+    primaryClick @1;
+    secondaryClick @2;
+    throwInteraction @3;
+}
+
+
 struct InteractNetMessage {
    interactorNetId @0 :Int32;
+   characterToMouseOffset @1 :NetVec2;
+   type @2 :InteractionType;
 }
+
+
 
 struct DestroyEntityNetMessage {
     netId @0 :UInt32;

@@ -232,7 +232,7 @@ void ClientGame::handle_incoming_message(
   }
 
   case net::BaseNetMessage::Which::HURT_ENTITY: {
-    
+
     break;
   }
 
@@ -244,8 +244,9 @@ void ClientGame::handle_incoming_message(
 void ClientGame::send_reliable_to_peer(
     uint32_t peer_id, ::capnp::MallocMessageBuilder &message_builder) {
   if (peer_id != 0) {
-    throw std::runtime_error(
-        "ClientGame::send_reliable_to_peer: peer_id must be 0");
+    LOG_WARN() << "ClientGame::send_reliable_to_peer: peer_id != 0"
+               << std::endl;
+    peer_id = 0;
   }
   auto encoded_array = capnp::messageToFlatArray(message_builder);
   auto charArray = encoded_array.asChars();
