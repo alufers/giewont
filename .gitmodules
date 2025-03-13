@@ -7,3 +7,6 @@
 [submodule "libs/libdatachannel"]
 	path = libs/libdatachannel
 	url = https://github.com/paullouisageneau/libdatachannel.git
+[submodule "libs/capnproto"]
+	path = libs/capnproto
+	url = https://github.com/capnproto/capnproto.git
