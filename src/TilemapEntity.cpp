@@ -1,7 +1,8 @@
+#define _USE_MATH_DEFINES // for C++
+#include <cmath>
 #include "TilemapEntity.h"
 #include "Log.h"
 #include "Vec2.h"
-#include <cmath>
 #include <iostream>
 
 #ifdef GIEWONT_HAS_GRAPHICS
@@ -134,43 +135,78 @@ TilemapEntity::check_collision_aabb(const AABB &aabb) {
   return manifolds;
 }
 
-bool TilemapEntity::check_collision_point(const Vec2 &point) {
+TileType TilemapEntity::check_collision_point(const Vec2 &point) {
   Vec2 in_local_space = point - this->position;
   AABB tilemap_aabb =
       AABB(Vec2(0, 0), Vec2((float)this->tilemap_width * this->tile_size.x,
                             (float)this->tilemap_height * this->tile_size.y));
   if (!tilemap_aabb.contains(in_local_space)) {
-    return false;
+    return TileType::AIR;
   }
   int x = (int)in_local_space.x / this->tile_size.x;
   int y = (int)in_local_space.y / this->tile_size.y;
   if (x < 0 || y < 0 || x >= this->tilemap_width || y >= this->tilemap_height) {
-    return false;
+    return TileType::AIR;
   }
   int tile_id = this->tilemap_data[y * this->tilemap_width + x];
   TilesetTileInfo &tile_info = get_tile_info_for_tile_id(tile_id);
 
-  return tile_info.tile == TileType::SOLID;
+  return tile_info.tile;
 }
 
-bool TilemapEntity::check_allow_jump(const Vec2 &feet_pos) {
-  Vec2 in_local_space = feet_pos - this->position;
-  AABB tilemap_aabb =
-      AABB(Vec2(0, 0), Vec2((float)this->tilemap_width * this->tile_size.x,
-                            (float)this->tilemap_height * this->tile_size.y));
-  if (!tilemap_aabb.contains(in_local_space)) {
-    return false;
-  }
-  int x = (int)in_local_space.x / this->tile_size.x;
-  int y = (int)in_local_space.y / this->tile_size.y;
-  if (x < 0 || y < 0 || x >= this->tilemap_width || y >= this->tilemap_height) {
-    return false;
-  }
-  int tile_id = this->tilemap_data[y * this->tilemap_width + x];
-  TilesetTileInfo &tile_info = get_tile_info_for_tile_id(tile_id);
 
-  return tile_info.tile == TileType::LADDER ||
-         tile_info.tile == TileType::SOLID;
+size_t
+TilemapEntity::check_collision_circle(const Vec2 &center, float radius,
+                                      TilemapCollisionManifold manifolds[],
+                                      size_t max_manifolds) {
+  Vec2 local_circle_pos = center - this->position;
+
+  // tile coords
+  int start_x = (int)(local_circle_pos.x - radius)/ this->tile_size.x;
+  int start_y = (int)(local_circle_pos.y - radius) / this->tile_size.y;
+  int end_x = (int)std::ceil((local_circle_pos.x + radius) / this->tile_size.x);
+  int end_y = (int)std::ceil((local_circle_pos.y + radius) / this->tile_size.y);
+
+  size_t manifold_count = 0;
+
+  for (int y = start_y; y < end_y; y++) {
+    for (int x = start_x; x < end_x; x++) {
+      if(manifold_count >= max_manifolds) {
+        return manifold_count; // can't fir any more manifolds
+      }
+      if (x < 0 || y < 0 || x >= this->tilemap_width ||
+          y >= this->tilemap_height) {
+        continue;
+      }
+      int tile_id = this->tilemap_data[y * this->tilemap_width + x];
+      if (tile_id == 0) { // short circuit for air tiles
+        continue;
+      }
+      TilesetTileInfo &tile_info = get_tile_info_for_tile_id(tile_id);
+      if(tile_info.tile == TileType::SOLID) {
+        Vec2 tile_center = Vec2((float)x * this->tile_size.x + this->tile_size.x / 2.0f,
+                                (float)y * this->tile_size.y + this->tile_size.y / 2.0f);
+        float outer_bounding_radius = this->tile_size.x * M_SQRT2 / 2.0f;
+        float inner_bounding_radius = this->tile_size.x / 2.0f;
+        float center_dist = center.distance(tile_center);
+        if(center_dist > outer_bounding_radius + radius) {
+          continue;
+        }
+
+        if(center_dist < inner_bounding_radius + radius) {
+          Vec2 normal = (center - tile_center).normalized();
+          float penetration = radius - center_dist + inner_bounding_radius;
+          manifolds[manifold_count++] = {normal, penetration};
+        } else {
+          //TODO: check corners
+        }
+        
+      }
+    }
+  }
+
+
+  return manifold_count;
 }
 
 /////// TilesetData
@@ -243,9 +279,9 @@ void TilesetData::draw_tile(const Game &game, int tile_id, int pos_x, int pos_y,
                    .y = (float)(tile_y * (this->tile_height + this->spacing)),
                    .width = (float)this->tile_width,
                    .height = (float)this->tile_height};
-  Rectangle dest = {.x = (float)pos_x * this->tile_width + offset.x,
+  Rectangle dest = {.x = (float)pos_x * (float)this->tile_width + offset.x,
 
-                    .y = (float)pos_y * this->tile_height + offset.y,
+                    .y = (float)pos_y * (float)this->tile_height + offset.y,
                     .width = size.x,
                     .height = size.y};
 
@@ -253,4 +289,12 @@ void TilesetData::draw_tile(const Game &game, int tile_id, int pos_x, int pos_y,
 
   DrawTexturePro(*tex, src, dest, origin, 0, WHITE);
 #endif
+}
+
+bool TilemapEntity::is_point_in_tilemap_bounds(const Vec2 &point) {
+  Vec2 in_local_space = point - this->position;
+  AABB tilemap_aabb =
+      AABB(Vec2(0, 0), Vec2((float)this->tilemap_width * this->tile_size.x,
+                            (float)this->tilemap_height * this->tile_size.y));
+  return tilemap_aabb.contains(in_local_space);
 }

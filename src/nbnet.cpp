@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <stdio.h>
+#include "nbnet_helper.h"
 
 extern "C" {
 
@@ -43,4 +44,12 @@ void Log(int type, const char *fmt, ...) {
 #endif
 
 
+}
+
+using namespace giewont;
+
+void giewont::install_nbnet_webrtc_driver() {
+  NBN_WebRTC_C_Register(NBN_WebRTC_C_Config{
+    .enable_tls = false,
+  });
 }

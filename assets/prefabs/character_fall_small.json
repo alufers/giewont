@@ -1,0 +1,63 @@
+{
+  "height": 0,
+  "id": 3,
+  "name": "",
+  "point": true,
+  "properties": [
+    {
+      "name": "emission_rate",
+      "type": "float",
+      "value": 100000000
+    },
+    {
+      "name": "initial_velocity_angle",
+      "type": "float",
+      "value": 0.8
+    },
+    {
+      "name": "particle_texture_path",
+      "type": "string",
+      "value": "stone_particle.png"
+    },
+    {
+      "name": "system_lifetime",
+      "type": "float",
+      "value": 0.1
+    },
+    {
+      "name": "particle_size",
+      "type": "float",
+      "value": 0.5
+    },
+    {
+      "name": "particle_variation",
+      "type": "float",
+      "value": 1.2
+    },
+    {
+      "name": "max_particles",
+      "type": "int",
+      "value": 1000
+    },
+    {
+      "name": "initial_velocity",
+      "value": [0.0, -340.0]
+    },
+    {
+      "name": "max_lifetime",
+      "type": "float",
+      "value": 10.0
+    },
+    {
+        "name": "velocity_variation",
+        "type": "float",
+        "value": 0.5
+    }
+  ],
+  "rotation": 0,
+  "type": "particle_system",
+  "visible": true,
+  "width": 0,
+  "x": 0,
+  "y": 0
+}

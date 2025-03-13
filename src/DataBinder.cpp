@@ -1,9 +1,9 @@
 #include "DataBinder.h"
 #include "Color.h"
 #include "GameplayManager.h"
+#include "Log.h"
 #include "Vec2.h"
 #include <stdexcept>
-#include "Log.h"
 #ifdef GIEWONT_HAS_GRAPHICS
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
@@ -26,6 +26,8 @@ DataBinderField::DataBinderField(std::string typeName, std::string name,
     type = DataBinderType::COLOR;
   } else if (typeName == "GameplayTeam") {
     type = DataBinderType::GAMEPLAY_TEAM;
+  } else if (typeName == "bool") {
+    type = DataBinderType::BOOL;
   } else {
     throw std::runtime_error("Unknown type name: " + typeName);
   }
@@ -54,7 +56,8 @@ void DataBinderBase::draw_inspector_ui_impl(void *instance) {
     }
     case DataBinderType::INT: {
       int *i = (int *)((char *)instance + field.offset);
-      // Log::info("DataBinder") << "Drawing int field: " << field.name << std::endl;
+      // Log::info("DataBinder") << "Drawing int field: " << field.name <<
+      // std::endl;
       ImGui::InputInt(field.name.c_str(), i);
       break;
     }
@@ -82,8 +85,12 @@ void DataBinderBase::draw_inspector_ui_impl(void *instance) {
 
       break;
     }
+    case DataBinderType::BOOL: {
+      bool *b = (bool *)((char *)instance + field.offset);
+      ImGui::Checkbox(field.name.c_str(), b);
+      break;
+    }
     }
   }
 #endif
 }
-  

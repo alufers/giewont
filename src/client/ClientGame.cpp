@@ -14,14 +14,8 @@
 #include <format>
 #include <stdexcept>
 #include <stdlib.h>
-extern "C" {
-#include "nbnet.h"
-#ifdef PLATFORM_WEB
-#include "net_drivers/webrtc.h"
-#else
-#include "net_drivers/webrtc_c.h"
-#endif
-}
+#include "nbnet_helper.h"
+#include "nbnet_lean.h"
 
 using namespace giewont;
 
@@ -162,9 +156,7 @@ void ClientGame::update(float delta_time) {
 }
 
 void ClientGame::init_net_client() {
-  NBN_WebRTC_C_Register(NBN_WebRTC_C_Config{
-      .enable_tls = false,
-  });
+  install_nbnet_webrtc_driver();
 }
 
 void ClientGame::handle_incoming_nbnet_message(NBN_MessageInfo msg_info) {
@@ -231,6 +223,11 @@ void ClientGame::handle_incoming_message(
     break;
   }
 
+  case net::BaseNetMessage::Which::HURT_ENTITY: {
+
+    break;
+  }
+
   default:
     LOG_WARN() << "Unknown message type received from the server" << std::endl;
   }
@@ -239,8 +236,9 @@ void ClientGame::handle_incoming_message(
 void ClientGame::send_reliable_to_peer(
     uint32_t peer_id, ::capnp::MallocMessageBuilder &message_builder) {
   if (peer_id != 0) {
-    throw std::runtime_error(
-        "ClientGame::send_reliable_to_peer: peer_id must be 0");
+    LOG_WARN() << "ClientGame::send_reliable_to_peer: peer_id != 0"
+               << std::endl;
+    peer_id = 0;
   }
   auto encoded_array = capnp::messageToFlatArray(message_builder);
   auto charArray = encoded_array.asChars();

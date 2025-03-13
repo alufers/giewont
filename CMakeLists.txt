@@ -39,7 +39,8 @@ if(EMSCRIPTEN)
     # Add nlohmann/json
     add_subdirectory(libs/json)
 else()
-    set(NO_TESTS ON)
+    set(NO_TESTS OFF CACHE BOOL "" FORCE)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
     add_subdirectory(libs/libdatachannel)
 endif()
 
@@ -48,7 +49,7 @@ endif()
 ### Capnproto
 
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-add_compile_definitions(-DKJ_NO_COMPILER_CHECK)
+add_compile_definitions(-DKJ_NO_COMPILER_CHECK -DKJ_USE_FIBERS=0)
 add_subdirectory(libs/capnproto)
 set(CAPNP_LIBRARIES "CapnProto::capnp")
 
@@ -129,7 +130,7 @@ if (EMSCRIPTEN)
     set_target_properties(${CLIENT_EXE_NAME} PROPERTIES OUTPUT_NAME "index")
 else()
     target_compile_definitions(${CLIENT_EXE_NAME} PUBLIC -DGIEWONT_ASSETS_PATH="../assets/" -DKJ_NO_COMPILER_CHECK)
-    target_link_libraries(${CLIENT_EXE_NAME} PUBLIC LibDataChannel::LibDataChannel)
+    target_link_libraries(${CLIENT_EXE_NAME} PUBLIC datachannel-static)
 endif()
 
 
@@ -155,7 +156,7 @@ if(NOT EMSCRIPTEN)
     target_compile_definitions(${SERVER_EXE_NAME} PUBLIC -DGIEWONT_ASSETS_PATH="../assets/" -DKJ_NO_COMPILER_CHECK)
     # target_compile_definitions(${SERVER_EXE_NAME} ${CAPNP_DEFINITIONS})
 
-    target_link_libraries(${SERVER_EXE_NAME} PRIVATE nlohmann_json::nlohmann_json LibDataChannel::LibDataChannel ${CAPNP_LIBRARIES})
+    target_link_libraries(${SERVER_EXE_NAME} PRIVATE nlohmann_json::nlohmann_json datachannel-static ${CAPNP_LIBRARIES})
     target_compile_options(${SERVER_EXE_NAME} PRIVATE -ggdb)
 endif()
 

@@ -11,10 +11,10 @@
 #include <exception>
 #include <memory>
 #include <vector>
+#include "nbnet_helper.h"
 
 extern "C" {
 #include "nbnet.h"
-#include "net_drivers/webrtc_c.h"
 }
 
 using namespace giewont;
@@ -24,10 +24,7 @@ ServerGame::ServerGame(std::string tmj_path) : Game(), tmj_path(tmj_path) {
 }
 
 void ServerGame::init_net_server() {
-  NBN_WebRTC_C_Register(NBN_WebRTC_C_Config{
-      .enable_tls = false,
-  });
-
+  install_nbnet_webrtc_driver();
   if (NBN_GameServer_Start(GIEWONT_PROTOCOL_NAME, 1338) < 0) {
     throw std::runtime_error("Failed to start server");
   }
@@ -291,7 +288,7 @@ void ServerGame::destroy_marked_entities() {
   for (auto &entity : entities) {
     if (entity == nullptr)
       continue;
-    if (entity->marked_for_deletion) {
+    if (entity->marked_for_deletion && !entity->is_static) {
       LOG_INFO()
           << "Notyfiing about the destruction of entity entity  with net_id="
           << entity->net_id << std::endl;

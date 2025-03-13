@@ -67,6 +67,12 @@ public:
 
   EntityRef get_entity_by_net_id(uint32_t net_id);
 
+  /** @brief Load a prefab json and load it's assets. */
+  res_id preload_prefab(std::string prefab_path) const;
+
+  EntityRef instantiate_prefab(res_id prefab_res);
+  EntityRef instantiate_prefab(res_id prefab_res, Vec2 pos);
+
 #ifdef GIEWONT_HAS_GRAPHICS
 
   virtual Camera2D get_currently_rendering_camera_data() const { return {0}; }

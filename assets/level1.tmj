@@ -76,34 +76,6 @@
                 }, 
                 {
                  "height":0,
-                 "id":3,
-                 "name":"",
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"emission_rate",
-                         "type":"float",
-                         "value":100
-                        }, 
-                        {
-                         "name":"initial_velocity_angle",
-                         "type":"float",
-                         "value":0.4
-                        }, 
-                        {
-                         "name":"particle_texture_path",
-                         "type":"string",
-                         "value":"stone_particle.png"
-                        }],
-                 "rotation":0,
-                 "type":"particle_system",
-                 "visible":true,
-                 "width":0,
-                 "x":1239.39393939394,
-                 "y":875.757575757576
-                }, 
-                {
-                 "height":0,
                  "id":12,
                  "name":"",
                  "point":true,
@@ -191,6 +163,39 @@
                  "width":0,
                  "x":-14,
                  "y":-2
+                }, 
+                {
+                 "height":0,
+                 "id":21,
+                 "name":"",
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"emission_rate",
+                         "type":"float",
+                         "value":100
+                        }, 
+                        {
+                         "name":"initial_velocity_angle",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"max_lifetime",
+                         "type":"float",
+                         "value":20
+                        }, 
+                        {
+                         "name":"particle_texture_path",
+                         "type":"string",
+                         "value":"stone_particle.png"
+                        }],
+                 "rotation":0,
+                 "type":"particle_system",
+                 "visible":true,
+                 "width":0,
+                 "x":551.515151515152,
+                 "y":2748.48484848485
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -199,10 +204,10 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":21,
+ "nextobjectid":22,
  "orientation":"orthogonal",
  "renderorder":"right-down",
- "tiledversion":"1.11.0",
+ "tiledversion":"1.11.2",
  "tileheight":70,
  "tilesets":[
         {
