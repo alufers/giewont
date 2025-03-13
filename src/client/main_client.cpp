@@ -21,7 +21,7 @@
 #define WINDOW_TITLE "GIEWONT"
 
 static std::unique_ptr<giewont::ClientGame> g =
-    std::make_unique<giewont::ClientGame>("localhost", 1338);
+    std::make_unique<giewont::ClientGame>("192.168.1.232", 1338);
 
 static void main_loop() {
   static std::chrono::time_point<std::chrono::system_clock> last_frame_time =

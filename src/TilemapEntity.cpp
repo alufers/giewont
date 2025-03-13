@@ -1,7 +1,8 @@
+#define _USE_MATH_DEFINES // for C++
+#include <cmath>
 #include "TilemapEntity.h"
 #include "Log.h"
 #include "Vec2.h"
-#include <cmath>
 #include <iostream>
 
 #ifdef GIEWONT_HAS_GRAPHICS

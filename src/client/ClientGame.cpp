@@ -14,14 +14,8 @@
 #include <format>
 #include <stdexcept>
 #include <stdlib.h>
-extern "C" {
-#include "nbnet.h"
-#ifdef PLATFORM_WEB
-#include "net_drivers/webrtc.h"
-#else
-#include "net_drivers/webrtc_c.h"
-#endif
-}
+#include "nbnet_helper.h"
+#include "nbnet_lean.h"
 
 using namespace giewont;
 
@@ -162,9 +156,7 @@ void ClientGame::update(float delta_time) {
 }
 
 void ClientGame::init_net_client() {
-  NBN_WebRTC_C_Register(NBN_WebRTC_C_Config{
-      .enable_tls = false,
-  });
+  install_nbnet_webrtc_driver();
 }
 
 void ClientGame::handle_incoming_nbnet_message(NBN_MessageInfo msg_info) {

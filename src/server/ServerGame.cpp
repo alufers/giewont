@@ -11,10 +11,10 @@
 #include <exception>
 #include <memory>
 #include <vector>
+#include "nbnet_helper.h"
 
 extern "C" {
 #include "nbnet.h"
-#include "net_drivers/webrtc_c.h"
 }
 
 using namespace giewont;
@@ -24,10 +24,7 @@ ServerGame::ServerGame(std::string tmj_path) : Game(), tmj_path(tmj_path) {
 }
 
 void ServerGame::init_net_server() {
-  NBN_WebRTC_C_Register(NBN_WebRTC_C_Config{
-      .enable_tls = false,
-  });
-
+  install_nbnet_webrtc_driver();
   if (NBN_GameServer_Start(GIEWONT_PROTOCOL_NAME, 1338) < 0) {
     throw std::runtime_error("Failed to start server");
   }

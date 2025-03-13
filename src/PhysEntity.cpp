@@ -32,8 +32,9 @@ void PhysEntity::update(Game &game, float delta_time) {
       Vec2((own_aabb.min.x + own_aabb.max.x) / 2.0f, own_aabb.max.y + 1.0f);
 
   auto aabb_to_check = own_aabb.translated(this->position);
+  bool has_landed = false;
   for (auto &entity : game.entities) {
-    if (entity == nullptr || entity->id == this->id ||
+    if (!entity || entity->id == this->id ||
         entity->marked_for_deletion) {
       continue;
     }
@@ -63,13 +64,10 @@ void PhysEntity::update(Game &game, float delta_time) {
                                         // computing for other ones
 
         if (this->check_is_propped(tilemap, feet_pos)) {
-          bool has_landed = !this->is_propped_by_level;
+          has_landed = !this->is_propped_by_level;
           this->is_propped_by_level = true;
           this->last_on_ground_position = feet_pos;
-          if (has_landed) {
-            this->on_has_landed(game,
-                                feet_pos - this->highest_off_ground_position);
-          }
+         
           this->highest_off_ground_position = feet_pos; // reset that
         } else {
           if (this->highest_off_ground_position.y > feet_pos.y) {
@@ -78,6 +76,10 @@ void PhysEntity::update(Game &game, float delta_time) {
         }
       }
     }
+  }
+  if (has_landed) {
+      this->on_has_landed(game,
+          feet_pos - this->highest_off_ground_position);
   }
 }
 

@@ -10,9 +10,9 @@
 
 #include "schema.capnp.h"
 
-extern "C" {
-#include "nbnet.h"
-}
+
+#include "nbnet_lean.h"
+
 
 namespace giewont {
 
