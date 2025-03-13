@@ -24,8 +24,6 @@ void PhysEntity::update(Game &game, float delta_time) {
     this->position += this->velocity * delta_time;
   }
 
-  this->is_propped_by_level = false;
-
   const AABB &own_aabb = this->get_aabb();
   Vec2 feet_pos =
       this->position +
@@ -33,6 +31,7 @@ void PhysEntity::update(Game &game, float delta_time) {
 
   auto aabb_to_check = own_aabb.translated(this->position);
   bool has_landed = false;
+  Vec2 old_highest_off_ground_position = this->highest_off_ground_position;
   for (auto &entity : game.entities) {
     if (!entity || entity->id == this->id || entity->marked_for_deletion) {
       continue;
@@ -66,6 +65,7 @@ void PhysEntity::update(Game &game, float delta_time) {
 
         this->highest_off_ground_position = feet_pos; // reset that
       } else {
+        this->is_propped_by_level = false;
         if (this->highest_off_ground_position.y > feet_pos.y) {
           this->highest_off_ground_position = feet_pos;
         }
@@ -73,7 +73,7 @@ void PhysEntity::update(Game &game, float delta_time) {
     }
   }
   if (has_landed) {
-    this->on_has_landed(game, feet_pos - this->highest_off_ground_position);
+    this->on_has_landed(game, feet_pos - old_highest_off_ground_position);
   }
 }
 
