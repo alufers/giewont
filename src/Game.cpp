@@ -10,10 +10,13 @@
 #include "CharacterEntity.h"
 #include "LevelLoader.h"
 #include "TeamBaseEntity.h"
+#include "Vec2.h"
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <cstdint>
+#include <format>
+
 using namespace giewont;
 
 Game::Game() { this->entities.push_back(std::make_unique<NullEntity>()); }
@@ -146,3 +149,35 @@ EntityRef Game::get_entity_by_net_id(uint32_t net_id) {
              << " not found" << std::endl;
   return EntityRef();
 }
+
+res_id Game::preload_prefab(std::string prefab_path) const {
+  res_id id = this->rm->load_json(prefab_path);
+  auto ent = LevelLoader::create_entity_from_json(*this, *this->rm->get_json(id));
+  if(ent == nullptr) {
+    throw std::runtime_error(std::format("Failed to create entity from prefab: {}", prefab_path));
+  }
+  ent->load_assets(*this);
+  return id;
+}
+
+
+EntityRef Game::instantiate_prefab(res_id prefab_res) {
+  auto ent = LevelLoader::create_entity_from_json(*this, *this->rm->get_json(prefab_res));
+  if(ent == nullptr) {
+    throw std::runtime_error(std::format("Failed to create entity from prefab: {}", prefab_res));
+  }
+  ent->load_assets(*this);
+
+  return this->push_entity(std::move(ent));
+}
+
+
+EntityRef Game::instantiate_prefab(res_id prefab_res, Vec2 pos) {
+  EntityRef ref = instantiate_prefab(prefab_res);
+
+  ref.get(*this).position = pos;
+
+  return ref;
+}
+
+

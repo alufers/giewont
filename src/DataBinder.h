@@ -16,6 +16,7 @@ enum class DataBinderType {
   VEC2,
   COLOR,
   GAMEPLAY_TEAM,
+  BOOL
 };
 
 class DataBinderBase;
@@ -46,7 +47,7 @@ protected:
 };
 
 /**
- * @brief Bind entity data to JSON fields, inspector fiels.
+ * @brief Bind entity data to JSON fields, inspector fields.
  *
  */
 template <typename T> class DataBinder : public DataBinderBase {

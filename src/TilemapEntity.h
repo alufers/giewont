@@ -48,8 +48,9 @@ public:
 
 class TilemapCollisionManifold {
 public:
-  Vec2 normal;
-  float penetration;
+
+  Vec2 normal = Vec2(0, 0);
+  float penetration = 0.0f;
 };
 
 /**
@@ -75,9 +76,12 @@ public:
   void draw(const Game &game) override;
 
   std::vector<TilemapCollisionManifold> check_collision_aabb(const AABB &aabb);
-  bool check_collision_point(const Vec2 &point);
+  size_t check_collision_circle(const Vec2 &center, float radius,
+                                TilemapCollisionManifold manifolds[],
+                                size_t max_manifolds);
 
-  bool check_allow_jump(const Vec2 &feet_pos);
+  TileType check_collision_point(const Vec2 &point);
+  bool is_point_in_tilemap_bounds(const Vec2 &point);
 
   Vec2 tile_size = Vec2(0.0f, 0.0f); // in game units
 

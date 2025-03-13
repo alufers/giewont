@@ -291,7 +291,7 @@ void ServerGame::destroy_marked_entities() {
   for (auto &entity : entities) {
     if (entity == nullptr)
       continue;
-    if (entity->marked_for_deletion) {
+    if (entity->marked_for_deletion && !entity->is_static) {
       LOG_INFO()
           << "Notyfiing about the destruction of entity entity  with net_id="
           << entity->net_id << std::endl;

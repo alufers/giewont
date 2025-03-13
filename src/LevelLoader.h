@@ -1,9 +1,11 @@
 #ifndef LEVELLOADER_H_
 #define LEVELLOADER_H_
 
-#include <string>
+#include "Entity.h"
 #include "ResourceManager.h"
+#include <memory>
 #include <nlohmann/json.hpp>
+#include <string>
 
 namespace giewont {
 
@@ -16,7 +18,14 @@ public:
 
   void load_level(Game &game);
 
-  static nlohmann::json tmjPropertiesToObj(const nlohmann::json &tmj_properties);
+  /** @brief Initialize an Entity based on the json object for it (structured by
+   * Tiled) */
+  static std::unique_ptr<Entity>
+  create_entity_from_json(const Game &game, const nlohmann::json &object);
+
+  static nlohmann::json
+  tmjPropertiesToObj(const nlohmann::json &tmj_properties);
+
 private:
   std::string tmj_path;
   res_id level_res_id;

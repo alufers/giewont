@@ -1,9 +1,11 @@
 #include "CharacterEntity.h"
 #include "AABB.h"
 
+#include "CameraEntity.h"
 #include "FlagEntity.h"
 #include "Game.h"
 #include "Log.h"
+#include "ParticleSystemEntity.h"
 #include "PhysEntity.h"
 #include "TilemapEntity.h"
 #include "Util.h"
@@ -11,6 +13,7 @@
 #include <capnp/message.h>
 #include <cmath>
 #include <cstring>
+#include <memory>
 #include <nlohmann/json.hpp>
 #ifdef GIEWONT_HAS_GRAPHICS
 #include <raylib.h>
@@ -49,8 +52,9 @@ void CharacterEntity::load_assets(const Game &game) {
 
   _texture_id = game.rm->load_texture("entities/p1_spritesheet.png");
   _spritesheet_data_id = game.rm->load_json("entities/p1_spritesheet.json");
-
   _ui_bar_texture_id = game.rm->load_texture("ui_bar.png");
+  _character_fall_particle_system_prefab_id =
+      game.preload_prefab("prefabs/character_fall_small.json");
 
   load_spritesheet_data(game);
 }
@@ -62,6 +66,8 @@ void CharacterEntity::build_sync_message(
 
   characterData.setAnimationState(static_cast<uint32_t>(anim_state));
   characterData.setDirection(static_cast<uint32_t>(direction));
+  characterData.setHealth(health);
+  characterData.setMaxHealth(max_health);
 }
 
 void CharacterEntity::update_from_sync_message(
@@ -72,6 +78,56 @@ void CharacterEntity::update_from_sync_message(
   anim_state =
       static_cast<CharacterAnimState>(characterData.getAnimationState());
   direction = static_cast<CharacterDirection>(characterData.getDirection());
+  health = characterData.getHealth();
+  max_health = characterData.getMaxHealth();
+}
+
+void CharacterEntity::apply_hurt_message(
+    Game &game, const net::HurtEntityNetMessage::Reader &msg) {
+  this->health -= msg.getDamage();
+  if (this->health < 0) {
+    this->health = 0;
+    //TODO: handle death
+  }
+  if (!game.is_server() && this->net_owner_peer_id == game.my_peer_id) {
+    // Add some camera shake if we have been hurt
+    std::unique_ptr<CameraShakeEffect> shake_effect =
+        std::make_unique<CameraShakeEffect>();
+    shake_effect->duration = 0.5f;
+    shake_effect->duration_left = 0.5f;
+    shake_effect->intensity =
+        30.0f * ((float)msg.getDamage() / (float)max_health);
+    shake_effect->falloff_time = 0.2f;
+    shake_effect->speed = 150.0;
+    game.camera_ref.get_as<CameraEntity>(game).effects.push_back(
+        std::move(shake_effect));
+
+    // If severe damage, add a red vignette effect
+    if (msg.getDamage() > max_health * 0.15) {
+      std::unique_ptr<VignetteEffect> vignette_effect =
+          std::make_unique<VignetteEffect>();
+      vignette_effect->duration = 0.5f;
+      vignette_effect->duration_left = 0.5f;
+      vignette_effect->intensity = 0.5f;
+      vignette_effect->falloff_time = 0.2f;
+      vignette_effect->color = GColor(1.0f, 0.0f, 0.0f);
+      game.camera_ref.get_as<CameraEntity>(game).effects.push_back(
+          std::move(vignette_effect));
+    }
+  }
+}
+
+void CharacterEntity::hurt_entity(Game &game, int damage) {
+  ::capnp::MallocMessageBuilder message;
+  auto hurt_msg = message.initRoot<net::BaseNetMessage>().initHurtEntity();
+  hurt_msg.setDamage(damage);
+  if (this->net_owner_peer_id == game.my_peer_id) {
+    // Apply the hurt message
+    apply_hurt_message(game, hurt_msg);
+  } else {
+    // Forward to owner
+    game.send_reliable_to_peer(this->net_owner_peer_id, message);
+  }
 }
 
 void CharacterEntity::load_spritesheet_data(const Game &game) {
@@ -132,6 +188,38 @@ void CharacterEntity::update(Game &game, float delta_time) {
     anim_frame_timer = 0.0f;
     anim_frame++;
   }
+}
+
+void CharacterEntity::on_has_landed(Game &game, Vec2 fall_delta) {
+  float fall_height = std::abs(fall_delta.y);
+  if (fall_height > 100.0) {
+#if GIEWONT_HAS_GRAPHICS
+    Vec2 feet_pos =
+        position + Vec2((get_aabb().min.x + get_aabb().max.x) / 2.0f,
+                        get_aabb().max.y + 1.0f);
+
+    auto particle_sys_ref = game.instantiate_prefab(
+        _character_fall_particle_system_prefab_id, feet_pos);
+#endif
+  }
+  if (fall_height > min_fall_hurt_height) {
+    float damage_factor =
+        (fall_height - min_fall_hurt_height) / max_fall_hurt_height;
+    int damage =
+        static_cast<int>(damage_factor * fall_max_damage_factor * max_health);
+
+    this->hurt_entity(game, damage);
+  }
+}
+
+Vec2 CharacterEntity::world_feet_pos() {
+  auto aabb = get_aabb();
+  return position + Vec2((aabb.min.x + aabb.max.x) / 2.0f, aabb.max.y + 1.0f);
+}
+
+bool CharacterEntity::check_is_propped(TilemapEntity *tilemap, Vec2 feet_pos) {
+  TileType feet_tile = tilemap->check_collision_point(feet_pos);
+  return feet_tile == TileType::SOLID || feet_tile == TileType::LADDER;
 }
 
 void CharacterEntity::draw(const Game &game) {
@@ -202,32 +290,14 @@ void CharacterEntity::draw_raylib_ui(const Game &game) {
 
 void CharacterEntity::perform_movement(const Game &game, float delta_time,
                                        CharacterMovementCommand command) {
-  bool on_ground_or_ladder = false;
 
-  Vec2 feet_pos = this->position +
-                  Vec2((this->get_aabb().min.x + this->get_aabb().max.x) / 2.0f,
-                       this->get_aabb().max.y + 1.0f);
-  for (auto &entity : game.entities) {
-    if (entity == nullptr || entity->id == this->id ||
-        entity->marked_for_deletion) {
-      continue;
-    }
-
-    if (TilemapEntity *tilemap = dynamic_cast<TilemapEntity *>(entity.get())) {
-      if (tilemap->check_allow_jump(feet_pos)) {
-        on_ground_or_ladder = true;
-        break;
-      }
-    }
-  }
-
-  if (command & CharacterMovementCommand::JUMP && on_ground_or_ladder) {
+  if (command & CharacterMovementCommand::JUMP && this->is_propped_by_level) {
     this->velocity.y = -this->jump_speed;
   }
 
   if (command & CharacterMovementCommand::MOVE_LEFT) {
     this->direction = CharacterDirection::LEFT;
-    if (on_ground_or_ladder) {
+    if (this->is_propped_by_level) {
       this->anim_state = CharacterAnimState::WALK;
     }
     this->velocity.x -= this->horiz_accel * delta_time;
@@ -236,7 +306,7 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
     }
   } else if (command & CharacterMovementCommand::MOVE_RIGHT) {
     this->direction = CharacterDirection::RIGHT;
-    if (on_ground_or_ladder) {
+    if (this->is_propped_by_level) {
       this->anim_state = CharacterAnimState::WALK;
     }
     this->velocity.x += this->horiz_accel * delta_time;
@@ -244,7 +314,7 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
       this->velocity.x = this->max_horiz_speed;
     }
   } else {
-    if (on_ground_or_ladder) {
+    if (this->is_propped_by_level) {
       if (anim_state == CharacterAnimState::WALK ||
           anim_state == CharacterAnimState::JUMP) {
         anim_state = CharacterAnimState::STAND;
@@ -260,7 +330,7 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
   }
 
   // overwrite anim state if jumping
-  if (command & CharacterMovementCommand::JUMP && on_ground_or_ladder) {
+  if (command & CharacterMovementCommand::JUMP && this->is_propped_by_level) {
     anim_state = CharacterAnimState::JUMP;
   }
 }
@@ -337,7 +407,7 @@ void DumbAICharacterController::update(Game &game, CharacterEntity &character,
             ((character.get_aabb().min.x + character.get_aabb().max.x) / 2.0f +
              tilemap->tile_size.x / 2.0f) *
             (moving_right ? 1.0f : -1.0f);
-        if (!tilemap->check_allow_jump(pos_to_check) &&
+        if (!character.check_is_propped(tilemap, pos_to_check) &&
             dir_change_time <= 0.0f) {
 
           dwell_time = 1.0f;
@@ -345,7 +415,7 @@ void DumbAICharacterController::update(Game &game, CharacterEntity &character,
           break;
         }
 
-        if (tilemap->check_allow_jump(head_pos_to_check) &&
+        if (character.check_is_propped(tilemap, head_pos_to_check) &&
             dir_change_time <= 0.0f && time_since_last_jump > 7.0f) {
           time_since_last_jump = 0.0f;
           command |= CharacterMovementCommand::JUMP;

@@ -12,6 +12,7 @@ struct BaseNetMessage {
         interact @5 :InteractNetMessage; # client -> server
         destroyEntity @6 :DestroyEntityNetMessage; # server -> client
         addCameraEffect @7 :AddCameraEffectNetMessage; # server -> client
+        hurtEntity @8 :HurtEntityNetMessage; # server -> client (sent only in case the client is the owner of that entity)
     }
 }
 
@@ -58,6 +59,8 @@ struct SyncTeamBaseEntityData {
 struct SyncCharacterEntityData {
     animationState @0 :UInt32;
     direction @1 :UInt32;
+    maxHealth @2 :UInt32;
+    health @3 :UInt32;
 }
 
 struct GameplayManagerData {
@@ -98,3 +101,8 @@ struct InteractNetMessage {
 struct DestroyEntityNetMessage {
     netId @0 :UInt32;
 }   
+
+struct HurtEntityNetMessage {
+    netId @0 :UInt32;
+    damage @1 :Int32;
+}

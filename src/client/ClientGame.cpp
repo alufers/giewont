@@ -231,6 +231,11 @@ void ClientGame::handle_incoming_message(
     break;
   }
 
+  case net::BaseNetMessage::Which::HURT_ENTITY: {
+    
+    break;
+  }
+
   default:
     LOG_WARN() << "Unknown message type received from the server" << std::endl;
   }

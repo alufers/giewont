@@ -1,4 +1,5 @@
 #include "PhysEntity.h"
+#include "AABB.h"
 #include "Entity.h"
 #include "Log.h"
 #include "TilemapEntity.h"
@@ -22,14 +23,23 @@ void PhysEntity::update(Game &game, float delta_time) {
     this->velocity += game.gravity * delta_time;
     this->position += this->velocity * delta_time;
   }
+
+  this->is_propped_by_level = false;
+
+  const AABB &own_aabb = this->get_aabb();
+  Vec2 feet_pos =
+      this->position +
+      Vec2((own_aabb.min.x + own_aabb.max.x) / 2.0f, own_aabb.max.y + 1.0f);
+
+  auto aabb_to_check = own_aabb.translated(this->position);
   for (auto &entity : game.entities) {
     if (entity == nullptr || entity->id == this->id ||
         entity->marked_for_deletion) {
       continue;
     }
-    auto aabb_to_check = this->get_aabb().translated(this->position);
     if (TilemapEntity *tilemap = dynamic_cast<TilemapEntity *>(entity.get())) {
 
+      // Physics collision check
       auto collision_manifolds = tilemap->check_collision_aabb(aabb_to_check);
       for (auto &manifold : collision_manifolds) {
         float velAlongNormal = this->velocity.dot(manifold.normal);
@@ -46,9 +56,36 @@ void PhysEntity::update(Game &game, float delta_time) {
           this->position += manifold.normal * manifold.penetration * 1;
         }
       }
+
+      // Feet pos check
+      if (!this->is_propped_by_level) { // if one tilemap already reports that
+                                        // it props up the entity, then skip
+                                        // computing for other ones
+
+        if (this->check_is_propped(tilemap, feet_pos)) {
+          bool has_landed = !this->is_propped_by_level;
+          this->is_propped_by_level = true;
+          this->last_on_ground_position = feet_pos;
+          if (has_landed) {
+            this->on_has_landed(game,
+                                feet_pos - this->highest_off_ground_position);
+          }
+          this->highest_off_ground_position = feet_pos; // reset that
+        } else {
+          if (this->highest_off_ground_position.y > feet_pos.y) {
+            this->highest_off_ground_position = feet_pos;
+          }
+        }
+      }
     }
   }
 }
+
+bool PhysEntity::check_is_propped(TilemapEntity *tilemap, Vec2 feet_pos) {
+  return tilemap->check_collision_point(feet_pos) == TileType::SOLID;
+}
+
+void PhysEntity::on_has_landed(Game &game, Vec2 fall_delta) {}
 
 void PhysEntity::draw(const Game &game) {}
 
@@ -57,7 +94,7 @@ void PhysEntity::draw_debug(const Game &game) {
   // draw aabb
   auto aabb = this->get_aabb().translated(this->position);
   DrawRectangleLines(aabb.min.x, aabb.min.y, aabb.width(), aabb.height(),
-                     GREEN);
+                     this->is_propped_by_level ? GREEN : RED);
   // draw resolution vector
   Vec2 reso = this->_resolution_vector_debug * 10.0;
 
@@ -66,6 +103,12 @@ void PhysEntity::draw_debug(const Game &game) {
   DrawText(text_buffer, this->position.x, this->position.y - 20, 10, RED);
   DrawLine(this->position.x, this->position.y, this->position.x + reso.x,
            this->position.y + reso.y, RED);
+
+  if (!this->is_propped_by_level) {
+    // Draw highest off ground position as a circle
+    DrawCircle(this->highest_off_ground_position.x,
+               this->highest_off_ground_position.y, 5, PURPLE);
+  }
 #endif
 }
 

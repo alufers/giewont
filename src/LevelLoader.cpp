@@ -31,48 +31,9 @@ void LevelLoader::load_level(Game &game) {
     } else if (tile_layer["type"] == "objectgroup") {
       LOG_DEBUG() << "Object group" << std::endl;
       for (auto &object : tile_layer["objects"]) {
-
-        // detect entity type
-        if (object["type"] == "spawn_entity") {
-          auto spawn = std::make_unique<SpawnEntity>(object);
-          spawn->is_static = true;
-          game.push_entity(std::move(spawn));
-        } else if (object["type"] == "particle_system") {
-          auto particle_system = std::make_unique<ParticleSystemEntity>(object);
-          particle_system->is_static = true;
-          particle_system->load_assets(game);
-          game.push_entity(std::move(particle_system));
-        } else if (object["type"] == "backdrop") {
-          auto backdrop = std::make_unique<BackdropEntity>(object);
-          backdrop->is_static = true;
-          backdrop->load_assets(game);
-          game.push_entity(std::move(backdrop));
-        } else if (object["type"] == "flag") {
-          auto flag = std::make_unique<FlagEntity>(object);
-          flag->is_static = true;
-          flag->load_assets(game);
-          game.push_entity(std::move(flag));
-
-        } else if (object["type"] == "team_base") {
-
-          // Only spawn team bases on the server, they will get synced.
-          if (game.is_server()) {
-            auto base = std::make_unique<TeamBaseEntity>(object);
-            base->load_assets(game);
-            game.push_entity(std::move(base));
-            LOG_DEBUG() << "Team base spawned" << std::endl;
-          }
-
-        } else if (object["type"] == "gameplay_manager") {
-          if (game.is_server()) {
-            auto gameplay_manager = std::make_unique<GameplayManager>();
-            gameplay_manager->load_assets(game);
-            game.push_entity(std::move(gameplay_manager));
-          }
-
-        } else {
-          LOG_ERROR() << "Unknown object type in level data: " << object["type"]
-                      << std::endl;
+        auto entity = create_entity_from_json(game, object);
+        if (entity != nullptr) {
+          game.push_entity(std::move(entity));
         }
       }
     }
@@ -89,4 +50,42 @@ LevelLoader::tmjPropertiesToObj(const nlohmann::json &tmj_properties) {
     obj[prop["name"]] = prop["value"];
   }
   return obj;
+}
+
+std::unique_ptr<Entity>
+LevelLoader::create_entity_from_json(const Game &game, const nlohmann::json &object) {
+  std::unique_ptr<Entity> entity = nullptr;
+  // detect entity type
+  if (object["type"] == "spawn_entity") {
+    entity = std::make_unique<SpawnEntity>(object);
+    entity->is_static = true;
+
+  } else if (object["type"] == "particle_system") {
+    entity = std::make_unique<ParticleSystemEntity>(object);
+    entity->is_static = true;
+
+  } else if (object["type"] == "backdrop") {
+    entity = std::make_unique<BackdropEntity>(object);
+    entity->is_static = true;
+
+  } else if (object["type"] == "flag") {
+    entity = std::make_unique<FlagEntity>(object);
+    entity->is_static = true;
+  } else if (object["type"] == "team_base") {
+    // Only spawn team bases on the server, they will get synced.
+    if (game.is_server()) {
+      entity = std::make_unique<TeamBaseEntity>(object);
+    }
+
+  } else if (object["type"] == "gameplay_manager") {
+    if (game.is_server()) {
+      entity = std::make_unique<GameplayManager>();
+    }
+
+  } else {
+    LOG_ERROR() << "Unknown object type in level data: " << object["type"]
+                << std::endl;
+  }
+
+  return entity;
 }
