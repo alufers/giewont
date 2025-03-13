@@ -206,6 +206,7 @@ void CharacterEntity::update(Game &game, float delta_time) {
 void CharacterEntity::on_has_landed(Game &game, Vec2 fall_delta) {
   float fall_height = std::abs(fall_delta.y);
   if (fall_height > 100.0) {
+     
 #if GIEWONT_HAS_GRAPHICS
     Vec2 feet_pos =
         position + Vec2((get_aabb().min.x + get_aabb().max.x) / 2.0f,

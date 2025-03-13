@@ -34,8 +34,7 @@ void PhysEntity::update(Game &game, float delta_time) {
   auto aabb_to_check = own_aabb.translated(this->position);
   bool has_landed = false;
   for (auto &entity : game.entities) {
-    if (!entity || entity->id == this->id ||
-        entity->marked_for_deletion) {
+    if (!entity || entity->id == this->id || entity->marked_for_deletion) {
       continue;
     }
     if (TilemapEntity *tilemap = dynamic_cast<TilemapEntity *>(entity.get())) {
@@ -59,27 +58,22 @@ void PhysEntity::update(Game &game, float delta_time) {
       }
 
       // Feet pos check
-      if (!this->is_propped_by_level) { // if one tilemap already reports that
-                                        // it props up the entity, then skip
-                                        // computing for other ones
 
-        if (this->check_is_propped(tilemap, feet_pos)) {
-          has_landed = !this->is_propped_by_level;
-          this->is_propped_by_level = true;
-          this->last_on_ground_position = feet_pos;
-         
-          this->highest_off_ground_position = feet_pos; // reset that
-        } else {
-          if (this->highest_off_ground_position.y > feet_pos.y) {
-            this->highest_off_ground_position = feet_pos;
-          }
+      if (this->check_is_propped(tilemap, feet_pos)) {
+        has_landed = !this->is_propped_by_level;
+        this->is_propped_by_level = true;
+        this->last_on_ground_position = feet_pos;
+
+        this->highest_off_ground_position = feet_pos; // reset that
+      } else {
+        if (this->highest_off_ground_position.y > feet_pos.y) {
+          this->highest_off_ground_position = feet_pos;
         }
       }
     }
   }
   if (has_landed) {
-      this->on_has_landed(game,
-          feet_pos - this->highest_off_ground_position);
+    this->on_has_landed(game, feet_pos - this->highest_off_ground_position);
   }
 }
 
