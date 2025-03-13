@@ -46,13 +46,11 @@ endif()
 
 
 ### Capnproto
-find_package(CapnProto QUIET)
-if(NOT CapnProto_FOUND)
-  set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-  add_subdirectory(libs/capnproto)
-  set(${CAPNP_LIBRARIES} "CapnProto::capnp")
-#   set(${CAPNP_INCLUDE_DIRS} "${CMAKE_CURRENT_LIST_DIR}/libs/capnproto/c++/src")
-endif()
+
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+add_compile_definitions(-DKJ_NO_COMPILER_CHECK)
+add_subdirectory(libs/capnproto)
+set(CAPNP_LIBRARIES "CapnProto::capnp")
 
 capnp_generate_cpp(CAPNP_SRCS CAPNP_HDRS "${CMAKE_CURRENT_LIST_DIR}/src/net/schema.capnp")
 
