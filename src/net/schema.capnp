@@ -13,6 +13,7 @@ struct BaseNetMessage {
         destroyEntity @6 :DestroyEntityNetMessage; # server -> client
         addCameraEffect @7 :AddCameraEffectNetMessage; # server -> client
         hurtEntity @8 :HurtEntityNetMessage; # server -> client (sent only in case the client is the owner of that entity)
+        instantiatePrefab @9 :InstantiatePrefabNetMessage; # server -> client
     }
 }
 
@@ -27,6 +28,7 @@ enum EntityType {
     flag @2;
     teamBase @3;
     gameplayManager @4;
+    grenade @5;
 }
 
 struct SyncEntityNetMessage {
@@ -42,6 +44,7 @@ struct SyncEntityNetMessage {
         flagData @7 :SyncFlagEntityData;
         teamBaseData @8 :SyncTeamBaseEntityData;
         gameplayManagerData @9 :GameplayManagerData;
+        grenadeData @10 :GrenadeData;
     }
 }
 
@@ -69,6 +72,16 @@ struct GameplayManagerData {
     redTeamScore @1 :UInt32;
     message @2 :Text;
     messageTime @3 :Float32;
+}
+
+struct GrenadeData {
+    fuseTotalTime @0 :Float32;
+    fuseTimeLeft @1 :Float32;
+}
+
+struct InstantiatePrefabNetMessage {
+    prefabPath @0 :Text;
+    position @1 :NetVec2;
 }
 
 struct NetVec2 {

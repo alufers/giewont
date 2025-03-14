@@ -1,9 +1,12 @@
 #include "ClientGame.h"
 #include "CameraEntity.h"
+#include "CharacterEntity.h"
 #include "Entity.h"
 #include "Log.h"
 
 #include "DebugGUI.h"
+#include "nbnet_helper.h"
+#include "nbnet_lean.h"
 #include "net_common.h"
 #include "raylib.h"
 #include "rlImGui.h"
@@ -14,8 +17,6 @@
 #include <format>
 #include <stdexcept>
 #include <stdlib.h>
-#include "nbnet_helper.h"
-#include "nbnet_lean.h"
 
 using namespace giewont;
 
@@ -155,9 +156,7 @@ void ClientGame::update(float delta_time) {
   }
 }
 
-void ClientGame::init_net_client() {
-  install_nbnet_webrtc_driver();
-}
+void ClientGame::init_net_client() { install_nbnet_webrtc_driver(); }
 
 void ClientGame::handle_incoming_nbnet_message(NBN_MessageInfo msg_info) {
   if (msg_info.type != NBN_BYTE_ARRAY_MESSAGE_TYPE) {
@@ -224,7 +223,20 @@ void ClientGame::handle_incoming_message(
   }
 
   case net::BaseNetMessage::Which::HURT_ENTITY: {
+    auto net_id = message.getHurtEntity().getNetId();
+    auto entity = get_entity_by_net_id(net_id);
+    if (entity.valid_as<CharacterEntity>(*this)) {
+      auto characterEntity = &entity.get_as<CharacterEntity>(*this);
 
+      characterEntity->apply_hurt_message(*this, message.getHurtEntity());
+    }
+    break;
+  }
+  case net::BaseNetMessage::Which::INSTANTIATE_PREFAB: {
+    auto prefab_id =
+        this->preload_prefab(message.getInstantiatePrefab().getPrefabPath());
+    auto prefab = this->instantiate_prefab(
+        prefab_id, Vec2(message.getInstantiatePrefab().getPosition()));
     break;
   }
 

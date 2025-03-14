@@ -34,6 +34,8 @@ public:
   Vec2 last_on_ground_position = Vec2(0, 0);
   Vec2 highest_off_ground_position = Vec2(0, 0);
 
+  float collision_impulse_multiplier = 1.9f; // 1.9f prevents oscillations
+
   /** @brief Check whether the entity  */
   virtual bool check_is_propped(TilemapEntity *tilemap, Vec2 feet_pos);
 

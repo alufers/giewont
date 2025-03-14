@@ -20,6 +20,7 @@ public:
       : lifetime(NAN), position({0.0f, 0.0f}), velocity({0.0f, 0.0f}),
         size(1.0) {}
   float lifetime; // if NaN, the particle is dead
+  float total_lifetime;
   Vec2 position;
   Vec2 velocity;
   float size;
@@ -68,6 +69,12 @@ public:
       ParticleTilemapCollisionAction::KILL;
 
   float particle_immunity_time = 0.3f;
+
+  bool fade_alpha = false;
+  bool fade_size = false;
+
+  EntityRef spawner_entity;
+  bool attached_to_spawner = false;
 
 private:
   float _time_since_last_emission = 0.0f;

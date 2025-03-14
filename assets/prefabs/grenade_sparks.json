@@ -7,27 +7,27 @@
     {
       "name": "emission_rate",
       "type": "float",
-      "value": 100000000
+      "value": 10.0
+    },
+    {
+      "name": "gravity_factor",
+      "type": "float",
+      "value": 0.5
     },
     {
       "name": "initial_velocity_angle",
       "type": "float",
-      "value": 0.8
+      "value": 0.4
     },
     {
       "name": "particle_texture_path",
       "type": "string",
-      "value": "stone_particle.png"
-    },
-    {
-      "name": "system_lifetime",
-      "type": "float",
-      "value": 0.1
+      "value": "spark_particle_flare.png"
     },
     {
       "name": "particle_size",
       "type": "float",
-      "value": 0.5
+      "value": 0.3
     },
     {
       "name": "particle_size_variation",
@@ -37,21 +37,25 @@
     {
       "name": "max_particles",
       "type": "int",
-      "value": 1000
+      "value": 300
     },
     {
       "name": "initial_velocity",
-      "value": [0.0, -340.0]
+      "value": [-50.0, -200.0]
     },
     {
       "name": "max_lifetime",
       "type": "float",
-      "value": 10.0
+      "value": 1.0
     },
     {
-        "name": "velocity_variation",
-        "type": "float",
-        "value": 0.5
+      "name": "velocity_variation",
+      "type": "float",
+      "value": 0.2
+    },
+    {
+      "name": "tilemap_collision_action",
+      "value": "KILL"
     }
   ],
   "rotation": 0,

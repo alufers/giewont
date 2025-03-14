@@ -50,7 +50,7 @@ void PhysEntity::update(Game &game, float delta_time) {
         j /= 1.0 / 1.0 + 1.0 / 1.0; // inverse mass
         Vec2 impulse = manifold.normal * j;
         if (!is_kinematic) {
-          this->velocity += impulse * 1.9; // 1.9 prevents oscillation
+          this->velocity += impulse * collision_impulse_multiplier; 
           this->_resolution_vector_debug = impulse;
           this->position += manifold.normal * manifold.penetration * 1;
         }

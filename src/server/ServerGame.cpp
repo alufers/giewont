@@ -2,8 +2,10 @@
 #include "CameraEntity.h"
 #include "CharacterEntity.h"
 #include "Entity.h"
+#include "GrenadeEntity.h"
 #include "Log.h"
 #include "SpawnEntity.h"
+#include "nbnet_helper.h"
 #include "net/net_common.h"
 #include "net_common.h"
 #include "schema.capnp.h"
@@ -11,7 +13,6 @@
 #include <exception>
 #include <memory>
 #include <vector>
-#include "nbnet_helper.h"
 
 extern "C" {
 #include "nbnet.h"
@@ -261,25 +262,32 @@ void ServerGame::handle_interact_message(
   }
 
   Vec2 interactor_pos = interactor_ent.position;
+  if (message.getType() == net::InteractionType::USE_INTERACTION) {
 
-  std::vector<EntityRef> allEntities;
-  for (auto &entity : this->valid_entities()) {
-    if (entity->get_ref() == interactor)
-      continue;
+    std::vector<EntityRef> allEntities;
+    for (auto &entity : this->valid_entities()) {
+      if (entity->get_ref() == interactor)
+        continue;
 
-    allEntities.push_back(entity->get_ref());
-  }
+      allEntities.push_back(entity->get_ref());
+    }
 
-  std::sort(allEntities.begin(), allEntities.end(),
-            [&](EntityRef a, EntityRef b) {
-              return a.get(*this).position.distance(interactor_pos) <
-                     b.get(*this).position.distance(interactor_pos);
-            });
+    std::sort(allEntities.begin(), allEntities.end(),
+              [&](EntityRef a, EntityRef b) {
+                return a.get(*this).position.distance(interactor_pos) <
+                       b.get(*this).position.distance(interactor_pos);
+              });
 
-  for (auto &entity_ref : allEntities) {
-    auto &entity = entity_ref.get(*this);
-    if (entity.handle_interaction(*this, message))
-      break;
+    for (auto &entity_ref : allEntities) {
+      auto &entity = entity_ref.get(*this);
+      if (entity.handle_interaction(*this, message))
+        break;
+    }
+  } else if (message.getType() == net::InteractionType::THROW_INTERACTION) {
+    auto grenade = std::make_unique<GrenadeEntity>();
+    grenade->position = interactor_pos;
+    grenade->load_assets(*this);
+    push_entity(std::move(grenade));
   }
 }
 

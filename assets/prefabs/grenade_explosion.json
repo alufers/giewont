@@ -7,32 +7,37 @@
     {
       "name": "emission_rate",
       "type": "float",
-      "value": 100000000
+      "value": 1000.0
     },
     {
-      "name": "initial_velocity_angle",
-      "type": "float",
-      "value": 0.8
-    },
-    {
-      "name": "particle_texture_path",
-      "type": "string",
-      "value": "stone_particle.png"
-    },
-    {
-      "name": "system_lifetime",
-      "type": "float",
-      "value": 0.1
-    },
-    {
-      "name": "particle_size",
+      "name": "gravity_factor",
       "type": "float",
       "value": 0.5
     },
     {
+      "name": "initial_velocity_angle",
+      "type": "float",
+      "value": 6.28
+    },
+    {
+      "name": "particle_texture_path",
+      "type": "string",
+      "value": "smoke1.png"
+    },
+    {
+      "name": "system_lifetime",
+      "type": "float",
+      "value": 0.2
+    },
+    {
+      "name": "particle_size",
+      "type": "float",
+      "value": 0.6
+    },
+    {
       "name": "particle_size_variation",
       "type": "float",
-      "value": 0.4
+      "value": 0.3
     },
     {
       "name": "max_particles",
@@ -41,17 +46,29 @@
     },
     {
       "name": "initial_velocity",
-      "value": [0.0, -340.0]
+      "value": [0.0, -300.0]
     },
     {
       "name": "max_lifetime",
       "type": "float",
-      "value": 10.0
+      "value": 0.7
     },
     {
-        "name": "velocity_variation",
-        "type": "float",
-        "value": 0.5
+      "name": "velocity_variation",
+      "type": "float",
+      "value": 0.5
+    },
+    {
+      "name": "tilemap_collision_action",
+      "value": "NONE"
+    },
+    {
+      "name": "fade_size",
+      "value": true
+    },
+    {
+      "name": "fade_alpha",
+      "value": true
     }
   ],
   "rotation": 0,
