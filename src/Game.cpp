@@ -24,6 +24,7 @@ Game::Game() {
   auto null_ent = std::make_unique<NullEntity>();
   null_ent->id = 0;
   this->entities.push_back(std::move(null_ent));
+  this->entities.resize(MAX_ENTITIES);
 }
 
 void Game::update(float delta_time) {

@@ -286,6 +286,9 @@ void ServerGame::handle_interact_message(
   } else if (message.getType() == net::InteractionType::THROW_INTERACTION) {
     auto grenade = std::make_unique<GrenadeEntity>();
     grenade->position = interactor_pos;
+    if (interactor.valid_as<PhysEntity>(*this)) {
+      grenade->velocity = interactor.get_as<PhysEntity>(*this).velocity * 1.2;
+    }
     grenade->load_assets(*this);
     push_entity(std::move(grenade));
   }

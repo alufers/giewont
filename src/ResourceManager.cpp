@@ -1,9 +1,22 @@
 #include "ResourceManager.h"
+#include <filesystem>
 #include <fstream>
+
 using giewont::res_id;
 using giewont::ResourceManager;
 
-ResourceManager::ResourceManager() {}
+ResourceManager::ResourceManager() {
+  if (this->assets_path == "") {
+    auto dir = std::filesystem::current_path();
+    while (dir != dir.root_directory()) {
+      if (std::filesystem::exists(dir / "gw_assets")) {
+        this->assets_path = (dir / "gw_assets").string() + "/";
+        break;
+      }
+      dir = dir.parent_path();
+    }
+  }
+}
 
 res_id ResourceManager::load_json(std::string path) {
   std::string full_path = assets_path + path;

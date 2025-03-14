@@ -12,7 +12,7 @@
 #endif
 
 #ifndef GIEWONT_ASSETS_PATH
-#define GIEWONT_ASSETS_PATH "assets/"
+#define GIEWONT_ASSETS_PATH ""
 #endif
 
 namespace giewont {
