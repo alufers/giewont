@@ -10,32 +10,32 @@ if (EMSCRIPTEN)
     set(CMAKE_EXECUTABLE_SUFFIX ".html") # This line is used to set your executable to build with the emscripten html template so that you can directly open it.
 endif ()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE INTERNAL "")
-endif()
+endif ()
 
 set(RAYLIB_VERSION 5.5)
 find_package(raylib ${RAYLIB_VERSION} QUIET) # QUIET or REQUIRED
 
-if(NOT raylib_FOUND) # If there's none, fetch and build raylib
+if (NOT raylib_FOUND) # If there's none, fetch and build raylib
     set(FETCHCONTENT_QUIET FALSE)
     include(FetchContent)
     FetchContent_Declare(
-        raylib
-        DOWNLOAD_EXTRACT_TIMESTAMP OFF
-        URL https://github.com/raysan5/raylib/archive/refs/tags/${RAYLIB_VERSION}.tar.gz
+            raylib
+            DOWNLOAD_EXTRACT_TIMESTAMP OFF
+            URL https://github.com/raysan5/raylib/archive/refs/tags/${RAYLIB_VERSION}.tar.gz
     )
     FetchContent_GetProperties(raylib)
 
-    if(NOT raylib_POPULATED) # Have we downloaded raylib yet?
+    if (NOT raylib_POPULATED) # Have we downloaded raylib yet?
         set(FETCHCONTENT_QUIET NO)
         set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
         set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
         FetchContent_MakeAvailable(raylib)
 
-#        add_subdirectory(${raylib_SOURCE_DIR} ${raylib_BINARY_DIR})
-    endif()
-endif()
+        #        add_subdirectory(${raylib_SOURCE_DIR} ${raylib_BINARY_DIR})
+    endif ()
+endif ()
 
 
 set(CMAKE_PROJECT_VERSION "AAAAA")
@@ -52,7 +52,6 @@ set(OPENSSL_USE_STATIC_LIBS ON CACHE BOOL "" FORCE)
 add_subdirectory(libs/libdatachannel)
 
 
-
 ### Capnproto
 
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
@@ -65,35 +64,35 @@ capnp_generate_cpp(CAPNP_SRCS CAPNP_HDRS "${CMAKE_CURRENT_LIST_DIR}/src/net/sche
 
 # List common sources between client and server
 set(COMMON_SOURCES
-    ${CAPNP_SRCS}
-    src/CameraEntity.cpp
-    src/CharacterEntity.cpp
-    src/Entity.cpp
-    src/Game.cpp
-    src/LevelLoader.cpp
-    src/nbnet.cpp
-    src/PhysEntity.cpp
-    src/ResourceManager.cpp
-    src/SpawnEntity.cpp
-    src/TilemapEntity.cpp
-    src/ParticleSystemEntity.cpp
-    src/BackdropEntity.cpp
-    src/FlagEntity.cpp
-    src/DataBinder.cpp
-    src/TeamBaseEntity.cpp
-    src/GameplayManager.cpp
-    src/GrenadeEntity.cpp
-    src/KeyboardCharacterController.cpp
-    src/CharacterController.cpp
-    src/Util.cpp
+        ${CAPNP_SRCS}
+        src/CameraEntity.cpp
+        src/CharacterEntity.cpp
+        src/Entity.cpp
+        src/Game.cpp
+        src/LevelLoader.cpp
+        src/nbnet.cpp
+        src/PhysEntity.cpp
+        src/ResourceManager.cpp
+        src/SpawnEntity.cpp
+        src/TilemapEntity.cpp
+        src/ParticleSystemEntity.cpp
+        src/BackdropEntity.cpp
+        src/FlagEntity.cpp
+        src/DataBinder.cpp
+        src/TeamBaseEntity.cpp
+        src/GameplayManager.cpp
+        src/GrenadeEntity.cpp
+        src/KeyboardCharacterController.cpp
+        src/CharacterController.cpp
+        src/Util.cpp
 )
 set(COMMON_INCLUDES
-    "${CMAKE_CURRENT_LIST_DIR}/src/"  
-    "${CMAKE_CURRENT_LIST_DIR}/src/math"
-    "${CMAKE_CURRENT_LIST_DIR}/src/net"
-    ${CAPNP_INCLUDE_DIRS}
-    "${CMAKE_CURRENT_LIST_DIR}/libs/capnproto/c++/src"
-    ${CMAKE_CURRENT_BINARY_DIR}/src/net # capnproto generated files
+        "${CMAKE_CURRENT_LIST_DIR}/src/"
+        "${CMAKE_CURRENT_LIST_DIR}/src/math"
+        "${CMAKE_CURRENT_LIST_DIR}/src/net"
+        ${CAPNP_INCLUDE_DIRS}
+        "${CMAKE_CURRENT_LIST_DIR}/libs/capnproto/c++/src"
+        ${CMAKE_CURRENT_BINARY_DIR}/src/net # capnproto generated files
 )
 
 ### Client build
@@ -106,17 +105,20 @@ add_compile_definitions(-DKJ_NO_COMPILER_CHECK=1)
 
 set(CLIENT_EXE_NAME "giewont_client")
 
-set(CLIENT_SOURCES 
-    src/client/main_client.cpp
-    src/client/ClientGame.cpp
-    src/client/DebugGUI.cpp
+set(CLIENT_SOURCES
+        src/client/main_client.cpp
+        src/client/ClientGame.cpp
+        src/client/DrawableGame.cpp
+        src/client/DebugGUI.cpp
 )
 
-set (CLIENT_INCLUDES
-    "${CMAKE_CURRENT_LIST_DIR}/src/client"
+set(CLIENT_INCLUDES
+        "${CMAKE_CURRENT_LIST_DIR}/src/client"
 )
 
-add_executable(${CLIENT_EXE_NAME})
+add_executable(${CLIENT_EXE_NAME}
+        src/client/DrawableGame.cpp
+        src/client/DrawableGame.h)
 target_compile_definitions(${CLIENT_EXE_NAME} PUBLIC -DGIEWONT_IS_CLIENT -DGIEWONT_HAS_GRAPHICS)
 target_sources(${CLIENT_EXE_NAME} PRIVATE ${COMMON_SOURCES} ${CLIENT_SOURCES})
 target_include_directories(${CLIENT_EXE_NAME} PRIVATE ${COMMON_INCLUDES} ${CLIENT_INCLUDES})
@@ -127,9 +129,7 @@ message("CAPNP_LIBRARIES: ${CAPNP_LIBRARIES}")
 target_link_libraries(${CLIENT_EXE_NAME} PRIVATE raylib nlohmann_json::nlohmann_json imgui rlImGui ${CAPNP_LIBRARIES})
 
 
-
 # target_compile_definitions(${CLIENT_EXE_NAME} ${CAPNP_DEFINITIONS})
-
 
 
 target_compile_options(${CLIENT_EXE_NAME} PRIVATE -ggdb)
@@ -139,24 +139,24 @@ if (EMSCRIPTEN)
     target_link_options(${CLIENT_EXE_NAME} PRIVATE -fwasm-exceptions --embed-file ${CMAKE_CURRENT_SOURCE_DIR}/assets@/assets)
     target_compile_definitions(${CLIENT_EXE_NAME} PUBLIC -DGIEWONT_ASSETS_PATH="/assets/")
     set_target_properties(${CLIENT_EXE_NAME} PROPERTIES OUTPUT_NAME "index")
-else()
+else ()
     target_compile_definitions(${CLIENT_EXE_NAME} PUBLIC -DKJ_NO_COMPILER_CHECK)
     target_link_libraries(${CLIENT_EXE_NAME} PUBLIC datachannel-static)
-endif()
+endif ()
 
 
 ### Server build
-if(NOT EMSCRIPTEN)
-    
+if (NOT EMSCRIPTEN)
+
     set(SERVER_EXE_NAME "giewont_server")
 
-    set(SERVER_SOURCES 
-        src/server/main_server.cpp
-        src/server/ServerGame.cpp
+    set(SERVER_SOURCES
+            src/server/main_server.cpp
+            src/server/ServerGame.cpp
     )
 
-    set (SERVER_INCLUDES
-        "${CMAKE_CURRENT_LIST_DIR}/src/server"
+    set(SERVER_INCLUDES
+            "${CMAKE_CURRENT_LIST_DIR}/src/server"
     )
 
     add_executable(${SERVER_EXE_NAME})
@@ -164,15 +164,15 @@ if(NOT EMSCRIPTEN)
     target_sources(${SERVER_EXE_NAME} PRIVATE ${COMMON_SOURCES} ${SERVER_SOURCES})
     target_include_directories(${SERVER_EXE_NAME} PRIVATE ${COMMON_INCLUDES} ${SERVER_INCLUDES})
     target_include_directories(${SERVER_EXE_NAME} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/libs/nbnet")
-    target_compile_definitions(${SERVER_EXE_NAME} PUBLIC  -DKJ_NO_COMPILER_CHECK)
+    target_compile_definitions(${SERVER_EXE_NAME} PUBLIC -DKJ_NO_COMPILER_CHECK)
     # target_compile_definitions(${SERVER_EXE_NAME} ${CAPNP_DEFINITIONS})
 
     target_link_libraries(${SERVER_EXE_NAME} PRIVATE nlohmann_json::nlohmann_json datachannel-static ${CAPNP_LIBRARIES})
 
     # if using gcc...
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_compile_options(${SERVER_EXE_NAME} PRIVATE -ggdb)
-    endif()
-   
-endif()
+    endif ()
+
+endif ()
 

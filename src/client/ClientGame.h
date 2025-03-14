@@ -4,6 +4,7 @@
 
 #include "Entity.h"
 #include "Game.h"
+#include "DrawableGame.h"
 #include <capnp/message.h>
 #include <capnp/serialize.h>
 #include <memory>
@@ -26,12 +27,11 @@ enum class ClientGameState {
 
 class DebugGUI;
 
-class ClientGame : public Game {
+class ClientGame : public DrawableGame {
 public:
   ClientGame(std::string server_address, int server_port);
-  void draw();
+  void draw() override;
   void update(float delta_time) override;
-  void init_net_client();
   bool is_server() const override { return false; }
   void shutdown() override;
 

@@ -20,7 +20,7 @@
 
 using namespace giewont;
 
-ClientGame::ClientGame(std::string server_address, int server_port) : Game() {
+ClientGame::ClientGame(std::string server_address, int server_port) : DrawableGame() {
   this->server_address = server_address;
   this->server_port = server_port;
   debug_gui = std::make_unique<DebugGUI>();
@@ -155,8 +155,6 @@ void ClientGame::update(float delta_time) {
     exit(1);
   }
 }
-
-void ClientGame::init_net_client() { install_nbnet_webrtc_driver(); }
 
 void ClientGame::handle_incoming_nbnet_message(NBN_MessageInfo msg_info) {
   if (msg_info.type != NBN_BYTE_ARRAY_MESSAGE_TYPE) {

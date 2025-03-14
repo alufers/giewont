@@ -22,6 +22,8 @@ namespace giewont {
 class Game {
 
 public:
+  virtual ~Game() = default;
+
   Game();
   // General stuff
   static constexpr size_t MAX_ENTITIES = 1024;

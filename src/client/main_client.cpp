@@ -8,19 +8,21 @@
 #include "ClientGame.h"
 #include "imgui.h"
 #include "rlImGui.h"
+#include "DrawableGame.h"
 #include <chrono>
 #include <memory>
+#include "nbnet_helper.h"
 
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
 #endif
 
-#define SCREEN_WIDTH (1920)
-#define SCREEN_HEIGHT (1080)
+#define SCREEN_WIDTH (1800)
+#define SCREEN_HEIGHT (940)
 
 #define WINDOW_TITLE "GIEWONT"
 
-static std::unique_ptr<giewont::ClientGame> g =
+static std::unique_ptr<giewont::DrawableGame> g =
     std::make_unique<giewont::ClientGame>("localhost", 1338);
 
 static void main_loop() {
@@ -110,7 +112,7 @@ int main() {
   //     ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
 
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15, 15));
-  g->init_net_client();
+  giewont::install_nbnet_webrtc_driver();
 
 #if defined(PLATFORM_WEB)
   emscripten_set_main_loop(main_loop, 60, 1);
