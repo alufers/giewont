@@ -10,6 +10,10 @@ if (EMSCRIPTEN)
     set(CMAKE_EXECUTABLE_SUFFIX ".html") # This line is used to set your executable to build with the emscripten html template so that you can directly open it.
 endif ()
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE INTERNAL "")
+endif()
+
 set(RAYLIB_VERSION 5.5)
 find_package(raylib ${RAYLIB_VERSION} QUIET) # QUIET or REQUIRED
 
@@ -25,10 +29,11 @@ if(NOT raylib_FOUND) # If there's none, fetch and build raylib
 
     if(NOT raylib_POPULATED) # Have we downloaded raylib yet?
         set(FETCHCONTENT_QUIET NO)
-        FetchContent_Populate(raylib)
         set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
         set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
-        add_subdirectory(${raylib_SOURCE_DIR} ${raylib_BINARY_DIR})
+        FetchContent_MakeAvailable(raylib)
+
+#        add_subdirectory(${raylib_SOURCE_DIR} ${raylib_BINARY_DIR})
     endif()
 endif()
 
@@ -43,6 +48,7 @@ set(NO_TESTS ON CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(NO_MEDIA ON CACHE BOOL "" FORCE)
 set(NO_EXAMPLES ON CACHE BOOL "" FORCE)
+set(OPENSSL_USE_STATIC_LIBS ON CACHE BOOL "" FORCE)
 add_subdirectory(libs/libdatachannel)
 
 
@@ -50,6 +56,7 @@ add_subdirectory(libs/libdatachannel)
 ### Capnproto
 
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(EXTERNAL_CAPNP ON CACHE BOOL "" FORCE)
 add_compile_definitions(-DKJ_NO_COMPILER_CHECK -DKJ_USE_FIBERS=0)
 add_subdirectory(libs/capnproto)
 set(CAPNP_LIBRARIES "CapnProto::capnp")
@@ -161,6 +168,11 @@ if(NOT EMSCRIPTEN)
     # target_compile_definitions(${SERVER_EXE_NAME} ${CAPNP_DEFINITIONS})
 
     target_link_libraries(${SERVER_EXE_NAME} PRIVATE nlohmann_json::nlohmann_json datachannel-static ${CAPNP_LIBRARIES})
-    target_compile_options(${SERVER_EXE_NAME} PRIVATE -ggdb)
+
+    # if using gcc...
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(${SERVER_EXE_NAME} PRIVATE -ggdb)
+    endif()
+   
 endif()
 
