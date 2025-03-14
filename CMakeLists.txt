@@ -10,7 +10,7 @@ if (EMSCRIPTEN)
     set(CMAKE_EXECUTABLE_SUFFIX ".html") # This line is used to set your executable to build with the emscripten html template so that you can directly open it.
 endif ()
 
-set(RAYLIB_VERSION 5.0)
+set(RAYLIB_VERSION 5.5)
 find_package(raylib ${RAYLIB_VERSION} QUIET) # QUIET or REQUIRED
 
 if(NOT raylib_FOUND) # If there's none, fetch and build raylib
