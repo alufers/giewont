@@ -9,18 +9,13 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include "CharacterController.h"
 
 namespace giewont {
 
 class CharacterController;
 class KeyboardCharacterController;
 
-enum class CharacterMovementCommand {
-  NONE = 0,
-  MOVE_LEFT = 1 << 0,
-  MOVE_RIGHT = 1 << 1,
-  JUMP = 1 << 2,
-};
 
 enum class CharacterAnimState { STAND, WALK, JUMP };
 
@@ -114,14 +109,7 @@ private:
   void load_spritesheet_data(const Game &game);
 };
 
-/**
- * @brief Base class for character controllers (player, AI, remote etc.)
- */
-class CharacterController {
-public:
-  virtual void update(Game &game, CharacterEntity &character,
-                      float delta_time) = 0;
-};
+
 
 /**
  * @brief Character controller that does nothing, used on the client for
@@ -134,11 +122,6 @@ public:
               float delta_time) override {};
 };
 
-class KeyboardCharacterController : public CharacterController {
-public:
-  void update(Game &game, CharacterEntity &character,
-              float delta_time) override;
-};
 
 class DumbAICharacterController : public CharacterController {
 public:

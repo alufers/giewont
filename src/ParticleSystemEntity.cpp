@@ -62,6 +62,10 @@ ParticleSystemEntity::ParticleSystemEntity(const nlohmann::json &data)
     this->system_lifetime = properties["system_lifetime"].get<float>();
   }
 
+  if (properties["gravity_factor"].is_number_float()) {
+    this->gravity_factor = properties["gravity_factor"].get<float>();
+  }
+
   if (properties["particle_size"].is_number_float()) {
     this->particle_size = properties["particle_size"].get<float>();
   }
@@ -73,6 +77,29 @@ ParticleSystemEntity::ParticleSystemEntity(const nlohmann::json &data)
 
   if (properties["velocity_variation"].is_number_float()) {
     this->velocity_variation = properties["velocity_variation"].get<float>();
+  }
+
+  if (properties["tilemap_collision_action"].is_string()) {
+    std::string action_str =
+        properties["tilemap_collision_action"].get<std::string>();
+    if (action_str == "NONE") {
+      this->tilemap_collision_action = ParticleTilemapCollisionAction::NONE;
+    } else if (action_str == "KILL") {
+      this->tilemap_collision_action = ParticleTilemapCollisionAction::KILL;
+    } else if (action_str == "BOUNCE") {
+      this->tilemap_collision_action = ParticleTilemapCollisionAction::BOUNCE;
+    } else {
+      throw std::runtime_error("Unknown tilemap_collision_action: " +
+                               action_str);
+    }
+  }
+
+  if (properties["fade_size"].is_boolean()) {
+    this->fade_size = properties["fade_size"].get<bool>();
+  }
+
+  if (properties["fade_alpha"].is_boolean()) {
+    this->fade_alpha = properties["fade_alpha"].get<bool>();
   }
 
   this->position.x = data["x"].get<float>();
@@ -87,7 +114,10 @@ void ParticleSystemEntity::update(Game &game, float delta_time) {
   if (this->particles.size() != this->max_particles) {
     this->particles.resize(this->max_particles);
   }
-  if (this->emission_rate >= 0.0000001f && this->system_lifetime >= 0.0f) {
+  bool should_emit =
+      this->emission_rate >= 0.0000001f && this->system_lifetime >= 0.0f &&
+      (!this->attached_to_spawner || this->spawner_entity.valid(game));
+  if (should_emit) {
     size_t particles_to_emit =
         static_cast<size_t>(this->emission_rate * delta_time);
 
@@ -99,12 +129,18 @@ void ParticleSystemEntity::update(Game &game, float delta_time) {
       }
     }
 
+    Vec2 spawn_pos = this->position;
+
+    if (this->attached_to_spawner) {
+      spawn_pos = this->spawner_entity.get(game).position;
+    }
     for (size_t i = 0; i < particles_to_emit; i++) {
       for (auto &particle : this->particles) {
         if (std::isnan(particle.lifetime)) {
           // spawn in this slot
           particle.lifetime = this->max_lifetime;
-          particle.position = Vec2(0.0, 0.0);
+          particle.total_lifetime = this->max_lifetime;
+          particle.position = spawn_pos;
 
           if (this->particle_size_variation > 0.0000001f) {
             particle.size = this->particle_size +
@@ -161,20 +197,22 @@ void ParticleSystemEntity::update(Game &game, float delta_time) {
     particle.velocity += game.gravity * delta_time * this->gravity_factor;
     particle.position += particle.velocity * delta_time;
 
-    if (tilemap_for_system != nullptr && (this->max_lifetime - particle.lifetime) > this->particle_immunity_time) {
+    if (tilemap_for_system != nullptr &&
+        (this->max_lifetime - particle.lifetime) >
+            this->particle_immunity_time) {
       auto particle_radius = particle.size * 70.0f * 0.7; // TOOD: compute
 
-      Vec2 world_position = this->position + particle.position;
       TilemapCollisionManifold manifolds[4];
       size_t manifolds_count = tilemap_for_system->check_collision_circle(
-          world_position, particle_radius, manifolds, 4);
+          particle.position, particle_radius, manifolds, 4);
 
       for (size_t i = 0; i < manifolds_count; i++) {
         if (this->tilemap_collision_action ==
             ParticleTilemapCollisionAction::KILL) {
           particle.lifetime = NAN;
           break;
-        } {
+        }
+        {
           // todo handle bounce
         }
       }
@@ -182,8 +220,13 @@ void ParticleSystemEntity::update(Game &game, float delta_time) {
   }
 
   this->system_lifetime -= delta_time;
-  if (this->system_lifetime <= 0.0f && !has_alive_particles) {
-    this->destroy();
+  if (!has_alive_particles) {
+    if (this->system_lifetime <= 0.0f) {
+      this->destroy();
+    }
+    if (this->attached_to_spawner && !this->spawner_entity.valid(game)) {
+      this->destroy();
+    }
   }
 }
 
@@ -195,9 +238,21 @@ void ParticleSystemEntity::draw(const Game &game) {
       continue;
     }
 
-    auto particle_pos = this->position + particle.position;
+    auto size = particle.size;
 
-    DrawTextureEx(*tex, particle_pos.to_raylib(), 0.0f, particle.size, WHITE);
+    if (this->fade_size) {
+      size *= particle.lifetime / particle.total_lifetime;
+      if (size < 0.0001f) {
+        size = 0.0001f;
+      }
+    }
+
+    Color tint = WHITE;
+    if (this->fade_alpha) {
+      tint.a = 255 * (particle.lifetime / particle.total_lifetime);
+    }
+
+    DrawTextureEx(*tex, particle.position.to_raylib(), 0.0f, size, tint);
   }
 #endif
 }

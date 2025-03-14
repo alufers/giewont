@@ -35,14 +35,15 @@ endif()
 
 set(CMAKE_PROJECT_VERSION "AAAAA")
 
-if(EMSCRIPTEN)
-    # Add nlohmann/json
-    add_subdirectory(libs/json)
-else()
-    set(NO_TESTS OFF CACHE BOOL "" FORCE)
-    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-    add_subdirectory(libs/libdatachannel)
-endif()
+
+add_subdirectory(libs/json)
+
+
+set(NO_TESTS ON CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(NO_MEDIA ON CACHE BOOL "" FORCE)
+set(NO_EXAMPLES ON CACHE BOOL "" FORCE)
+add_subdirectory(libs/libdatachannel)
 
 
 
@@ -74,6 +75,9 @@ set(COMMON_SOURCES
     src/DataBinder.cpp
     src/TeamBaseEntity.cpp
     src/GameplayManager.cpp
+    src/GrenadeEntity.cpp
+    src/KeyboardCharacterController.cpp
+    src/CharacterController.cpp
     src/Util.cpp
 )
 set(COMMON_INCLUDES

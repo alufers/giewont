@@ -4,6 +4,7 @@
 #include "CameraEntity.h"
 #include "FlagEntity.h"
 #include "Game.h"
+#include "KeyboardCharacterController.h"
 #include "Log.h"
 #include "ParticleSystemEntity.h"
 #include "PhysEntity.h"
@@ -15,28 +16,12 @@
 #include <cstring>
 #include <memory>
 #include <nlohmann/json.hpp>
+
 #ifdef GIEWONT_HAS_GRAPHICS
 #include <raylib.h>
 #endif
 
 using namespace giewont;
-
-CharacterMovementCommand operator|(CharacterMovementCommand a,
-                                   CharacterMovementCommand b) {
-  return static_cast<CharacterMovementCommand>(static_cast<int>(a) |
-                                               static_cast<int>(b));
-}
-
-bool operator&(CharacterMovementCommand a, CharacterMovementCommand b) {
-  return static_cast<int>(a) & static_cast<int>(b);
-}
-
-CharacterMovementCommand operator|=(CharacterMovementCommand &a,
-                                    CharacterMovementCommand b) {
-  a = static_cast<CharacterMovementCommand>(static_cast<int>(a) |
-                                            static_cast<int>(b));
-  return a;
-}
 
 CharacterEntity::CharacterEntity() : PhysEntity() {
   this->controller = std::make_unique<
@@ -78,12 +63,14 @@ void CharacterEntity::update_from_sync_message(
   PhysEntity::update_from_sync_message(game, sync_message);
   auto characterData = sync_message.getExtraData().getCharacterData();
 
-  anim_state =
-      static_cast<CharacterAnimState>(characterData.getAnimationState());
-  direction = static_cast<CharacterDirection>(characterData.getDirection());
-  health = characterData.getHealth();
-  max_health = characterData.getMaxHealth();
-  immunity_time = characterData.getImmunityTime();
+  if (game.my_peer_id != this->net_owner_peer_id) {
+    anim_state =
+        static_cast<CharacterAnimState>(characterData.getAnimationState());
+    direction = static_cast<CharacterDirection>(characterData.getDirection());
+    health = characterData.getHealth();
+    max_health = characterData.getMaxHealth();
+    immunity_time = characterData.getImmunityTime();
+  }
 }
 
 void CharacterEntity::apply_hurt_message(
@@ -91,6 +78,7 @@ void CharacterEntity::apply_hurt_message(
   if (immunity_time > 0.0f && msg.getDamage() > 0) {
     return;
   }
+
   this->health -= msg.getDamage();
   if (this->health < 0) {
     this->health = 0;
@@ -128,6 +116,7 @@ void CharacterEntity::hurt_entity(Game &game, int damage) {
   ::capnp::MallocMessageBuilder message;
   auto hurt_msg = message.initRoot<net::BaseNetMessage>().initHurtEntity();
   hurt_msg.setDamage(damage);
+  hurt_msg.setNetId(net_id);
   if (this->net_owner_peer_id == game.my_peer_id) {
     // Apply the hurt message
     apply_hurt_message(game, hurt_msg);
@@ -206,7 +195,7 @@ void CharacterEntity::update(Game &game, float delta_time) {
 void CharacterEntity::on_has_landed(Game &game, Vec2 fall_delta) {
   float fall_height = std::abs(fall_delta.y);
   if (fall_height > 100.0) {
-     
+
 #if GIEWONT_HAS_GRAPHICS
     Vec2 feet_pos =
         position + Vec2((get_aabb().min.x + get_aabb().max.x) / 2.0f,
@@ -216,7 +205,10 @@ void CharacterEntity::on_has_landed(Game &game, Vec2 fall_delta) {
         _character_fall_particle_system_prefab_id, feet_pos);
 #endif
   }
-  if (fall_height > min_fall_hurt_height) {
+
+  // calculate fall damage if owner of the entity
+  if (fall_height > min_fall_hurt_height &&
+      game.my_peer_id == net_owner_peer_id) {
     float damage_factor =
         (fall_height - min_fall_hurt_height) / max_fall_hurt_height;
     int damage =
@@ -360,39 +352,6 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
   if (command & CharacterMovementCommand::JUMP && this->is_propped_by_level) {
     anim_state = CharacterAnimState::JUMP;
   }
-}
-
-void KeyboardCharacterController::update(Game &game, CharacterEntity &character,
-                                         float delta_time) {
-
-  if (game.is_server()) {
-    LOG_WARN() << "KeyboardCharacterController::update: called on server"
-               << std::endl;
-  }
-#ifdef GIEWONT_HAS_GRAPHICS
-  CharacterMovementCommand command = CharacterMovementCommand::NONE;
-  if (IsKeyDown(KEY_A)) {
-    command |= CharacterMovementCommand::MOVE_LEFT;
-  } else if (IsKeyDown(KEY_D)) {
-    command |= CharacterMovementCommand::MOVE_RIGHT;
-  }
-  if (IsKeyDown(KEY_SPACE)) {
-    command |= CharacterMovementCommand::JUMP;
-  }
-
-  if (IsKeyReleased(KEY_E)) {
-    if (!game.is_server()) {
-
-      capnp::MallocMessageBuilder message;
-      auto base_msg = message.initRoot<net::BaseNetMessage>();
-      auto interact = base_msg.initInteract();
-      interact.setInteractorNetId(character.net_id);
-      game.send_reliable_to_peer(0, message);
-    }
-  }
-
-  character.perform_movement(game, delta_time, command);
-#endif
 }
 
 void DumbAICharacterController::update(Game &game, CharacterEntity &character,
