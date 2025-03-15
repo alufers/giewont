@@ -4,14 +4,13 @@
 
 #include "raylib.h"
 
-
 #include "ClientGame.h"
-#include "imgui.h"
-#include "rlImGui.h"
 #include "DrawableGame.h"
+#include "imgui.h"
+#include "nbnet_helper.h"
+#include "rlImGui.h"
 #include <chrono>
 #include <memory>
-#include "nbnet_helper.h"
 
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
@@ -23,7 +22,7 @@
 #define WINDOW_TITLE "GIEWONT"
 
 static std::unique_ptr<giewont::DrawableGame> g =
-    std::make_unique<giewont::ClientGame>("localhost", 1338);
+    std::make_unique<giewont::ClientGame>();
 
 static void main_loop() {
   static std::chrono::time_point<std::chrono::system_clock> last_frame_time =
@@ -114,6 +113,7 @@ int main() {
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15, 15));
   giewont::install_nbnet_webrtc_driver();
 
+  g->load_level("main_menu.tmj");
 #if defined(PLATFORM_WEB)
   emscripten_set_main_loop(main_loop, 60, 1);
 #else

@@ -65,6 +65,11 @@ public:
    */
   virtual void draw(const Game &game) = 0;
 
+  /**
+   * @brief Draw any raylib based UI elements.
+   * 
+   * @param game 
+   */
   virtual void draw_raylib_ui(const Game &game) {}
 
   /**
@@ -88,6 +93,13 @@ public:
    * @param game
    */
   virtual void draw_inspector_ui(Game &game);
+
+  /**
+   * @brief Draw any user-facing Imgui UI elements.
+   * 
+   * @param game 
+   */
+  virtual void draw_imgui_ui(Game &game) {};
 
   /**
    * @brief Add data to the SyncEntityNetMessage.

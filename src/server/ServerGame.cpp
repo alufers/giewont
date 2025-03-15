@@ -91,11 +91,6 @@ EntityRef ServerGame::push_entity(std::unique_ptr<Entity> entity) {
 
   ref.get_as<Entity>(*this).net_id = this->net_id_counter++;
 
-  for (auto &entity : entities) {
-    if (entity != nullptr && !entity->marked_for_deletion &&
-        !entity->is_static) {
-    }
-  }
   return ref;
 }
 
@@ -294,14 +289,14 @@ void ServerGame::handle_interact_message(
   }
 }
 
-void ServerGame::destroy_marked_entities() {
+void ServerGame::delete_marked_entities() {
 
   for (auto &entity : entities) {
     if (entity == nullptr)
       continue;
     if (entity->marked_for_deletion && !entity->is_static) {
       LOG_INFO()
-          << "Notyfiing about the destruction of entity entity  with net_id="
+          << "Notifying about the destruction of entity entity  with net_id="
           << entity->net_id << std::endl;
 
       ::capnp::MallocMessageBuilder message;
@@ -317,7 +312,7 @@ void ServerGame::destroy_marked_entities() {
     }
   }
 
-  Game::destroy_marked_entities();
+  Game::delete_marked_entities();
 }
 
 void ServerGame::broadcast_reliable(

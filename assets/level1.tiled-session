@@ -1,0 +1,38 @@
+{
+    "activeFile": "level1.tmj",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "fileStates": {
+        "level1.tmj": {
+            "scale": 0.33,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 1459.090909090909,
+                "y": 910.6060606060606
+            }
+        },
+        "level1.tmx": {
+            "scale": 0.7862380952380952,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 1050.5723457089214,
+                "y": 699.5336442371753
+            }
+        },
+        "tileset_base.j": {
+            "scaleInDock": 1
+        },
+        "tileset_base.tsj": {
+            "scaleInDock": 1
+        },
+        "tileset_base.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        }
+    },
+    "openFiles": [
+        "level1.tmj"
+    ]
+}

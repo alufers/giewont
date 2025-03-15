@@ -86,7 +86,7 @@ protected:
 
   virtual void
   apply_sync_entity(const net::SyncEntityNetMessage::Reader &message);
-  virtual void destroy_marked_entities();
+  virtual void delete_marked_entities();
 
 private:
   uint32_t generation_counter = 0;

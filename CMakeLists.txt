@@ -85,6 +85,7 @@ set(COMMON_SOURCES
         src/KeyboardCharacterController.cpp
         src/CharacterController.cpp
         src/Util.cpp
+        src/entities/gui/MainMenuGUIEntity.cpp
 )
 set(COMMON_INCLUDES
         "${CMAKE_CURRENT_LIST_DIR}/src/"
@@ -110,6 +111,7 @@ set(CLIENT_SOURCES
         src/client/ClientGame.cpp
         src/client/DrawableGame.cpp
         src/client/DebugGUI.cpp
+        
 )
 
 set(CLIENT_INCLUDES

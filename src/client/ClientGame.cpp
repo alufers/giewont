@@ -20,15 +20,22 @@
 
 using namespace giewont;
 
-ClientGame::ClientGame(std::string server_address, int server_port) : DrawableGame() {
+ClientGame::ClientGame() : DrawableGame() {
+
+  debug_gui = std::make_unique<DebugGUI>();
+}
+
+void ClientGame::connect_to_server(const std::string &server_address,
+                                   int server_port) {
   this->server_address = server_address;
   this->server_port = server_port;
-  debug_gui = std::make_unique<DebugGUI>();
+  state = ClientGameState::INITIAL;
 }
 
 void ClientGame::draw() {
 
-  if (state != ClientGameState::CONNECTED) {
+  if (state != ClientGameState::CONNECTED &&
+      state != ClientGameState::NO_CONNECTION_NEEDED) {
     std::string message = "Connecting to server...";
     if (state == ClientGameState::GAME_STATE_ERROR) {
       message = "Error: " + error_message;
@@ -41,8 +48,6 @@ void ClientGame::draw() {
              state == ClientGameState::GAME_STATE_ERROR ? RED : BLACK);
     return;
   }
-  auto &camera = camera_ref.get_as<CameraEntity>(*this);
-  camera.begin_mode2d();
 
   // Todo: cache this
   std::vector<EntityRef> entity_draw_list;
@@ -62,27 +67,40 @@ void ClientGame::draw() {
               return ent_a.get_z_index() < ent_b.get_z_index();
             });
 
-  for (auto &entity_ref : entity_draw_list) {
-    entity_ref.get(*this).draw(*this);
+  // rendering with the camera transform
+  if (camera_ref.valid_as<CameraEntity>(*this)) {
+
+    auto &camera = camera_ref.get_as<CameraEntity>(*this);
+    camera.begin_mode2d();
+
+    for (auto &entity_ref : entity_draw_list) {
+      entity_ref.get(*this).draw(*this);
+    }
+
+    debug_gui->draw(*this, entity_draw_list);
+
+    camera.end_mode2d();
+  } else {
+    std::string message = "No camera set";
+    int text_size = 20;
+    int text_width = MeasureText(message.c_str(), text_size);
+    DrawText(message.c_str(), GetScreenWidth() / 2 - text_width / 2,
+             GetScreenHeight() / 2 - text_size / 2, text_size, RED);
   }
 
-  debug_gui->draw(*this, entity_draw_list);
-
-  camera.end_mode2d();
+  // Rendering screen space UI
 
   for (auto &entity_ref : entity_draw_list) {
     entity_ref.get(*this).draw_raylib_ui(*this);
   }
 
-  // DrawText(std::format("UPS: {:.2f}", last_ups).c_str(), 10, 10, 20, BLACK);
+  // Imgui UI drawing
 
-  draw_ui();
-}
-
-void ClientGame::draw_ui() {
   rlImGuiBegin();
-
   debug_gui->draw_ui(*this);
+  for (auto &entity_ref : entity_draw_list) {
+    entity_ref.get(*this).draw_imgui_ui(*this);
+  }
   rlImGuiEnd();
 }
 
@@ -114,45 +132,51 @@ void ClientGame::update(float delta_time) {
 
   int ev;
 
-  // Poll for client events
-  while ((ev = NBN_GameClient_Poll()) != NBN_NO_EVENT) {
-    if (ev < 0) {
-      LOG_ERROR() << "An error occurred while polling for events" << std::endl;
+  if (state != ClientGameState::NO_CONNECTION_NEEDED) {
+    // Poll for client events
+    while ((ev = NBN_GameClient_Poll()) != NBN_NO_EVENT) {
+      if (ev < 0) {
+        LOG_ERROR() << "An error occurred while polling for events"
+                    << std::endl;
 
-      break;
-    }
+        break;
+      }
 
-    switch (ev) {
-    // Client is connected to the server
-    case NBN_CONNECTED:
-      LOG_INFO() << "Connected to server" << std::endl;
-      state = ClientGameState::CONNECTED;
-      break;
+      switch (ev) {
+      // Client is connected to the server
+      case NBN_CONNECTED:
+        LOG_INFO() << "Connected to server" << std::endl;
+        state = ClientGameState::CONNECTED;
+        break;
 
-      // Client has disconnected from the server
-    case NBN_DISCONNECTED:
-      LOG_INFO() << "Disconnected from server" << std::endl;
-      break;
+        // Client has disconnected from the server
+      case NBN_DISCONNECTED:
+        LOG_INFO() << "Disconnected from server" << std::endl;
+        break;
 
-      // A message has been received from the server
-    case NBN_MESSAGE_RECEIVED:
-      NBN_MessageInfo msg_info = NBN_GameClient_GetMessageInfo();
-      handle_incoming_nbnet_message(msg_info);
-      break;
+        // A message has been received from the server
+      case NBN_MESSAGE_RECEIVED:
+        NBN_MessageInfo msg_info = NBN_GameClient_GetMessageInfo();
+        handle_incoming_nbnet_message(msg_info);
+        break;
+      }
     }
   }
 
   // Only update the game if the client is connected to the server
-  if (state == ClientGameState::CONNECTED) {
+  if (state == ClientGameState::CONNECTED ||
+      state == ClientGameState::NO_CONNECTION_NEEDED) {
     Game::update(delta_time);
   }
 
   debug_gui->update(*this);
-  sync_my_entities_to_server();
+  if (state != ClientGameState::NO_CONNECTION_NEEDED) {
+    sync_my_entities_to_server();
 
-  if (NBN_GameClient_SendPackets() < 0) {
-    LOG_ERROR() << "Failed to send packets" << std::endl;
-    exit(1);
+    if (NBN_GameClient_SendPackets() < 0) {
+      LOG_ERROR() << "Failed to send packets" << std::endl;
+      exit(1);
+    }
   }
 }
 
