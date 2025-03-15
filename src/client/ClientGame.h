@@ -4,6 +4,7 @@
 
 #include "Entity.h"
 #include "Game.h"
+#include "DrawableGame.h"
 #include <capnp/message.h>
 #include <capnp/serialize.h>
 #include <memory>
@@ -17,27 +18,29 @@
 namespace giewont {
 
 enum class ClientGameState {
-  INITIAL = 0,
-  PRE_CONNECTING = 1, // To render one frame before connecting
-  CONNECTING = 2,
-  CONNECTED = 3,
-  GAME_STATE_ERROR = 4
+  NO_CONNECTION_NEEDED,
+  INITIAL,
+  PRE_CONNECTING, // To render one frame before connecting
+  CONNECTING,
+  CONNECTED,
+  GAME_STATE_ERROR,
 };
 
 class DebugGUI;
 
-class ClientGame : public Game {
+class ClientGame : public DrawableGame {
 public:
-  ClientGame(std::string server_address, int server_port);
-  void draw();
+  ClientGame();
+  void draw() override;
   void update(float delta_time) override;
-  void init_net_client();
   bool is_server() const override { return false; }
   void shutdown() override;
 
+  void connect_to_server(const std::string &server_address, int server_port);
+
   Camera2D get_currently_rendering_camera_data() const override;
 
-  ClientGameState state = ClientGameState::INITIAL;
+  ClientGameState state = ClientGameState::NO_CONNECTION_NEEDED;
 
   std::unique_ptr<DebugGUI> debug_gui;
 
@@ -62,7 +65,6 @@ private:
 
   EntityRef inspector_selected_entity;
 
-  void draw_ui();
 };
 } // namespace giewont
 

@@ -22,6 +22,8 @@ namespace giewont {
 class Game {
 
 public:
+  virtual ~Game() = default;
+
   Game();
   // General stuff
   static constexpr size_t MAX_ENTITIES = 1024;
@@ -84,7 +86,7 @@ protected:
 
   virtual void
   apply_sync_entity(const net::SyncEntityNetMessage::Reader &message);
-  virtual void destroy_marked_entities();
+  virtual void delete_marked_entities();
 
 private:
   uint32_t generation_counter = 0;

@@ -1,0 +1,43 @@
+{
+  "compressionlevel": -1,
+  "height": 20,
+  "infinite": false,
+  "layers": [
+    {
+      "draworder": "topdown",
+      "id": 2,
+      "name": "obj",
+      "objects": [
+        {
+          "height": 0,
+          "id": 1,
+          "name": "",
+          "point": true,
+          "properties": [],
+          "rotation": 0,
+          "type": "main_menu_gui",
+          "visible": true,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "nextlayerid": 3,
+  "nextobjectid": 22,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "tiledversion": "1.11.2",
+  "tileheight": 70,
+  "tilesets": [],
+  "tilewidth": 70,
+  "type": "map",
+  "version": "1.10",
+  "width": 30
+}

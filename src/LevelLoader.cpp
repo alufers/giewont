@@ -8,6 +8,7 @@
 #include "SpawnEntity.h"
 #include "TeamBaseEntity.h"
 #include "TilemapEntity.h"
+#include "entities/gui/MainMenuGUIEntity.h"
 #include <filesystem>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
@@ -53,7 +54,8 @@ LevelLoader::tmjPropertiesToObj(const nlohmann::json &tmj_properties) {
 }
 
 std::unique_ptr<Entity>
-LevelLoader::create_entity_from_json(const Game &game, const nlohmann::json &object) {
+LevelLoader::create_entity_from_json(const Game &game,
+                                     const nlohmann::json &object) {
   std::unique_ptr<Entity> entity = nullptr;
   // detect entity type
   if (object["type"] == "spawn_entity") {
@@ -80,6 +82,11 @@ LevelLoader::create_entity_from_json(const Game &game, const nlohmann::json &obj
   } else if (object["type"] == "gameplay_manager") {
     if (game.is_server()) {
       entity = std::make_unique<GameplayManager>();
+    }
+
+  } else if (object["type"] == "main_menu_gui") {
+    if (!game.is_server()) {
+      entity = std::make_unique<MainMenuGUIEntity>();
     }
 
   } else {

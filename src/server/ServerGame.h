@@ -36,7 +36,7 @@ public:
   broadcast_reliable(::capnp::MallocMessageBuilder &message_builder) override;
 
 protected:
-  void destroy_marked_entities() override;
+  void delete_marked_entities() override;
 
 private:
   std::string tmj_path;

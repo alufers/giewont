@@ -8,6 +8,7 @@
 #include <exception>
 
 #include "CharacterEntity.h"
+#include "GrenadeEntity.h"
 #include "LevelLoader.h"
 #include "TeamBaseEntity.h"
 #include "Vec2.h"
@@ -16,7 +17,6 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
-#include "GrenadeEntity.h"
 
 using namespace giewont;
 
@@ -28,7 +28,7 @@ Game::Game() {
 }
 
 void Game::update(float delta_time) {
-  destroy_marked_entities();
+  delete_marked_entities();
 
   for (auto &entity : entities) {
     if (entity != nullptr) {
@@ -56,6 +56,7 @@ EntityRef Game::push_entity(std::unique_ptr<Entity> entity) {
     }
   }
   entity->id = idx;
+  LOG_DEBUG() << "Pushing entity with id " << idx << std::endl;
   entity->generation = generation_counter;
   generation_counter++;
   entities[idx] = std::move(entity);
@@ -126,6 +127,12 @@ void Game::apply_sync_entity(const net::SyncEntityNetMessage::Reader &message) {
 }
 
 void Game::load_level(std::string tmj_path) {
+  for (auto &entity : entities) {
+    if (entity != nullptr && !entity->marked_for_deletion && entity->id != 0) {
+      entity->destroy();
+    }
+  }
+  delete_marked_entities();
   LevelLoader level_loader(tmj_path);
   level_loader.load_level(*this);
 
@@ -136,7 +143,7 @@ void Game::load_level(std::string tmj_path) {
   }
 }
 
-void Game::destroy_marked_entities() {
+void Game::delete_marked_entities() {
   for (size_t i = 0; i < entities.size(); i++) {
     if (entities[i] != nullptr && entities[i]->marked_for_deletion) {
       entities[i] = nullptr;
