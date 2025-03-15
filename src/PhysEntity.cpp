@@ -45,12 +45,15 @@ void PhysEntity::update(Game &game, float delta_time) {
         if (velAlongNormal > 0) {
           continue;
         }
-        float e = 0.1f;
+        float e = 0.5f;
         float j = -(1 + e) * velAlongNormal;
-        j /= 1.0 / 1.0 + 1.0 / 1.0; // inverse mass
+        float tilemapMass =
+            std::numeric_limits<float>::infinity(); // We assume the tilemap is
+                                                    // immovable
+        j /= 1.0 / this->mass + 1.0 / tilemapMass;  // inverse mass
         Vec2 impulse = manifold.normal * j;
         if (!is_kinematic) {
-          this->velocity += impulse * collision_impulse_multiplier; 
+          this->velocity += (1.0f / this->mass) * impulse;
           this->_resolution_vector_debug = impulse;
           this->position += manifold.normal * manifold.penetration * 1;
         }
@@ -124,4 +127,28 @@ void PhysEntity::build_sync_message(
   Entity::build_sync_message(game, sync_message);
   auto net_velocity = sync_message.initVelocity();
   velocity.serialize(net_velocity);
+}
+
+void PhysEntity::apply_impulse(Game &game, Vec2 impulse) {
+  ::capnp::MallocMessageBuilder message;
+  auto impulse_msg =
+      message.initRoot<net::BaseNetMessage>().initApplyPhysicsImpulse();
+  auto impulseVec = impulse_msg.initImpulse();
+  impulse.serialize(impulseVec);
+  impulse_msg.setNetId(net_id);
+
+  if (this->net_owner_peer_id != game.my_peer_id) {
+    game.broadcast_reliable(message);
+  } else {
+    this->handle_apply_impulse_message(game, impulse_msg);
+  }
+}
+
+void PhysEntity::handle_apply_impulse_message(
+    Game &game,
+    const net::ApplyPhysicsImpulseNetMessage::Reader &apply_impulse_message) {
+  Vec2 vec = Vec2(apply_impulse_message.getImpulse());
+  LOG_DEBUG() << "Applying impulse to entity " << this->net_id << ", " << vec
+              << std::endl;
+  this->velocity += vec / this->mass;
 }

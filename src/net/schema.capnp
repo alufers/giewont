@@ -14,6 +14,7 @@ struct BaseNetMessage {
         addCameraEffect @7 :AddCameraEffectNetMessage; # server -> client
         hurtEntity @8 :HurtEntityNetMessage; # server -> client (sent only in case the client is the owner of that entity)
         instantiatePrefab @9 :InstantiatePrefabNetMessage; # server -> client
+        applyPhysicsImpulse @10 :ApplyPhysicsImpulseNetMessage; # server -> client
     }
 }
 
@@ -82,6 +83,11 @@ struct GrenadeData {
 struct InstantiatePrefabNetMessage {
     prefabPath @0 :Text;
     position @1 :NetVec2;
+}
+
+struct ApplyPhysicsImpulseNetMessage {
+    netId @0 :UInt32;
+    impulse @1 :NetVec2;
 }
 
 struct NetVec2 {

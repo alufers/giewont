@@ -2,6 +2,7 @@
 #include "AABB.h"
 #include "CharacterEntity.h"
 #include "ParticleSystemEntity.h"
+#include "PhysEntity.h"
 #include <cmath>
 #ifdef GIEWONT_HAS_GRAPHICS
 #include <raylib.h>
@@ -62,11 +63,31 @@ void GrenadeEntity::explode(Game &game) {
         auto dist_from_close = std::max(0.0f, dist - hurt_radius_close);
         auto damage_factor =
             1.0f - dist_from_close / (hurt_radius_far - hurt_radius_close);
-       
+
         int damage = (int)((float)hurt_damage * damage_factor);
         LOG_INFO() << "Distance: " << dist
-        << " damage factor: " << damage_factor << " damage: " << damage << std::endl;
+                   << " damage factor: " << damage_factor
+                   << " damage: " << damage << std::endl;
         character_ent->hurt_entity(game, damage);
+      }
+    }
+
+    if (PhysEntity *phys_ent = dynamic_cast<PhysEntity *>(entity.get())) {
+      auto dist = phys_ent->position.distance(position);
+      if (dist < hurt_radius_far) {
+        auto dist_from_close = std::max(0.0f, dist - hurt_radius_close);
+        auto damage_factor =
+            1.0f - dist_from_close / (hurt_radius_far - hurt_radius_close);
+
+        Vec2 direction = (phys_ent->position - (position + get_aabb().center()))
+                             .normalized();
+
+        Vec2 up_component = Vec2(0, 0);
+        if (is_propped_by_level) {
+          up_component = Vec2(0, -300.0f);
+        }
+
+        phys_ent->apply_impulse(game, direction * 1000.0f + up_component);
       }
     }
   }
