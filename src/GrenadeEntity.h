@@ -28,9 +28,9 @@ public:
   float fuse_total_time = 3.0f;
   float fuse_time_left = 3.0f;
 
-  int hurt_damage = 40;
+  int hurt_damage = 20;
   float hurt_radius_close = 70.0;
-  float hurt_radius_far = 210.0;
+  float hurt_radius_far = 410.0;
 
 private:
   void explode(Game &game);

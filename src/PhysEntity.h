@@ -21,6 +21,8 @@ public:
 
   Vec2 velocity = {0, 0};
 
+  float mass = 2.0f;
+
   /**
    * @brief If set to false the entity will not be affected by physics.
    */
@@ -51,6 +53,17 @@ public:
   void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
   void draw_debug(const Game &game) override;
+
+  /**
+   * @brief Apply a momentary force to the entity.
+   *
+   * @param impulse
+   */
+  void apply_impulse(Game &game, Vec2 impulse);
+
+  void handle_apply_impulse_message(Game &game,
+                                    const net::ApplyPhysicsImpulseNetMessage::Reader
+                                        &apply_impulse_message);
 
   void update_from_sync_message(
       Game &game,

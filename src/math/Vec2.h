@@ -4,9 +4,9 @@
 #ifdef GIEWONT_HAS_GRAPHICS
 #include "raylib.h"
 #endif
+#include "schema.capnp.h"
 #include <cmath>
 #include <iostream>
-#include "schema.capnp.h"
 
 namespace giewont {
 
@@ -71,7 +71,7 @@ public:
   Vec2 project(const Vec2 &other) const {
     return other * (dot(other) / other.dot(other));
   }
-  
+
 #ifdef GIEWONT_HAS_GRAPHICS
   Vector2 to_raylib() const { return {x, y}; }
 #endif
@@ -92,10 +92,11 @@ public:
     builder.setY(y);
   }
 
-  float distance(const Vec2 &other) const {
-    return (*this - other).length();
-  }
+  float distance(const Vec2 &other) const { return (*this - other).length(); }
 };
+
+inline Vec2 operator*(float scalar, const Vec2 &v) { return v * scalar; }
+
 } // namespace giewont
 
 #endif // VEC2_H_

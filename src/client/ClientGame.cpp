@@ -261,6 +261,16 @@ void ClientGame::handle_incoming_message(
         prefab_id, Vec2(message.getInstantiatePrefab().getPosition()));
     break;
   }
+  case net::BaseNetMessage::Which::APPLY_PHYSICS_IMPULSE: {
+    auto net_id = message.getApplyPhysicsImpulse().getNetId();
+    auto entity = get_entity_by_net_id(net_id);
+    if (entity.valid_as<PhysEntity>(*this)) {
+      auto phys_entity = &entity.get_as<PhysEntity>(*this);
+      phys_entity->handle_apply_impulse_message(
+          *this, message.getApplyPhysicsImpulse());
+    }
+    break;
+  }
 
   default:
     LOG_WARN() << "Unknown message type received from the server" << std::endl;
