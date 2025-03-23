@@ -1,0 +1,19 @@
+[project]
+name = "ecs-codegen"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "alufers", email = "alufers@wp.pl" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "jinja2>=3.1.6",
+]
+
+[project.scripts]
+ecs-codegen = "ecs_codegen:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

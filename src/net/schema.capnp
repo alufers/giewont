@@ -138,3 +138,11 @@ struct HurtEntityNetMessage {
     netId @0 :UInt32;
     damage @1 :Int32;
 }
+
+# ECS expriment
+
+struct PowerupComponentData {
+    healAmount @0 :Int32;
+    lifetimeLeft @1 :Float32;
+    lifetimeTotal @2 :Float32;
+}
