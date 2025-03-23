@@ -6,7 +6,7 @@
  "name":"tileset_base",
  "spacing":2,
  "tilecount":156,
- "tiledversion":"1.10.2",
+ "tiledversion":"1.11.2",
  "tileheight":70,
  "tiles":[
         {
@@ -14,7 +14,6 @@
          "objectgroup":
             {
              "draworder":"index",
-             "id":2,
              "name":"",
              "objects":[
                     {
@@ -46,6 +45,18 @@
         {
          "id":31,
          "type":"ladder"
+        }, 
+        {
+         "id":43,
+         "type":"water"
+        }, 
+        {
+         "id":102,
+         "type":"water"
+        }, 
+        {
+         "id":114,
+         "type":"water"
         }],
  "tilewidth":70,
  "type":"tileset",

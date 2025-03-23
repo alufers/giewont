@@ -31,6 +31,7 @@ CharacterEntity::CharacterEntity() : PhysEntity() {
 
 void CharacterEntity::load_assets(const Game &game) {
 
+  PhysEntity::load_assets(game);
   if (!game.is_server() && this->net_owner_peer_id == game.my_peer_id) {
     this->controller = std::make_unique<KeyboardCharacterController>();
   }
@@ -314,6 +315,10 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
     this->velocity.y = -this->jump_speed;
   }
 
+  if (command & CharacterMovementCommand::JUMP && this->is_in_water) {
+    this->velocity.y = -this->jump_speed;
+  }
+
   if (command & CharacterMovementCommand::MOVE_LEFT) {
     this->direction = CharacterDirection::LEFT;
     if (this->is_propped_by_level) {
@@ -345,6 +350,9 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
           this->velocity.x = 0;
         }
       }
+    }
+    if (this->is_in_water) {
+      this->anim_state = CharacterAnimState::JUMP;
     }
   }
 

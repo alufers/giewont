@@ -16,6 +16,7 @@ GrenadeEntity::GrenadeEntity() : PhysEntity() {
   this->collision_impulse_multiplier = 3.2f;
 }
 void GrenadeEntity::load_assets(const Game &game) {
+  PhysEntity::load_assets(game);
   grenade_aab = AABB(Vec2(0, 0), Vec2(70, 70));
   _explosion_prefab_res_id =
       game.preload_prefab("prefabs/grenade_explosion.json");

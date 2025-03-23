@@ -14,7 +14,10 @@ using namespace giewont;
 
 PhysEntity::PhysEntity() : Entity() {}
 
-void PhysEntity::load_assets(const Game &game) {}
+void PhysEntity::load_assets(const Game &game) {
+
+  _water_splash_prefab = game.preload_prefab("prefabs/water_splash.json");
+}
 
 void PhysEntity::update(Game &game, float delta_time) {
   this->_resolution_vector_debug = {0, 0};
@@ -31,6 +34,8 @@ void PhysEntity::update(Game &game, float delta_time) {
 
   auto aabb_to_check = own_aabb.translated(this->position);
   bool has_landed = false;
+  bool is_currently_in_water = false;
+  bool has_fallen_into_water = false;
   Vec2 old_highest_off_ground_position = this->highest_off_ground_position;
   for (auto &entity : game.entities) {
     if (!entity || entity->id == this->id || entity->marked_for_deletion) {
@@ -41,42 +46,62 @@ void PhysEntity::update(Game &game, float delta_time) {
       // Physics collision check
       auto collision_manifolds = tilemap->check_collision_aabb(aabb_to_check);
       for (auto &manifold : collision_manifolds) {
-        float velAlongNormal = this->velocity.dot(manifold.normal);
-        if (velAlongNormal > 0) {
-          continue;
-        }
-        float e = 0.5f;
-        float j = -(1 + e) * velAlongNormal;
-        float tilemapMass =
-            std::numeric_limits<float>::infinity(); // We assume the tilemap is
-                                                    // immovable
-        j /= 1.0 / this->mass + 1.0 / tilemapMass;  // inverse mass
-        Vec2 impulse = manifold.normal * j;
-        if (!is_kinematic) {
-          this->velocity += (1.0f / this->mass) * impulse;
-          this->_resolution_vector_debug = impulse;
-          this->position += manifold.normal * manifold.penetration * 1;
+        if (manifold.tile_type == TileType::SOLID) {
+
+          float velAlongNormal = this->velocity.dot(manifold.normal);
+          if (velAlongNormal > 0) {
+            continue;
+          }
+          float e = 0.5f;
+          float j = -(1 + e) * velAlongNormal;
+          float tilemapMass =
+              std::numeric_limits<float>::infinity(); // We assume the tilemap
+                                                      // is immovable
+          j /= 1.0 / this->mass + 1.0 / tilemapMass;  // inverse mass
+          Vec2 impulse = manifold.normal * j;
+          if (!is_kinematic) {
+            this->velocity += (1.0f / this->mass) * impulse;
+            this->_resolution_vector_debug = impulse;
+            this->position += manifold.normal * manifold.penetration * 1;
+          }
+        } else if (manifold.tile_type == TileType::WATER) {
+          is_currently_in_water = true;
+          this->velocity +=
+              (Vec2(0, -35.0) * (manifold.penetration / 60.0f)) / mass;
+          this->velocity *= (1.0f - 0.09f * (manifold.penetration / 60.0f));
         }
       }
 
       // Feet pos check
-
       if (this->check_is_propped(tilemap, feet_pos)) {
         has_landed = !this->is_propped_by_level;
         this->is_propped_by_level = true;
         this->last_on_ground_position = feet_pos;
 
         this->highest_off_ground_position = feet_pos; // reset that
+      } else if (is_currently_in_water) {
+        this->last_on_ground_position = feet_pos; // water resets fall damage
+        this->is_propped_by_level = false;
+        has_fallen_into_water = !this->is_in_water;
+        this->is_in_water = true;
       } else {
         this->is_propped_by_level = false;
         if (this->highest_off_ground_position.y > feet_pos.y) {
           this->highest_off_ground_position = feet_pos;
         }
       }
+
+      if (!is_currently_in_water) {
+        this->is_in_water = false;
+      }
     }
   }
   if (has_landed) {
     this->on_has_landed(game, feet_pos - old_highest_off_ground_position);
+  }
+  if (has_fallen_into_water) {
+    this->on_fallen_into_water(game,
+                               feet_pos - old_highest_off_ground_position);
   }
 }
 
@@ -85,6 +110,16 @@ bool PhysEntity::check_is_propped(TilemapEntity *tilemap, Vec2 feet_pos) {
 }
 
 void PhysEntity::on_has_landed(Game &game, Vec2 fall_delta) {}
+
+void PhysEntity::on_fallen_into_water(Game &game, Vec2 fall_delta) {
+#if GIEWONT_HAS_GRAPHICS
+  Vec2 feet_pos = position + Vec2((get_aabb().min.x + get_aabb().max.x) / 2.0f,
+                                  get_aabb().max.y + 1.0f);
+
+  auto particle_sys_ref =
+      game.instantiate_prefab(_water_splash_prefab, feet_pos);
+#endif
+}
 
 void PhysEntity::draw(const Game &game) {}
 

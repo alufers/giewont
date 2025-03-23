@@ -7,11 +7,46 @@
 #include "misc/cpp/imgui_stdlib.h"
 #endif
 
+#include <iostream>
+#include <vector>
+#include <random>
+
+
+
 using namespace giewont;
 
-void MainMenuGUIEntity::load_assets(const Game &game) {}
 
-void MainMenuGUIEntity::update(Game &game, float delta_time) {}
+static std::string generateRandomUsername() {
+  // List of adjectives
+  std::vector<std::string> adjectives = {
+      "Swift", "Clever", "Brave", "Happy", "Eager", "Jolly", "Lively", "Witty", "Zesty", "Merry"
+  };
+
+  // List of verbs
+  std::vector<std::string> verbs = {
+      "Jump", "Run", "Fly", "Swim", "Sing", "Dash", "Laugh", "Climb", "Spin", "Dance"
+  };
+
+  // Random number generator setup
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> adjDist(0, adjectives.size() - 1);
+  std::uniform_int_distribution<int> verbDist(0, verbs.size() - 1);
+  std::uniform_int_distribution<int> numDist(10, 99); // Two-digit number
+
+  // Generate random username
+  std::string username = adjectives[adjDist(gen)] + verbs[verbDist(gen)] + std::to_string(numDist(gen));
+  return username;
+}
+
+
+void MainMenuGUIEntity::load_assets(const Game &game) {
+  player_name_text = generateRandomUsername();
+}
+
+void MainMenuGUIEntity::update(Game &game, float delta_time) {
+
+}
 
 void MainMenuGUIEntity::draw(const Game &game) {}
 
@@ -22,6 +57,7 @@ void MainMenuGUIEntity::draw_imgui_ui(Game &game) {
       ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f),
       ImGuiCond_Always, ImVec2(0.5f, 0.5f));
   ImGui::Begin("Main Menu");
+  ImGui::InputText("Player Name", &player_name_text);
   ImGui::InputText("Server Address", &server_addr_text);
   if (ImGui::Button("Connect")) {
     LOG_INFO() << "Connect button pressed" << std::endl;

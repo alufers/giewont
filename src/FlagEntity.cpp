@@ -20,7 +20,7 @@ FlagEntity::FlagEntity(nlohmann::json data) : PhysEntity() {
 }
 
 void FlagEntity::load_assets(const Game &game) {
-
+  PhysEntity::load_assets(game);
   _texture_id = game.rm->load_texture("entities/flag_spritesheet.png");
   _spritesheet_data_id = game.rm->load_json("entities/flag_spritesheet.json");
 
