@@ -326,4 +326,9 @@ Camera2D ClientGame::get_currently_rendering_camera_data() const {
   return {0};
 }
 
+EntityRef ClientGame::spawn_player_character(uint32_t peer_id, Vec2 position) {
+  throw std::runtime_error(
+      "ClientGame::spawn_player_character: cannot be called on the client!");
+};
+
 ClientGame::~ClientGame() = default;

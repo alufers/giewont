@@ -15,6 +15,7 @@ struct BaseNetMessage {
         hurtEntity @8 :HurtEntityNetMessage; # server -> client (sent only in case the client is the owner of that entity)
         instantiatePrefab @9 :InstantiatePrefabNetMessage; # server -> client
         applyPhysicsImpulse @10 :ApplyPhysicsImpulseNetMessage; # server -> client
+        guiInteraction @11 :GuiInteractionNetMessage; # client -> server
     }
 }
 
@@ -30,6 +31,7 @@ enum EntityType {
     teamBase @3;
     gameplayManager @4;
     grenade @5;
+    teamChoiceGUI @6;
 }
 
 struct SyncEntityNetMessage {
@@ -137,4 +139,9 @@ struct DestroyEntityNetMessage {
 struct HurtEntityNetMessage {
     netId @0 :UInt32;
     damage @1 :Int32;
+}
+
+struct GuiInteractionNetMessage {
+    netId @0 :UInt32; # Net ID of the GUI element / entity
+    name @1 :Text;
 }

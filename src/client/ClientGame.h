@@ -51,6 +51,9 @@ public:
   void
   broadcast_reliable(::capnp::MallocMessageBuilder &message_builder) override;
 
+  EntityRef spawn_player_character(uint32_t peer_id,
+    Vec2 position) override;
+
   ~ClientGame();
 
 private:

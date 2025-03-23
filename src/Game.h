@@ -53,6 +53,16 @@ public:
   virtual void
   broadcast_reliable(::capnp::MallocMessageBuilder &message_builder) = 0;
 
+  /**
+   * @brief Spawn a player character at this position for the given peer_id.
+   * Server only.
+   * @param peer_id 
+   * @param position 
+   * @return EntityRef 
+   */
+  virtual EntityRef spawn_player_character(uint32_t peer_id,
+                                                Vec2 position) = 0;
+
   virtual void shutdown() {};
 
 // Font
