@@ -347,14 +347,20 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
     this->velocity.y = -this->jump_speed;
   }
 
+  auto calculated_max_horiz_speed = this->max_horiz_speed;
+
+  if(is_in_water) {
+    calculated_max_horiz_speed *= 0.5f;
+  }
+
   if (command & CharacterMovementCommand::MOVE_LEFT) {
     this->direction = CharacterDirection::LEFT;
     if (this->is_propped_by_level) {
       this->anim_state = CharacterAnimState::WALK;
     }
     this->velocity.x -= this->horiz_accel * delta_time;
-    if (this->velocity.x < -this->max_horiz_speed) {
-      this->velocity.x = -this->max_horiz_speed;
+    if (this->velocity.x < calculated_max_horiz_speed) {
+      this->velocity.x = -calculated_max_horiz_speed;
     }
   } else if (command & CharacterMovementCommand::MOVE_RIGHT) {
     this->direction = CharacterDirection::RIGHT;
@@ -362,8 +368,8 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
       this->anim_state = CharacterAnimState::WALK;
     }
     this->velocity.x += this->horiz_accel * delta_time;
-    if (this->velocity.x > this->max_horiz_speed) {
-      this->velocity.x = this->max_horiz_speed;
+    if (this->velocity.x > calculated_max_horiz_speed) {
+      this->velocity.x = calculated_max_horiz_speed;
     }
   } else {
     if (this->is_propped_by_level) {
