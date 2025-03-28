@@ -35,6 +35,8 @@ public:
   void
   broadcast_reliable(::capnp::MallocMessageBuilder &message_builder) override;
 
+  EntityRef spawn_player_character(uint32_t peer_id, Vec2 position) override;
+
 protected:
   void delete_marked_entities() override;
 
@@ -50,10 +52,13 @@ private:
   void handle_incoming_message(ClientPeer &peer,
                                const net::BaseNetMessage::Reader &message);
 
-  void spawn_player_character(ClientPeer &peer);
-
   void handle_interact_message(ClientPeer &peer,
                                const net::InteractNetMessage::Reader &message);
+
+  void handle_gui_interaction_message(
+      ClientPeer &peer, const net::GuiInteractionNetMessage::Reader &message);
+
+  void show_team_choice_gui(ClientPeer &peer);
 };
 
 class ClientPeer {

@@ -4,6 +4,7 @@
 #include "CameraEntity.h"
 #include "FlagEntity.h"
 #include "Game.h"
+#include "GameplayManager.h"
 #include "KeyboardCharacterController.h"
 #include "Log.h"
 #include "ParticleSystemEntity.h"
@@ -31,6 +32,7 @@ CharacterEntity::CharacterEntity() : PhysEntity() {
 
 void CharacterEntity::load_assets(const Game &game) {
 
+  PhysEntity::load_assets(game);
   if (!game.is_server() && this->net_owner_peer_id == game.my_peer_id) {
     this->controller = std::make_unique<KeyboardCharacterController>();
   }
@@ -56,6 +58,8 @@ void CharacterEntity::build_sync_message(
   characterData.setHealth(health);
   characterData.setMaxHealth(max_health);
   characterData.setImmunityTime(immunity_time);
+  characterData.setTeam(static_cast<uint32_t>(team));
+  characterData.setName(nickname);
 }
 
 void CharacterEntity::update_from_sync_message(
@@ -63,13 +67,15 @@ void CharacterEntity::update_from_sync_message(
   PhysEntity::update_from_sync_message(game, sync_message);
   auto characterData = sync_message.getExtraData().getCharacterData();
 
-  if (game.my_peer_id != this->net_owner_peer_id) {
+  if (game.my_peer_id != this->net_owner_peer_id || this->is_being_created) {
     anim_state =
         static_cast<CharacterAnimState>(characterData.getAnimationState());
     direction = static_cast<CharacterDirection>(characterData.getDirection());
     health = characterData.getHealth();
     max_health = characterData.getMaxHealth();
     immunity_time = characterData.getImmunityTime();
+    team = static_cast<GameplayTeam>(characterData.getTeam());
+    nickname = characterData.getName();
   }
 }
 
@@ -190,6 +196,12 @@ void CharacterEntity::update(Game &game, float delta_time) {
       immunity_time = 0.0f;
     }
   }
+
+  if (this->nickname == "" && !game.is_server() &&
+      this->net_owner_peer_id == game.my_peer_id) {
+    // Set own nickname
+    this->nickname = game.local_player_name;
+  }
 }
 
 void CharacterEntity::on_has_landed(Game &game, Vec2 fall_delta) {
@@ -253,6 +265,23 @@ void CharacterEntity::draw(const Game &game) {
     src_rect.width *= -1;
   }
 
+  // Draw the name over the character
+  // if (this->net_owner_peer_id == game.my_peer_id) {
+
+  Color team_color = (team == GameplayTeam::RED_TEAM) ? RED : BLUE;
+  int font_size = 20;
+  float spacing = 1.0f;
+  auto textSize = MeasureTextEx(GetFontDefault(), nickname.c_str(), font_size,
+                                spacing); // Measure the text width
+  Vec2 name_pos =
+      this->position +
+      Vec2(dest_rect.width / 2.0 - textSize.x / 2.0f, -textSize.y - 4.0f);
+
+  // DrawText(nickname.c_str(), name_pos.x, name_pos.y, 20, WHITE);
+  DrawTextEx(GetFontDefault(), nickname.c_str(), name_pos.to_raylib(),
+             font_size, spacing, team_color);
+  // }
+
   if (this->immunity_time > 0.0f) {
     Rectangle scaled_dest = dest_rect;
     // scaled_dest.width += 3.0;
@@ -314,14 +343,24 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
     this->velocity.y = -this->jump_speed;
   }
 
+  if (command & CharacterMovementCommand::JUMP && this->is_in_water) {
+    this->velocity.y = -this->jump_speed;
+  }
+
+  auto calculated_max_horiz_speed = this->max_horiz_speed;
+
+  if(is_in_water) {
+    calculated_max_horiz_speed *= 0.5f;
+  }
+
   if (command & CharacterMovementCommand::MOVE_LEFT) {
     this->direction = CharacterDirection::LEFT;
     if (this->is_propped_by_level) {
       this->anim_state = CharacterAnimState::WALK;
     }
     this->velocity.x -= this->horiz_accel * delta_time;
-    if (this->velocity.x < -this->max_horiz_speed) {
-      this->velocity.x = -this->max_horiz_speed;
+    if (this->velocity.x < calculated_max_horiz_speed) {
+      this->velocity.x = -calculated_max_horiz_speed;
     }
   } else if (command & CharacterMovementCommand::MOVE_RIGHT) {
     this->direction = CharacterDirection::RIGHT;
@@ -329,8 +368,8 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
       this->anim_state = CharacterAnimState::WALK;
     }
     this->velocity.x += this->horiz_accel * delta_time;
-    if (this->velocity.x > this->max_horiz_speed) {
-      this->velocity.x = this->max_horiz_speed;
+    if (this->velocity.x > calculated_max_horiz_speed) {
+      this->velocity.x = calculated_max_horiz_speed;
     }
   } else {
     if (this->is_propped_by_level) {
@@ -345,6 +384,9 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
           this->velocity.x = 0;
         }
       }
+    }
+    if (this->is_in_water) {
+      this->anim_state = CharacterAnimState::JUMP;
     }
   }
 

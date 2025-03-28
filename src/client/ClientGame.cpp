@@ -26,10 +26,11 @@ ClientGame::ClientGame() : DrawableGame() {
 }
 
 void ClientGame::connect_to_server(const std::string &server_address,
-                                   int server_port) {
+                                   int server_port, const std::string &player_name) {
   this->server_address = server_address;
   this->server_port = server_port;
   state = ClientGameState::INITIAL;
+  this->local_player_name = player_name;
 }
 
 void ClientGame::draw() {
@@ -325,5 +326,10 @@ Camera2D ClientGame::get_currently_rendering_camera_data() const {
   }
   return {0};
 }
+
+EntityRef ClientGame::spawn_player_character(uint32_t peer_id, Vec2 position) {
+  throw std::runtime_error(
+      "ClientGame::spawn_player_character: cannot be called on the client!");
+};
 
 ClientGame::~ClientGame() = default;

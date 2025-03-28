@@ -86,6 +86,7 @@ set(COMMON_SOURCES
         src/CharacterController.cpp
         src/Util.cpp
         src/entities/gui/MainMenuGUIEntity.cpp
+        src/entities/gui/TeamChoiceGUIEntity.cpp
 )
 set(COMMON_INCLUDES
         "${CMAKE_CURRENT_LIST_DIR}/src/"

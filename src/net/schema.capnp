@@ -15,6 +15,7 @@ struct BaseNetMessage {
         hurtEntity @8 :HurtEntityNetMessage; # server -> client (sent only in case the client is the owner of that entity)
         instantiatePrefab @9 :InstantiatePrefabNetMessage; # server -> client
         applyPhysicsImpulse @10 :ApplyPhysicsImpulseNetMessage; # server -> client
+        guiInteraction @11 :GuiInteractionNetMessage; # client -> server
     }
 }
 
@@ -30,10 +31,11 @@ enum EntityType {
     teamBase @3;
     gameplayManager @4;
     grenade @5;
+    teamChoiceGUI @6;
 }
 
 struct SyncEntityNetMessage {
-    isFirstSync @0 :Bool; # not actually set by the rmeote peer, but by the client
+    isFirstSync @0 :Bool; # not actually set by the remote peer, but by the client
     netId @1 :UInt32;
     netOwnerId @2 :UInt32;
     entityType @3 :EntityType;
@@ -66,6 +68,8 @@ struct SyncCharacterEntityData {
     maxHealth @2 :UInt32;
     health @3 :UInt32;
     immunityTime @4 :Float32;
+    team @5 :UInt32;
+    name @6 :Text;
 }
 
 struct GameplayManagerData {
@@ -137,4 +141,9 @@ struct DestroyEntityNetMessage {
 struct HurtEntityNetMessage {
     netId @0 :UInt32;
     damage @1 :Int32;
+}
+
+struct GuiInteractionNetMessage {
+    netId @0 :UInt32; # Net ID of the GUI element / entity
+    name @1 :Text;
 }

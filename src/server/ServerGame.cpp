@@ -5,6 +5,7 @@
 #include "GrenadeEntity.h"
 #include "Log.h"
 #include "SpawnEntity.h"
+#include "entities/gui/TeamChoiceGUIEntity.h"
 #include "nbnet_helper.h"
 #include "net/net_common.h"
 #include "net_common.h"
@@ -59,7 +60,7 @@ void ServerGame::update(float delta_time) {
       peer.send_reliable(message);
       clients.push_back(peer);
 
-      this->spawn_player_character(this->clients[this->clients.size() - 1]);
+      this->show_team_choice_gui(this->clients[this->clients.size() - 1]);
     } break;
     case NBN_CLIENT_DISCONNECTED: {
       LOG_INFO() << "Client disconnected" << std::endl;
@@ -185,44 +186,50 @@ void ServerGame::handle_incoming_message(
   case net::BaseNetMessage::Which::INTERACT: {
     handle_interact_message(peer, message.getInteract());
   } break;
+
+  case net::BaseNetMessage::Which::GUI_INTERACTION: {
+    handle_gui_interaction_message(peer, message.getGuiInteraction());
+  } break;
   default:
     LOG_WARN() << "Unknown message type received from the client" << std::endl;
   }
 }
 
-void ServerGame::spawn_player_character(ClientPeer &peer) {
-  EntityRef spawn_point;
+EntityRef ServerGame::spawn_player_character(uint32_t peer_id, Vec2 position) {
 
-  for (auto &entity : this->entities) {
-    if (entity == nullptr || entity->marked_for_deletion) {
-      continue;
-    }
+  for (auto &client : clients) {
+    if (client.peer_id == peer_id) {
+      std::unique_ptr<CharacterEntity> character =
+          std::make_unique<CharacterEntity>();
+      character->controller = std::make_unique<RemoteCharacterController>();
 
-    if (SpawnEntity *spawnEnt = dynamic_cast<SpawnEntity *>(entity.get())) {
-      if (spawnEnt->entity_type == "player_character") {
-        spawn_point = entity->get_ref();
-        break;
-      }
+      character->position = position;
+      character->net_owner_peer_id = peer_id;
+      character->load_assets(*this);
+
+      EntityRef ref = this->push_entity(std::move(character));
+
+      client.camera_target_net_id = ref.get(*this).net_id;
+      client.set_camera_target_countdown = 30;
+
+      return ref;
     }
   }
+  
+  LOG_WARN() << "spawn_player_character: peer_id " << peer_id
+             << " not found in clients" << std::endl;
+  return EntityRef();
+}
 
-  if (!spawn_point.valid(*this)) {
-    LOG_WARN() << "No spawn point found for player character" << std::endl;
-    return;
-  }
+void ServerGame::show_team_choice_gui(ClientPeer &peer) {
+  std::unique_ptr<TeamChoiceGUIEntity> choice_gui =
+      std::make_unique<TeamChoiceGUIEntity>();
 
-  std::unique_ptr<CharacterEntity> character =
-      std::make_unique<CharacterEntity>();
-  character->controller = std::make_unique<RemoteCharacterController>();
+  choice_gui->position = Vec2(0, 0);
+  choice_gui->net_owner_peer_id = peer.peer_id;
+  choice_gui->load_assets(*this);
 
-  character->position = spawn_point.get(*this).position;
-  character->net_owner_peer_id = peer.peer_id;
-  character->load_assets(*this);
-
-  EntityRef ref = this->push_entity(std::move(character));
-
-  peer.camera_target_net_id = ref.get(*this).net_id;
-  peer.set_camera_target_countdown = 30;
+  EntityRef ref = this->push_entity(std::move(choice_gui));
 }
 
 void ServerGame::send_reliable_to_peer(
@@ -287,6 +294,27 @@ void ServerGame::handle_interact_message(
     grenade->load_assets(*this);
     push_entity(std::move(grenade));
   }
+}
+
+void ServerGame::handle_gui_interaction_message(
+    ClientPeer &peer, const net::GuiInteractionNetMessage::Reader &message) {
+  EntityRef interactor = this->get_entity_by_net_id(message.getNetId());
+
+  if (!interactor.valid(*this)) {
+    LOG_WARN() << "handle_gui_interaction_message: GUI entity not found"
+               << std::endl;
+    return;
+  }
+  auto &interactor_ent = interactor.get(*this);
+
+  if (interactor_ent.net_owner_peer_id != peer.peer_id) {
+    LOG_WARN() << "handle_gui_interaction_message: GUI entity does not belong "
+                  "to the peer"
+               << std::endl;
+    return;
+  }
+
+  interactor_ent.handle_gui_interaction(*this, message);
 }
 
 void ServerGame::delete_marked_entities() {

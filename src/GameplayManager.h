@@ -13,7 +13,7 @@ enum class GameplayTeam { UNKNOWN_TEAM = 0, RED_TEAM = 1, BLUE_TEAM = 2 };
 std::string gameplay_team_to_string(GameplayTeam team);
 GColor gameplay_team_to_color(GameplayTeam team);
 
-class GaemplayTeamState {
+class GameplayTeamState {
 public:
   bool did_create_flag_first_time = false;
   int score = 0;
@@ -53,7 +53,9 @@ public:
 
   float time_until_gameplay_state_check = 0.5f;
 
-  std::unordered_map<GameplayTeam, GaemplayTeamState> team_states;
+  std::unordered_map<GameplayTeam, GameplayTeamState> team_states;
+
+  void spawn_player_with_team(Game &game, uint32_t peer_id, GameplayTeam team);
 
 private:
   void server_update(Game &game, float delta_time);

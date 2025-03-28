@@ -13,5 +13,6 @@ public:
 
 private:
   std::string server_addr_text = "localhost";
+  std::string player_name_text = "Player";
 };
 }; // namespace giewont

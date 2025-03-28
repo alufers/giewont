@@ -67,8 +67,8 @@ public:
 
   /**
    * @brief Draw any raylib based UI elements.
-   * 
-   * @param game 
+   *
+   * @param game
    */
   virtual void draw_raylib_ui(const Game &game) {}
 
@@ -96,8 +96,8 @@ public:
 
   /**
    * @brief Draw any user-facing Imgui UI elements.
-   * 
-   * @param game 
+   *
+   * @param game
    */
   virtual void draw_imgui_ui(Game &game) {};
 
@@ -121,6 +121,9 @@ public:
                      const net::InteractNetMessage::Reader interaction) {
     return false;
   }
+
+  virtual void handle_gui_interaction(
+      Game &game, const net::GuiInteractionNetMessage::Reader interaction) {}
 
   virtual Vec2 get_flag_attachment_pos() { return position; }
 

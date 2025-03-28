@@ -2,18 +2,16 @@
 #define CLIENTGAME_H_
 #define WIN32_LEAN_AND_MEAN
 
+#include "DrawableGame.h"
 #include "Entity.h"
 #include "Game.h"
-#include "DrawableGame.h"
 #include <capnp/message.h>
 #include <capnp/serialize.h>
 #include <memory>
 
 #include "schema.capnp.h"
 
-
 #include "nbnet_lean.h"
-
 
 namespace giewont {
 
@@ -36,7 +34,8 @@ public:
   bool is_server() const override { return false; }
   void shutdown() override;
 
-  void connect_to_server(const std::string &server_address, int server_port);
+  void connect_to_server(const std::string &server_address, int server_port,
+                         const std::string &player_name);
 
   Camera2D get_currently_rendering_camera_data() const override;
 
@@ -51,6 +50,8 @@ public:
   void
   broadcast_reliable(::capnp::MallocMessageBuilder &message_builder) override;
 
+  EntityRef spawn_player_character(uint32_t peer_id, Vec2 position) override;
+
   ~ClientGame();
 
 private:
@@ -64,7 +65,6 @@ private:
   void sync_my_entities_to_server();
 
   EntityRef inspector_selected_entity;
-
 };
 } // namespace giewont
 

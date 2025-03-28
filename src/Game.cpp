@@ -12,6 +12,7 @@
 #include "LevelLoader.h"
 #include "TeamBaseEntity.h"
 #include "Vec2.h"
+#include "entities/gui/TeamChoiceGUIEntity.h"
 #include <cstdint>
 #include <format>
 #include <memory>
@@ -99,6 +100,9 @@ void Game::apply_sync_entity(const net::SyncEntityNetMessage::Reader &message) {
         break;
       case net::EntityType::GRENADE:
         entToCreate = std::make_unique<GrenadeEntity>();
+        break;
+      case net::EntityType::TEAM_CHOICE_G_U_I:
+        entToCreate = std::make_unique<TeamChoiceGUIEntity>();
         break;
       default:
         LOG_WARN() << "apply_sync_entity: Unknown entity type "

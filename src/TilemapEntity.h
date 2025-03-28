@@ -12,7 +12,7 @@
 
 namespace giewont {
 
-enum class TileType { AIR, SOLID, LADDER };
+enum class TileType { AIR, SOLID, LADDER, WATER };
 
 class TilesetTileInfo {
 public:
@@ -51,6 +51,7 @@ public:
 
   Vec2 normal = Vec2(0, 0);
   float penetration = 0.0f;
+  TileType tile_type = TileType::AIR;
 };
 
 /**
