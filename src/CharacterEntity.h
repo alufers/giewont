@@ -2,20 +2,20 @@
 #define CHARACTERENTITY_H_
 
 #include "AABB.h"
+#include "CharacterController.h"
 #include "Entity.h"
 #include "Game.h"
+#include "GameplayManager.h"
 #include "PhysEntity.h"
 #include "ResourceManager.h"
 #include <memory>
 #include <unordered_map>
 #include <vector>
-#include "CharacterController.h"
 
 namespace giewont {
 
 class CharacterController;
 class KeyboardCharacterController;
-
 
 enum class CharacterAnimState { STAND, WALK, JUMP };
 
@@ -53,7 +53,11 @@ public:
 
   float min_fall_hurt_height = 200.0f;
   float max_fall_hurt_height = 500.0f;
-  float fall_max_damage_factor = 0.5f; // falling can take a maximum of 50% of the health
+  float fall_max_damage_factor =
+      0.5f; // falling can take a maximum of 50% of the health
+
+  GameplayTeam team = GameplayTeam::UNKNOWN_TEAM;
+  std::string nickname = "";
 
   CharacterEntity();
 
@@ -109,8 +113,6 @@ private:
   void load_spritesheet_data(const Game &game);
 };
 
-
-
 /**
  * @brief Character controller that does nothing, used on the client for
  * characters owned by the server.
@@ -121,7 +123,6 @@ public:
   void update(Game &game, CharacterEntity &character,
               float delta_time) override {};
 };
-
 
 class DumbAICharacterController : public CharacterController {
 public:

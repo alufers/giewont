@@ -26,10 +26,11 @@ ClientGame::ClientGame() : DrawableGame() {
 }
 
 void ClientGame::connect_to_server(const std::string &server_address,
-                                   int server_port) {
+                                   int server_port, const std::string &player_name) {
   this->server_address = server_address;
   this->server_port = server_port;
   state = ClientGameState::INITIAL;
+  this->local_player_name = player_name;
 }
 
 void ClientGame::draw() {

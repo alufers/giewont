@@ -8,24 +8,20 @@
 #endif
 
 #include <iostream>
-#include <vector>
 #include <random>
-
-
+#include <vector>
 
 using namespace giewont;
 
-
 static std::string generateRandomUsername() {
   // List of adjectives
-  std::vector<std::string> adjectives = {
-      "Swift", "Clever", "Brave", "Happy", "Eager", "Jolly", "Lively", "Witty", "Zesty", "Merry"
-  };
+  std::vector<std::string> adjectives = {"Swift", "Clever", "Brave",  "Happy",
+                                         "Eager", "Jolly",  "Lively", "Witty",
+                                         "Zesty", "Merry"};
 
   // List of verbs
-  std::vector<std::string> verbs = {
-      "Jump", "Run", "Fly", "Swim", "Sing", "Dash", "Laugh", "Climb", "Spin", "Dance"
-  };
+  std::vector<std::string> verbs = {"Jump", "Run",   "Fly",   "Swim", "Sing",
+                                    "Dash", "Laugh", "Climb", "Spin", "Dance"};
 
   // Random number generator setup
   std::random_device rd;
@@ -35,18 +31,16 @@ static std::string generateRandomUsername() {
   std::uniform_int_distribution<int> numDist(10, 99); // Two-digit number
 
   // Generate random username
-  std::string username = adjectives[adjDist(gen)] + verbs[verbDist(gen)] + std::to_string(numDist(gen));
+  std::string username = adjectives[adjDist(gen)] + verbs[verbDist(gen)] +
+                         std::to_string(numDist(gen));
   return username;
 }
-
 
 void MainMenuGUIEntity::load_assets(const Game &game) {
   player_name_text = generateRandomUsername();
 }
 
-void MainMenuGUIEntity::update(Game &game, float delta_time) {
-
-}
+void MainMenuGUIEntity::update(Game &game, float delta_time) {}
 
 void MainMenuGUIEntity::draw(const Game &game) {}
 
@@ -63,9 +57,8 @@ void MainMenuGUIEntity::draw_imgui_ui(Game &game) {
     LOG_INFO() << "Connect button pressed" << std::endl;
     ClientGame &client_game = dynamic_cast<ClientGame &>(game);
 
-
     // Try parsing port
-    
+
     std::string host = server_addr_text;
     int port = 1338;
     size_t colon_pos = server_addr_text.rfind(':');
@@ -78,7 +71,7 @@ void MainMenuGUIEntity::draw_imgui_ui(Game &game) {
       }
     }
 
-    client_game.connect_to_server(server_addr_text, 1338);
+    client_game.connect_to_server(server_addr_text, 1338, player_name_text);
   }
 
   if (ImGui::Button("Quit Game")) {

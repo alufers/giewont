@@ -35,7 +35,7 @@ enum EntityType {
 }
 
 struct SyncEntityNetMessage {
-    isFirstSync @0 :Bool; # not actually set by the rmeote peer, but by the client
+    isFirstSync @0 :Bool; # not actually set by the remote peer, but by the client
     netId @1 :UInt32;
     netOwnerId @2 :UInt32;
     entityType @3 :EntityType;
@@ -68,6 +68,8 @@ struct SyncCharacterEntityData {
     maxHealth @2 :UInt32;
     health @3 :UInt32;
     immunityTime @4 :Float32;
+    team @5 :UInt32;
+    name @6 :Text;
 }
 
 struct GameplayManagerData {

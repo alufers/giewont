@@ -56,12 +56,11 @@ public:
   /**
    * @brief Spawn a player character at this position for the given peer_id.
    * Server only.
-   * @param peer_id 
-   * @param position 
-   * @return EntityRef 
+   * @param peer_id
+   * @param position
+   * @return EntityRef
    */
-  virtual EntityRef spawn_player_character(uint32_t peer_id,
-                                                Vec2 position) = 0;
+  virtual EntityRef spawn_player_character(uint32_t peer_id, Vec2 position) = 0;
 
   virtual void shutdown() {};
 
@@ -89,6 +88,8 @@ public:
 
   virtual Camera2D get_currently_rendering_camera_data() const { return {0}; }
 #endif
+
+  std::string local_player_name = "Player";
 
 protected:
   /** @brief Last update per second. */

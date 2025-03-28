@@ -1,4 +1,5 @@
 #include "GameplayManager.h"
+#include "CharacterEntity.h"
 #include "Color.h"
 #include "DataBinder.h"
 #include "Entity.h"
@@ -178,8 +179,17 @@ void GameplayManager::build_sync_message(
 
 void GameplayManager::spawn_player_with_team(Game &game, uint32_t peer_id,
                                              GameplayTeam team) {
-  game.spawn_player_character(peer_id,
-                              team_states[team].base.get(game).position);
+  EntityRef player_ref = game.spawn_player_character(
+      peer_id, team_states[team].base.get(game).position);
+
+  auto &player = player_ref.get_as<CharacterEntity>(game);
+
+  player.team = team;
+
+  LOG_INFO() << "spawning player with team " << gameplay_team_to_string(player.team)
+             << std::endl;
+
+
 }
 
 std::string giewont::gameplay_team_to_string(GameplayTeam team) {
