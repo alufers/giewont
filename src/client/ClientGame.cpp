@@ -26,7 +26,8 @@ ClientGame::ClientGame() : DrawableGame() {
 }
 
 void ClientGame::connect_to_server(const std::string &server_address,
-                                   int server_port, const std::string &player_name) {
+                                   int server_port,
+                                   const std::string &player_name) {
   this->server_address = server_address;
   this->server_port = server_port;
   state = ClientGameState::INITIAL;
@@ -293,7 +294,10 @@ void ClientGame::send_reliable_to_peer(
 
 void ClientGame::broadcast_reliable(
     ::capnp::MallocMessageBuilder &message_builder) {
-  throw std::runtime_error("ClientGame::broadcast_reliable: not implemented");
+  auto encoded_array = capnp::messageToFlatArray(message_builder);
+  auto charArray = encoded_array.asChars();
+  NBN_GameClient_SendReliableByteArray((unsigned char *)charArray.begin(),
+                                       charArray.size());
 }
 
 void ClientGame::sync_my_entities_to_server() {

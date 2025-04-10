@@ -190,6 +190,9 @@ void ServerGame::handle_incoming_message(
   case net::BaseNetMessage::Which::GUI_INTERACTION: {
     handle_gui_interaction_message(peer, message.getGuiInteraction());
   } break;
+  case net::BaseNetMessage::Which::DESTROY_ENTITY: {
+    handle_destroy_entity_message(peer, message.getDestroyEntity());
+  }
   default:
     LOG_WARN() << "Unknown message type received from the client" << std::endl;
   }
@@ -215,7 +218,7 @@ EntityRef ServerGame::spawn_player_character(uint32_t peer_id, Vec2 position) {
       return ref;
     }
   }
-  
+
   LOG_WARN() << "spawn_player_character: peer_id " << peer_id
              << " not found in clients" << std::endl;
   return EntityRef();
@@ -317,30 +320,25 @@ void ServerGame::handle_gui_interaction_message(
   interactor_ent.handle_gui_interaction(*this, message);
 }
 
-void ServerGame::delete_marked_entities() {
+void ServerGame::handle_destroy_entity_message(
+    ClientPeer &peer, const net::DestroyEntityNetMessage::Reader &message) {
+  EntityRef entRef = this->get_entity_by_net_id(message.getNetId());
 
-  for (auto &entity : entities) {
-    if (entity == nullptr)
-      continue;
-    if (entity->marked_for_deletion && !entity->is_static) {
-      LOG_INFO()
-          << "Notifying about the destruction of entity entity  with net_id="
-          << entity->net_id << std::endl;
+  if (!entRef.valid(*this)) {
+    LOG_WARN() << "handle_destroy_entity_message: entity to destroy not found"
+               << std::endl;
+    return;
+  }
+  auto &ent = entRef.get(*this);
 
-      ::capnp::MallocMessageBuilder message;
-      auto root = message.initRoot<net::BaseNetMessage>();
-      auto destroyEntity = root.initDestroyEntity();
-      destroyEntity.setNetId(entity->net_id);
-
-      for (auto &client : clients) {
-        if (client.level_loaded) {
-          client.send_reliable(message);
-        }
-      }
-    }
+  if (ent.net_owner_peer_id != peer.peer_id) {
+    LOG_WARN()
+        << "handle_destroy_entity_message: entity does not belong to the peer"
+        << std::endl;
+    return;
   }
 
-  Game::delete_marked_entities();
+  ent.destroy();
 }
 
 void ServerGame::broadcast_reliable(

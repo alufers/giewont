@@ -147,14 +147,6 @@ void Game::load_level(std::string tmj_path) {
   }
 }
 
-void Game::delete_marked_entities() {
-  for (size_t i = 0; i < entities.size(); i++) {
-    if (entities[i] != nullptr && entities[i]->marked_for_deletion) {
-      entities[i] = nullptr;
-    }
-  }
-}
-
 EntityRef Game::get_entity_by_net_id(uint32_t net_id) {
   if (net_id == 0) {
     return EntityRef();
@@ -199,4 +191,34 @@ EntityRef Game::instantiate_prefab(res_id prefab_res, Vec2 pos) {
   ref.get(*this).position = pos;
 
   return ref;
+}
+
+void Game::delete_marked_entities() {
+
+  
+  for (auto &entity : entities) {
+    if (entity == nullptr)
+      continue;
+    bool is_server_or_owns_entity =
+        this->is_server() || (entity->net_owner_peer_id == my_peer_id);
+    if (entity->marked_for_deletion && !entity->is_static &&
+        is_server_or_owns_entity) {
+      LOG_INFO()
+          << "Notifying about the destruction of entity entity  with net_id="
+          << entity->net_id << std::endl;
+
+      ::capnp::MallocMessageBuilder message;
+      auto root = message.initRoot<net::BaseNetMessage>();
+      auto destroyEntity = root.initDestroyEntity();
+      destroyEntity.setNetId(entity->net_id);
+
+      broadcast_reliable(message);
+    }
+  }
+
+  for (size_t i = 0; i < entities.size(); i++) {
+    if (entities[i] != nullptr && entities[i]->marked_for_deletion) {
+      entities[i] = nullptr;
+    }
+  }
 }

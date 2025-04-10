@@ -88,7 +88,7 @@ void CharacterEntity::apply_hurt_message(
   this->health -= msg.getDamage();
   if (this->health < 0) {
     this->health = 0;
-    // TODO: handle death
+    this->destroy();
   }
   if (!game.is_server() && this->net_owner_peer_id == game.my_peer_id) {
     // Add some camera shake if we have been hurt

@@ -37,9 +37,6 @@ public:
 
   EntityRef spawn_player_character(uint32_t peer_id, Vec2 position) override;
 
-protected:
-  void delete_marked_entities() override;
-
 private:
   std::string tmj_path;
   uint32_t net_id_counter = 1;
@@ -57,6 +54,9 @@ private:
 
   void handle_gui_interaction_message(
       ClientPeer &peer, const net::GuiInteractionNetMessage::Reader &message);
+
+  void handle_destroy_entity_message(
+      ClientPeer &peer, const net::DestroyEntityNetMessage::Reader &message);
 
   void show_team_choice_gui(ClientPeer &peer);
 };
