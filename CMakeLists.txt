@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.5)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.20)
+cmake_minimum_required(VERSION 3.20)
 project(giewont)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 20)
