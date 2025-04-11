@@ -162,6 +162,14 @@ bool FlagEntity::handle_interaction(
     return false;
   }
 
+  auto dist = (interactor.get(game).position - position).length();
+
+  if (dist > FLAG_GRAB_DISTANCE) {
+    return false;
+  }
+
+  
+
   flag_holder = interactor;
   return true;
 }

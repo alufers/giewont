@@ -51,7 +51,7 @@ public:
   int max_health = 100;
   float immunity_time = 2.0f;
 
-  float min_fall_hurt_height = 200.0f;
+  float min_fall_hurt_height = 300.0f;
   float max_fall_hurt_height = 500.0f;
   float fall_max_damage_factor =
       0.5f; // falling can take a maximum of 50% of the health
@@ -66,6 +66,7 @@ public:
   void load_assets(const Game &game) override;
   void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
+  void draw_debug(const Game &game) override;
 
   AABB &get_aabb() override { return character_aabb; }
 

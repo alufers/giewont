@@ -35,11 +35,11 @@ void KeyboardCharacterController::update(Game &game, CharacterEntity &character,
     if (IsKeyReleased(key)) {
       if (!game.is_server()) {
         capnp::MallocMessageBuilder message;
-        auto base_msg = message.initRoot<net::BaseNetMessage>();
-        auto interact = base_msg.initInteract();
+        auto interact = message.initRoot<net::InteractNetMessage>();
+
         interact.setType(interaction_type);
         interact.setInteractorNetId(character.net_id);
-        game.send_reliable_to_peer(0, message);
+        game.perform_interaction(interact);
       }
     }
   }

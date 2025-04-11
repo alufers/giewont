@@ -86,6 +86,7 @@ set(COMMON_SOURCES
         src/entities/character/KeyboardCharacterController.cpp
         src/entities/character/CharacterController.cpp
         src/entities/character/DumbAICharacterController.cpp
+        src/entities/character/SmartAICharacterController.cpp
         src/Util.cpp
         src/entities/gui/MainMenuGUIEntity.cpp
         src/entities/gui/TeamChoiceGUIEntity.cpp

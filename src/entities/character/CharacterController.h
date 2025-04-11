@@ -26,6 +26,12 @@ class CharacterController {
 public:
   virtual void update(Game &game, CharacterEntity &character,
                       float delta_time) = 0;
+  /**
+   * @brief Function to draw debug information over all other entities.
+   *
+   * @param game
+   */
+  virtual void draw_debug(const Game &game) {}
 };
 
 }; // namespace giewont

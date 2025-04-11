@@ -1,5 +1,8 @@
 #include "DebugGUI.h"
+#include "CameraEntity.h"
 #include "Util.h"
+#include "entities/character/CharacterEntity.h"
+#include "entities/character/SmartAICharacterController.h"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "raylib.h"
@@ -13,6 +16,13 @@ void DebugGUI::draw_ui(Game &game) {
     if (ImGui::BeginMenu("Debug")) {
       ImGui::MenuItem("Show Debug Overlay", nullptr, &show_debug_overlay);
       ImGui::MenuItem("Show Entity Inspector", nullptr, &show_entity_inspector);
+      if (ImGui::MenuItem("Swap character controller to SmartAI")) {
+        auto &cam = game.camera_ref.get_as<CameraEntity>(game);
+        if (cam.entity_to_follow.valid_as<CharacterEntity>(game)) {
+          auto &character = cam.entity_to_follow.get_as<CharacterEntity>(game);
+          character.controller = std::make_unique<SmartAICharacterController>();
+        }
+      }
       ImGui::EndMenu();
     }
     ImGui::EndMainMenuBar();
@@ -33,8 +43,8 @@ void DebugGUI::draw_ui(Game &game) {
         auto &ent = game.entities[idx];
         if (ent != nullptr) {
           if (!inspector_filter.empty() &&
-              !string_contains_case_insensitive(
-                  ent->get_type_name(), inspector_filter.c_str())) {
+              !string_contains_case_insensitive(ent->get_type_name(),
+                                                inspector_filter.c_str())) {
             continue;
           }
           ImGui::TableNextRow();

@@ -307,6 +307,12 @@ void CharacterEntity::draw(const Game &game) {
   DrawTexturePro(*tex, src_rect, dest_rect, {0, 0}, 0.0f, WHITE);
 #endif
 }
+void CharacterEntity::draw_debug(const Game &game) {
+#ifdef GIEWONT_HAS_GRAPHICS
+  PhysEntity::draw_debug(game);
+  this->controller->draw_debug(game);
+#endif
+}
 
 void CharacterEntity::draw_raylib_ui(const Game &game) {
 #ifdef GIEWONT_HAS_GRAPHICS

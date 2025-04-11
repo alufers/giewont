@@ -248,3 +248,14 @@ GColor giewont::gameplay_team_to_color(GameplayTeam team) {
     return GColor(1.0f, 1.0f, 1.0f, 1.0f);
   }
 }
+
+GameplayTeam giewont::gameplay_team_get_enemy(GameplayTeam team) {
+  switch (team) {
+  case GameplayTeam::RED_TEAM:
+    return GameplayTeam::BLUE_TEAM;
+  case GameplayTeam::BLUE_TEAM:
+    return GameplayTeam::RED_TEAM;
+  default:
+    return GameplayTeam::UNKNOWN_TEAM;
+  }
+}

@@ -24,6 +24,8 @@ public:
 
 class FlagEntity : public PhysEntity {
 public:
+
+  static constexpr float FLAG_GRAB_DISTANCE = 140.0f;
   FlagEntity();
   FlagEntity(nlohmann::json data);
   const char *get_type_name() const override { return "FlagEntity"; }

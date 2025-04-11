@@ -4,10 +4,12 @@
 #include "AABB.h"
 #include "Entity.h"
 #include "Game.h"
+#include "IVec2.h"
 #include "ResourceManager.h"
 #include "Vec2.h"
 #include <filesystem>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <vector>
 
 namespace giewont {
@@ -48,7 +50,6 @@ public:
 
 class TilemapCollisionManifold {
 public:
-
   Vec2 normal = Vec2(0, 0);
   float penetration = 0.0f;
   TileType tile_type = TileType::AIR;
@@ -56,6 +57,7 @@ public:
 
 /**
  * @brief Entity for a loaded tilemap.
+ * Vec2 are in world space, while IVec2 are in tilemap space.
  */
 class TilemapEntity : public Entity {
 public:
@@ -82,14 +84,42 @@ public:
                                 size_t max_manifolds);
 
   TileType check_collision_point(const Vec2 &point);
+  /// @brief Check if world space point is in tilemap bounds
   bool is_point_in_tilemap_bounds(const Vec2 &point);
 
+  IVec2 world_pos_to_tilemap_pos(const Vec2 &point) {
+    return IVec2((int)((point.x - this->position.x) / this->tile_size.x),
+                 (int)((point.y - this->position.y) / this->tile_size.y));
+  }
+
+  /// @brief Get the world space position of the bottom center of a tile (pos is
+  /// tilemap space)
+  Vec2 get_tile_bottom_center_world_pos(IVec2 pos);
+
+  std::optional<IVec2> get_nearest_walkable_tile_pos(const Vec2 &point);
+
+  /// @brief Get the tile type at the given tilemap position (returns AIR if
+  /// out)
+  inline TileType get_tile_type_at(IVec2 pos) {
+    if (pos.x < 0 || pos.y < 0 || pos.x >= this->tilemap_width ||
+        pos.y >= this->tilemap_height) {
+      return TileType::AIR;
+    }
+    return get_tile_info_for_tile_id(
+               this->tilemap_data[pos.y * this->tilemap_width + pos.x])
+        .tile;
+  }
+
+  inline bool is_tile_in_bounds(IVec2 pos) {
+    return pos.x >= 0 && pos.y >= 0 && pos.x < this->tilemap_width &&
+           pos.y < this->tilemap_height;
+  }
+
   Vec2 tile_size = Vec2(0.0f, 0.0f); // in game units
+  int tilemap_width;                 // in tiles
+  int tilemap_height;                // in tiles
 
 private:
-  int tilemap_width;  // in tiles
-  int tilemap_height; // in tiles
-
   std::vector<int> tilemap_data;
 
   std::vector<TilesetData> tilesets = {
