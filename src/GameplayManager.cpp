@@ -1,5 +1,5 @@
 #include "GameplayManager.h"
-#include "CharacterEntity.h"
+#include "entities/character/CharacterEntity.h"
 #include "Color.h"
 #include "DataBinder.h"
 #include "Entity.h"

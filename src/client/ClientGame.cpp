@@ -1,6 +1,6 @@
 #include "ClientGame.h"
 #include "CameraEntity.h"
-#include "CharacterEntity.h"
+#include "entities/character/CharacterEntity.h"
 #include "Entity.h"
 #include "Log.h"
 

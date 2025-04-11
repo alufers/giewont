@@ -1,5 +1,5 @@
 #include "SpawnEntity.h"
-#include "CharacterEntity.h"
+#include "entities/character/CharacterEntity.h"
 #include "FlagEntity.h"
 #include "Log.h"
 #include <exception>
