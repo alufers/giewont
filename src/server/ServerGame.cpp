@@ -1,6 +1,7 @@
 #include "ServerGame.h"
 #include "CameraEntity.h"
 #include "entities/character/CharacterEntity.h"
+#include "entities/character/DumbAICharacterController.h"
 #include "Entity.h"
 #include "GrenadeEntity.h"
 #include "Log.h"
