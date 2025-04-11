@@ -12,6 +12,7 @@
 #include "LevelLoader.h"
 #include "TeamBaseEntity.h"
 #include "Vec2.h"
+#include "entities/decorative/TombstoneEntity.h"
 #include "entities/gui/TeamChoiceGUIEntity.h"
 #include <cstdint>
 #include <format>
@@ -57,7 +58,8 @@ EntityRef Game::push_entity(std::unique_ptr<Entity> entity) {
     }
   }
   entity->id = idx;
-  LOG_DEBUG() << "Pushing entity with id " << idx << std::endl;
+  LOG_DEBUG() << "Pushing entity with id " << idx << " (type "
+              << entity->get_type_name() << ")" << std::endl;
   entity->generation = generation_counter;
   generation_counter++;
   entities[idx] = std::move(entity);
@@ -103,6 +105,9 @@ void Game::apply_sync_entity(const net::SyncEntityNetMessage::Reader &message) {
         break;
       case net::EntityType::TEAM_CHOICE_G_U_I:
         entToCreate = std::make_unique<TeamChoiceGUIEntity>();
+        break;
+      case net::EntityType::TOMBSTONE:
+        entToCreate = std::make_unique<TombstoneEntity>();
         break;
       default:
         LOG_WARN() << "apply_sync_entity: Unknown entity type "
@@ -195,17 +200,17 @@ EntityRef Game::instantiate_prefab(res_id prefab_res, Vec2 pos) {
 
 void Game::delete_marked_entities() {
 
-  
   for (auto &entity : entities) {
     if (entity == nullptr)
       continue;
     bool is_server_or_owns_entity =
         this->is_server() || (entity->net_owner_peer_id == my_peer_id);
     if (entity->marked_for_deletion && !entity->is_static &&
-        is_server_or_owns_entity) {
+        entity->net_id != 0 && is_server_or_owns_entity) {
       LOG_INFO()
           << "Notifying about the destruction of entity entity  with net_id="
-          << entity->net_id << std::endl;
+          << entity->net_id << " (type: " << entity->get_type_name() << ")"
+          << std::endl;
 
       ::capnp::MallocMessageBuilder message;
       auto root = message.initRoot<net::BaseNetMessage>();

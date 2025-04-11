@@ -88,6 +88,8 @@ set(COMMON_SOURCES
         src/Util.cpp
         src/entities/gui/MainMenuGUIEntity.cpp
         src/entities/gui/TeamChoiceGUIEntity.cpp
+        src/entities/decorative/TombstoneEntity.cpp
+        src/math/RandUtil.cpp
 )
 set(COMMON_INCLUDES
         "${CMAKE_CURRENT_LIST_DIR}/src/"

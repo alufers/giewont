@@ -15,6 +15,7 @@
 #include <capnp/message.h>
 #include <cmath>
 #include <cstring>
+#include <math/RandUtil.h>
 #include <memory>
 #include <nlohmann/json.hpp>
 
@@ -88,7 +89,6 @@ void CharacterEntity::apply_hurt_message(
   this->health -= msg.getDamage();
   if (this->health < 0) {
     this->health = 0;
-    this->destroy();
   }
   if (!game.is_server() && this->net_owner_peer_id == game.my_peer_id) {
     // Add some camera shake if we have been hurt
@@ -202,6 +202,20 @@ void CharacterEntity::update(Game &game, float delta_time) {
     // Set own nickname
     this->nickname = game.local_player_name;
   }
+
+  if (game.is_server()) {
+    // Server side death check
+    if (this->health <= 0) {
+      for (auto &entity : game.valid_entities()) {
+        if (GameplayManager *gpm =
+                dynamic_cast<GameplayManager *>(entity.get())) {
+          gpm->notify_player_died(game, get_ref());
+          break;
+        }
+      }
+      this->destroy();
+    }
+  }
 }
 
 void CharacterEntity::on_has_landed(Game &game, Vec2 fall_delta) {
@@ -284,10 +298,7 @@ void CharacterEntity::draw(const Game &game) {
 
   if (this->immunity_time > 0.0f) {
     Rectangle scaled_dest = dest_rect;
-    // scaled_dest.width += 3.0;
-    // scaled_dest.height += 3.0;
-    // scaled_dest.x -= 3.0;
-    // scaled_dest.y -= 3.0;
+
     Color tint = BLUE;
     tint.a = (uint8_t)(255.0 * (immunity_time / 3.0));
     DrawTexturePro(*highlight_tex, src_rect, scaled_dest, {0, 0}, 0.0f, tint);
@@ -349,7 +360,7 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
 
   auto calculated_max_horiz_speed = this->max_horiz_speed;
 
-  if(is_in_water) {
+  if (is_in_water) {
     calculated_max_horiz_speed *= 0.5f;
   }
 
@@ -405,7 +416,7 @@ void DumbAICharacterController::update(Game &game, CharacterEntity &character,
   } else if (dir_change_time > -1000.0f) {
     dir_change_time = -10000.0f;
     moving_right = !moving_right;
-    dwell_time = 1.5f;
+    dwell_time = rand_float(0.5f, 2.0f);
   }
 
   if (dwell_time > 0.0) {
@@ -448,7 +459,7 @@ void DumbAICharacterController::update(Game &game, CharacterEntity &character,
           time_since_last_jump = 0.0f;
           command |= CharacterMovementCommand::JUMP;
           // moving_right = !moving_right;
-          dir_change_time = 2.0f;
+          dir_change_time = rand_float(1.5f, 3.0f);
         }
       }
     }

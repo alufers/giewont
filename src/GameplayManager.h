@@ -16,6 +16,7 @@ GColor gameplay_team_to_color(GameplayTeam team);
 class GameplayTeamState {
 public:
   bool did_create_flag_first_time = false;
+  bool did_spawn_ai_first_time = false;
   int score = 0;
   EntityRef base;
   EntityRef flag;
@@ -55,9 +56,14 @@ public:
 
   std::unordered_map<GameplayTeam, GameplayTeamState> team_states;
 
+  // Serverside methods
   void spawn_player_with_team(Game &game, uint32_t peer_id, GameplayTeam team);
+  void notify_player_died(Game &game, EntityRef player);
 
 private:
+  // Config
+  size_t initial_ai_spawn_count = 5; // Per team
+
   void server_update(Game &game, float delta_time);
 
   /**

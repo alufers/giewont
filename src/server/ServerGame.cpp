@@ -192,13 +192,27 @@ void ServerGame::handle_incoming_message(
   } break;
   case net::BaseNetMessage::Which::DESTROY_ENTITY: {
     handle_destroy_entity_message(peer, message.getDestroyEntity());
+    break;
   }
   default:
-    LOG_WARN() << "Unknown message type received from the client" << std::endl;
+    LOG_WARN() << "Unknown message type received from the client "
+               << static_cast<int>(message.which()) << std::endl;
   }
 }
 
 EntityRef ServerGame::spawn_player_character(uint32_t peer_id, Vec2 position) {
+
+  if (peer_id == 0) {
+    // Spawn AI character
+    auto character = std::make_unique<CharacterEntity>();
+    character->nickname = "[AI]";
+    character->controller = std::make_unique<DumbAICharacterController>();
+    character->position = position;
+    character->net_owner_peer_id = peer_id;
+    character->load_assets(*this);
+    EntityRef ref = this->push_entity(std::move(character));
+    return ref;
+  }
 
   for (auto &client : clients) {
     if (client.peer_id == peer_id) {
@@ -213,7 +227,7 @@ EntityRef ServerGame::spawn_player_character(uint32_t peer_id, Vec2 position) {
       EntityRef ref = this->push_entity(std::move(character));
 
       client.camera_target_net_id = ref.get(*this).net_id;
-      client.set_camera_target_countdown = 30;
+      client.set_camera_target_countdown = 10;
 
       return ref;
     }
