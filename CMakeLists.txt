@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.5)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.20)
+cmake_minimum_required(VERSION 3.20)
 project(giewont)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 20)
@@ -87,6 +88,8 @@ set(COMMON_SOURCES
         src/Util.cpp
         src/entities/gui/MainMenuGUIEntity.cpp
         src/entities/gui/TeamChoiceGUIEntity.cpp
+        src/entities/decorative/TombstoneEntity.cpp
+        src/math/RandUtil.cpp
 )
 set(COMMON_INCLUDES
         "${CMAKE_CURRENT_LIST_DIR}/src/"

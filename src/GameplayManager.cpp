@@ -6,6 +6,7 @@
 #include "FlagEntity.h"
 #include "Log.h"
 #include "TeamBaseEntity.h"
+#include "entities/decorative/TombstoneEntity.h"
 #include "schema.capnp.h"
 
 #ifdef GIEWONT_HAS_GRAPHICS
@@ -103,8 +104,9 @@ void GameplayManager::check_gameplay_state(Game &game) {
     }
   }
 
-  // Checks if each team has a flag
   for (auto &[team, state] : team_states) {
+
+    // Checks if each team has a flag
     if (!state.flag.valid(game)) {
       auto flag = std::make_unique<FlagEntity>();
       flag->position =
@@ -152,6 +154,14 @@ void GameplayManager::check_gameplay_state(Game &game) {
       }
       state.did_create_flag_first_time = true;
     }
+
+    if (!state.did_spawn_ai_first_time) {
+      state.did_spawn_ai_first_time = true;
+      for (size_t i = 0; i < initial_ai_spawn_count; i++) {
+        
+        spawn_player_with_team(game, 0, team);
+      }
+    }
   }
 }
 
@@ -179,17 +189,42 @@ void GameplayManager::build_sync_message(
 
 void GameplayManager::spawn_player_with_team(Game &game, uint32_t peer_id,
                                              GameplayTeam team) {
+  assert(game.is_server());
   EntityRef player_ref = game.spawn_player_character(
-      peer_id, team_states[team].base.get(game).position);
+      peer_id, team_states[team].base.get(game).position + Vec2(0, -10));
 
   auto &player = player_ref.get_as<CharacterEntity>(game);
 
   player.team = team;
 
-  LOG_INFO() << "spawning player with team " << gameplay_team_to_string(player.team)
-             << std::endl;
+  LOG_INFO() << "spawning player with team "
+             << gameplay_team_to_string(player.team) << std::endl;
+}
 
+void GameplayManager::notify_player_died(Game &game, EntityRef player) {
+  assert(game.is_server());
+  auto &character = player.get_as<CharacterEntity>(game);
 
+  // 1. create tombstone
+  auto tombstone = std::make_unique<TombstoneEntity>();
+  tombstone->position = character.position;
+  tombstone->load_assets(game);
+  tombstone->dead_player_peer_id = character.net_owner_peer_id;
+  tombstone->dead_player_team = character.team;
+  game.push_entity(std::move(tombstone));
+
+  // 2. Add black vignette effect
+  capnp::MallocMessageBuilder message_builder;
+  auto sync_message = message_builder.initRoot<net::BaseNetMessage>();
+  auto add_camera_effect = sync_message.initAddCameraEffect();
+  add_camera_effect.setType(net::CameraEffectType::VIGNETTE);
+  add_camera_effect.setDuration(1.5f);
+  add_camera_effect.setIntensity(8.0f);
+  add_camera_effect.setFalloffDuration(0.4f);
+  add_camera_effect.setColor(GColor(0.0f, 0.0f, 0.0f, 1.0f).to_uint32());
+  add_camera_effect.setClearOthers(true);
+
+  game.send_reliable_to_peer(character.net_owner_peer_id, message_builder);
 }
 
 std::string giewont::gameplay_team_to_string(GameplayTeam team) {

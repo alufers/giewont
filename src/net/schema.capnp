@@ -32,6 +32,7 @@ enum EntityType {
     gameplayManager @4;
     grenade @5;
     teamChoiceGUI @6;
+    tombstone @7;
 }
 
 struct SyncEntityNetMessage {
@@ -48,6 +49,7 @@ struct SyncEntityNetMessage {
         teamBaseData @8 :SyncTeamBaseEntityData;
         gameplayManagerData @9 :GameplayManagerData;
         grenadeData @10 :GrenadeData;
+        tombstoneData @11 :SyncTombstoneEntityData;
     }
 }
 
@@ -84,6 +86,16 @@ struct GrenadeData {
     fuseTimeLeft @1 :Float32;
 }
 
+struct SyncTombstoneEntityData {
+    totalLifetime @0 :Float32;
+    lifetime @1 :Float32;
+    fadeOutTime @2 :Float32;
+    fadingOut @3 :Bool;
+    deadPlayerPeerId @4 :UInt32;
+
+
+}
+
 struct InstantiatePrefabNetMessage {
     prefabPath @0 :Text;
     position @1 :NetVec2;
@@ -116,6 +128,7 @@ struct AddCameraEffectNetMessage {
     falloffDuration @3 :Float32;
     color @4 :UInt32;
     speed @5 :Float32;
+    clearOthers @6 :Bool; # if true, clear all other effects
 }
 
 enum InteractionType {

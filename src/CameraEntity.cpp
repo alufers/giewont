@@ -98,6 +98,10 @@ void CameraEntity::handle_add_camera_effect(
 #ifdef GIEWONT_HAS_GRAPHICS
   std::unique_ptr<CameraEffect> effect;
 
+  if (message.getClearOthers()) {
+    effects.clear();
+  }
+
   switch (message.getType()) {
   case net::CameraEffectType::SHAKE:
     effect = std::make_unique<CameraEffect>();
@@ -170,7 +174,7 @@ Camera2D CameraShakeEffect::modify_camera(float delta_time,
 }
 
 void VignetteEffect::on_after_end_mode2d() {
-  
+
   float radius = std::sqrt(GetScreenWidth() * GetScreenWidth() +
                            GetScreenHeight() * GetScreenHeight()) *
                  0.5f;
