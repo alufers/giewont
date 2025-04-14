@@ -17,9 +17,20 @@ namespace giewont {
 class CharacterController;
 class KeyboardCharacterController;
 
-enum class CharacterAnimState { STAND, WALK, JUMP };
+enum class CharacterAnimState { STAND, WALK, JUMP, CLIMB, SWIM };
 
 enum class CharacterDirection { LEFT, RIGHT };
+
+template <class T, std::size_t N> struct EnumClassArray : std::array<T, N> {
+  template <typename I> T &operator[](const I &i) {
+    return std::array<T, N>::operator[](
+        static_cast<std::underlying_type<I>::type>(i));
+  }
+  template <typename I> const T &operator[](const I &i) const {
+    return std::array<T, N>::operator[](
+        static_cast<std::underlying_type<I>::type>(i));
+  }
+};
 
 class CharacterAnimFrame {
 public:
@@ -44,17 +55,20 @@ public:
   CharacterAnimState anim_state = CharacterAnimState::STAND;
   CharacterDirection direction = CharacterDirection::RIGHT;
   int anim_frame = 0;
-  float anim_frame_duration = 0.03f;
+  static constexpr EnumClassArray<float, 5> anim_frame_durations = {
+      0.03f, 0.03f, 0.03f, 0.15f, 0.15f};
   float anim_frame_timer = 0.0f;
 
   int health = 100;
   int max_health = 100;
   float immunity_time = 2.0f;
 
-  float min_fall_hurt_height = 200.0f;
+  float min_fall_hurt_height = 300.0f;
   float max_fall_hurt_height = 500.0f;
   float fall_max_damage_factor =
       0.5f; // falling can take a maximum of 50% of the health
+
+  bool is_on_ladder = false;
 
   GameplayTeam team = GameplayTeam::UNKNOWN_TEAM;
   std::string nickname = "";
@@ -66,6 +80,7 @@ public:
   void load_assets(const Game &game) override;
   void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
+  void draw_debug(const Game &game) override;
 
   AABB &get_aabb() override { return character_aabb; }
 
@@ -122,18 +137,6 @@ class RemoteCharacterController : public CharacterController {
 public:
   void update(Game &game, CharacterEntity &character,
               float delta_time) override {};
-};
-
-class DumbAICharacterController : public CharacterController {
-public:
-  void update(Game &game, CharacterEntity &character,
-              float delta_time) override;
-
-private:
-  float dwell_time = 0.0;
-  float dir_change_time = -10000.0f;
-  float time_since_last_jump = 0.0f;
-  bool moving_right = false;
 };
 
 } // namespace giewont

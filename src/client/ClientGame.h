@@ -52,6 +52,9 @@ public:
 
   EntityRef spawn_player_character(uint32_t peer_id, Vec2 position) override;
 
+  void
+  perform_interaction(const net::InteractNetMessage::Reader &message) override;
+
   ~ClientGame();
 
 private:

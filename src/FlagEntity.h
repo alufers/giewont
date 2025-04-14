@@ -14,7 +14,7 @@ namespace giewont {
 
 enum class FlagEntitySpriteType { POLE, WAVING, DEFORM_UP, DEFORM_DOWN };
 
-class FLagEntitySprite {
+class FlagEntitySprite {
 public:
   int spritesheet_x;
   int spritesheet_y;
@@ -24,6 +24,8 @@ public:
 
 class FlagEntity : public PhysEntity {
 public:
+
+  static constexpr float FLAG_GRAB_DISTANCE = 140.0f;
   FlagEntity();
   FlagEntity(nlohmann::json data);
   const char *get_type_name() const override { return "FlagEntity"; }
@@ -63,7 +65,7 @@ public:
   GW_DATABINDER_AUTO_INSPECTOR(klass);
 
 private:
-  std::unordered_map<FlagEntitySpriteType, std::vector<FLagEntitySprite>>
+  std::unordered_map<FlagEntitySpriteType, std::vector<FlagEntitySprite>>
       sprites;
   std::string _texture_path;
   res_id _texture_id;

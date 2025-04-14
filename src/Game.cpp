@@ -7,7 +7,7 @@
 #include "NullEntity.h"
 #include <exception>
 
-#include "CharacterEntity.h"
+#include "entities/character/CharacterEntity.h"
 #include "GrenadeEntity.h"
 #include "LevelLoader.h"
 #include "TeamBaseEntity.h"

@@ -12,6 +12,7 @@ enum class GameplayTeam { UNKNOWN_TEAM = 0, RED_TEAM = 1, BLUE_TEAM = 2 };
 
 std::string gameplay_team_to_string(GameplayTeam team);
 GColor gameplay_team_to_color(GameplayTeam team);
+GameplayTeam gameplay_team_get_enemy(GameplayTeam team);
 
 class GameplayTeamState {
 public:

@@ -1,8 +1,8 @@
 #include "ClientGame.h"
 #include "CameraEntity.h"
-#include "CharacterEntity.h"
 #include "Entity.h"
 #include "Log.h"
+#include "entities/character/CharacterEntity.h"
 
 #include "DebugGUI.h"
 #include "nbnet_helper.h"
@@ -337,3 +337,12 @@ EntityRef ClientGame::spawn_player_character(uint32_t peer_id, Vec2 position) {
 };
 
 ClientGame::~ClientGame() = default;
+
+void ClientGame::perform_interaction(
+    const net::InteractNetMessage::Reader &message) {
+
+  capnp::MallocMessageBuilder root_msg;
+  auto base_msg = root_msg.initRoot<net::BaseNetMessage>();
+  base_msg.setInteract(message);
+  this->send_reliable_to_peer(0, root_msg);
+}

@@ -67,7 +67,6 @@ capnp_generate_cpp(CAPNP_SRCS CAPNP_HDRS "${CMAKE_CURRENT_LIST_DIR}/src/net/sche
 set(COMMON_SOURCES
         ${CAPNP_SRCS}
         src/CameraEntity.cpp
-        src/CharacterEntity.cpp
         src/Entity.cpp
         src/Game.cpp
         src/LevelLoader.cpp
@@ -83,8 +82,11 @@ set(COMMON_SOURCES
         src/TeamBaseEntity.cpp
         src/GameplayManager.cpp
         src/GrenadeEntity.cpp
-        src/KeyboardCharacterController.cpp
-        src/CharacterController.cpp
+        src/entities/character/CharacterEntity.cpp
+        src/entities/character/KeyboardCharacterController.cpp
+        src/entities/character/CharacterController.cpp
+        src/entities/character/DumbAICharacterController.cpp
+        src/entities/character/SmartAICharacterController.cpp
         src/Util.cpp
         src/entities/gui/MainMenuGUIEntity.cpp
         src/entities/gui/TeamChoiceGUIEntity.cpp

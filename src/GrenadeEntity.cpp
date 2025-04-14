@@ -1,6 +1,6 @@
 #include "GrenadeEntity.h"
 #include "AABB.h"
-#include "CharacterEntity.h"
+#include "entities/character/CharacterEntity.h"
 #include "ParticleSystemEntity.h"
 #include "PhysEntity.h"
 #include <cmath>

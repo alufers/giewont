@@ -55,10 +55,10 @@ void FlagEntity::load_spritesheet_data(const Game &game) {
     }
 
     if (sprites.find(state) == sprites.end()) {
-      sprites[state] = std::vector<FLagEntitySprite>();
+      sprites[state] = std::vector<FlagEntitySprite>();
     }
 
-    FLagEntitySprite frame;
+    FlagEntitySprite frame;
     frame.spritesheet_x = value[0].get<int>();
     frame.spritesheet_y = value[1].get<int>();
     frame.spritesheet_w = value[2].get<int>();
@@ -151,6 +151,7 @@ void FlagEntity::draw(const Game &game) {
 
 bool FlagEntity::handle_interaction(
     Game &game, const net::InteractNetMessage::Reader interaction) {
+      
   EntityRef interactor =
       game.get_entity_by_net_id(interaction.getInteractorNetId());
   if (flag_holder.valid(game)) {
@@ -161,6 +162,14 @@ bool FlagEntity::handle_interaction(
     }
     return false;
   }
+
+  auto dist = (interactor.get(game).position - position).length();
+
+  if (dist > FLAG_GRAB_DISTANCE) {
+    return false;
+  }
+
+  
 
   flag_holder = interactor;
   return true;

@@ -64,6 +64,14 @@ public:
 
   virtual void shutdown() {};
 
+  /**
+   * @brief If client, send interaction to server. If server, perform the interaction.
+   * 
+   * @param message 
+   */
+  virtual void
+  perform_interaction(const net::InteractNetMessage::Reader &message) = 0;
+
 // Font
 #ifdef GIEWONT_HAS_GRAPHICS
   Font font;

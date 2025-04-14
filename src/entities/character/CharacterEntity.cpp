@@ -153,6 +153,10 @@ void CharacterEntity::load_spritesheet_data(const Game &game) {
       state = CharacterAnimState::WALK;
     } else if (string_contains_case_insensitive(key, "jump")) {
       state = CharacterAnimState::JUMP;
+    } else if (string_contains_case_insensitive(key, "climb")) {
+      state = CharacterAnimState::CLIMB;
+    } else if (string_contains_case_insensitive(key, "swim")) {
+      state = CharacterAnimState::SWIM;
     } else {
       continue;
     }
@@ -186,7 +190,7 @@ void CharacterEntity::update(Game &game, float delta_time) {
   this->controller->update(game, *this, delta_time);
   PhysEntity::update(game, delta_time);
   anim_frame_timer += delta_time;
-  if (anim_frame_timer >= anim_frame_duration) {
+  if (anim_frame_timer >= CharacterEntity::anim_frame_durations[anim_state]) {
     anim_frame_timer = 0.0f;
     anim_frame++;
   }
@@ -245,12 +249,13 @@ void CharacterEntity::on_has_landed(Game &game, Vec2 fall_delta) {
 }
 
 Vec2 CharacterEntity::world_feet_pos() {
-  auto aabb = get_aabb();
+  auto &aabb = get_aabb();
   return position + Vec2((aabb.min.x + aabb.max.x) / 2.0f, aabb.max.y + 1.0f);
 }
 
 bool CharacterEntity::check_is_propped(TilemapEntity *tilemap, Vec2 feet_pos) {
   TileType feet_tile = tilemap->check_collision_point(feet_pos);
+  is_on_ladder = feet_tile == TileType::LADDER; // TODO: not mutate it here
   return feet_tile == TileType::SOLID || feet_tile == TileType::LADDER;
 }
 
@@ -305,6 +310,12 @@ void CharacterEntity::draw(const Game &game) {
   }
 
   DrawTexturePro(*tex, src_rect, dest_rect, {0, 0}, 0.0f, WHITE);
+#endif
+}
+void CharacterEntity::draw_debug(const Game &game) {
+#ifdef GIEWONT_HAS_GRAPHICS
+  PhysEntity::draw_debug(game);
+  this->controller->draw_debug(game);
 #endif
 }
 
@@ -385,7 +396,9 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
   } else {
     if (this->is_propped_by_level) {
       if (anim_state == CharacterAnimState::WALK ||
-          anim_state == CharacterAnimState::JUMP) {
+          anim_state == CharacterAnimState::SWIM ||
+          anim_state == CharacterAnimState::JUMP ||
+          (anim_state == CharacterAnimState::CLIMB || !is_on_ladder)) {
         anim_state = CharacterAnimState::STAND;
       }
       if (std::fabs(this->velocity.x) > PHYS_EPSILON) {
@@ -397,81 +410,19 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
       }
     }
     if (this->is_in_water) {
+      this->anim_state = CharacterAnimState::SWIM;
+    }
+
+    if (!is_on_ladder && anim_state == CharacterAnimState::CLIMB) {
       this->anim_state = CharacterAnimState::JUMP;
     }
   }
 
   // overwrite anim state if jumping
   if (command & CharacterMovementCommand::JUMP && this->is_propped_by_level) {
-    anim_state = CharacterAnimState::JUMP;
+    anim_state =
+        is_on_ladder ? CharacterAnimState::CLIMB : CharacterAnimState::JUMP;
   }
-}
-
-void DumbAICharacterController::update(Game &game, CharacterEntity &character,
-                                       float delta_time) {
-  CharacterMovementCommand command = CharacterMovementCommand::NONE;
-  time_since_last_jump += delta_time;
-  if (dir_change_time > 0.0f) {
-    dir_change_time -= delta_time;
-  } else if (dir_change_time > -1000.0f) {
-    dir_change_time = -10000.0f;
-    moving_right = !moving_right;
-    dwell_time = rand_float(0.5f, 2.0f);
-  }
-
-  if (dwell_time > 0.0) {
-    dwell_time -= delta_time;
-  } else {
-    Vec2 feet_pos =
-        character.position +
-        Vec2((character.get_aabb().min.x + character.get_aabb().max.x) / 2.0f,
-             character.get_aabb().max.y + 1.0f);
-    Vec2 head_pos =
-        character.position +
-        Vec2((character.get_aabb().min.x + character.get_aabb().max.x) / 2.0f,
-             (character.get_aabb().max.y + character.get_aabb().min.y) / 2.0f +
-                 1.0f);
-
-    for (auto &entity : game.valid_entities()) {
-      if (TilemapEntity *tilemap =
-              dynamic_cast<TilemapEntity *>(entity.get())) {
-        Vec2 pos_to_check = feet_pos;
-        pos_to_check.x +=
-            ((character.get_aabb().min.x + character.get_aabb().max.x) / 2.0f +
-             tilemap->tile_size.x / 2.0f) *
-            (moving_right ? 1.0f : -1.0f);
-
-        Vec2 head_pos_to_check = head_pos;
-        head_pos_to_check.x +=
-            ((character.get_aabb().min.x + character.get_aabb().max.x) / 2.0f +
-             tilemap->tile_size.x / 2.0f) *
-            (moving_right ? 1.0f : -1.0f);
-        if (!character.check_is_propped(tilemap, pos_to_check) &&
-            dir_change_time <= 0.0f) {
-
-          dwell_time = 1.0f;
-          moving_right = !moving_right;
-          break;
-        }
-
-        if (character.check_is_propped(tilemap, head_pos_to_check) &&
-            dir_change_time <= 0.0f && time_since_last_jump > 7.0f) {
-          time_since_last_jump = 0.0f;
-          command |= CharacterMovementCommand::JUMP;
-          // moving_right = !moving_right;
-          dir_change_time = rand_float(1.5f, 3.0f);
-        }
-      }
-    }
-
-    if (moving_right) {
-      command |= CharacterMovementCommand::MOVE_RIGHT;
-    } else {
-      command |= CharacterMovementCommand::MOVE_LEFT;
-    }
-  }
-
-  character.perform_movement(game, delta_time, command);
 }
 
 net::EntityType CharacterEntity::get_net_type() {

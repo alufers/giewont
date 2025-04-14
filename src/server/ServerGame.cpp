@@ -1,10 +1,12 @@
 #include "ServerGame.h"
 #include "CameraEntity.h"
-#include "CharacterEntity.h"
 #include "Entity.h"
 #include "GrenadeEntity.h"
 #include "Log.h"
 #include "SpawnEntity.h"
+#include "entities/character/CharacterEntity.h"
+#include "entities/character/DumbAICharacterController.h"
+#include "entities/character/SmartAICharacterController.h"
 #include "entities/gui/TeamChoiceGUIEntity.h"
 #include "nbnet_helper.h"
 #include "net/net_common.h"
@@ -206,8 +208,9 @@ EntityRef ServerGame::spawn_player_character(uint32_t peer_id, Vec2 position) {
     // Spawn AI character
     auto character = std::make_unique<CharacterEntity>();
     character->nickname = "[AI]";
-    character->controller = std::make_unique<DumbAICharacterController>();
+    character->controller = std::make_unique<SmartAICharacterController>();
     character->position = position;
+    character->velocity = Vec2(0, -300);
     character->net_owner_peer_id = peer_id;
     character->load_assets(*this);
     EntityRef ref = this->push_entity(std::move(character));
@@ -223,6 +226,7 @@ EntityRef ServerGame::spawn_player_character(uint32_t peer_id, Vec2 position) {
       character->position = position;
       character->net_owner_peer_id = peer_id;
       character->load_assets(*this);
+      character->velocity = Vec2(0, -300);
 
       EntityRef ref = this->push_entity(std::move(character));
 
@@ -279,38 +283,7 @@ void ServerGame::handle_interact_message(
                << std::endl;
     return;
   }
-
-  Vec2 interactor_pos = interactor_ent.position;
-  if (message.getType() == net::InteractionType::USE_INTERACTION) {
-
-    std::vector<EntityRef> allEntities;
-    for (auto &entity : this->valid_entities()) {
-      if (entity->get_ref() == interactor)
-        continue;
-
-      allEntities.push_back(entity->get_ref());
-    }
-
-    std::sort(allEntities.begin(), allEntities.end(),
-              [&](EntityRef a, EntityRef b) {
-                return a.get(*this).position.distance(interactor_pos) <
-                       b.get(*this).position.distance(interactor_pos);
-              });
-
-    for (auto &entity_ref : allEntities) {
-      auto &entity = entity_ref.get(*this);
-      if (entity.handle_interaction(*this, message))
-        break;
-    }
-  } else if (message.getType() == net::InteractionType::THROW_INTERACTION) {
-    auto grenade = std::make_unique<GrenadeEntity>();
-    grenade->position = interactor_pos;
-    if (interactor.valid_as<PhysEntity>(*this)) {
-      grenade->velocity = interactor.get_as<PhysEntity>(*this).velocity * 1.2;
-    }
-    grenade->load_assets(*this);
-    push_entity(std::move(grenade));
-  }
+  perform_interaction(message);
 }
 
 void ServerGame::handle_gui_interaction_message(
@@ -369,4 +342,49 @@ void ClientPeer::send_reliable(capnp::MallocMessageBuilder &message_builder) {
   auto charArray = encoded_array.asChars();
   NBN_GameServer_SendReliableByteArrayTo(
       connection, (unsigned char *)charArray.begin(), charArray.size());
+}
+
+void ServerGame::perform_interaction(
+    const net::InteractNetMessage::Reader &message) {
+  EntityRef interactor =
+      this->get_entity_by_net_id(message.getInteractorNetId());
+
+  if (!interactor.valid(*this)) {
+    LOG_WARN() << "handle_interact_message: Interactor entity not found"
+               << std::endl;
+    return;
+  }
+  auto &interactor_ent = interactor.get(*this);
+
+  Vec2 interactor_pos = interactor_ent.position;
+  if (message.getType() == net::InteractionType::USE_INTERACTION) {
+
+    std::vector<EntityRef> allEntities;
+    for (auto &entity : this->valid_entities()) {
+      if (entity->get_ref() == interactor)
+        continue;
+
+      allEntities.push_back(entity->get_ref());
+    }
+
+    std::sort(allEntities.begin(), allEntities.end(),
+              [&](EntityRef a, EntityRef b) {
+                return a.get(*this).position.distance(interactor_pos) <
+                       b.get(*this).position.distance(interactor_pos);
+              });
+
+    for (auto &entity_ref : allEntities) {
+      auto &entity = entity_ref.get(*this);
+      if (entity.handle_interaction(*this, message))
+        break;
+    }
+  } else if (message.getType() == net::InteractionType::THROW_INTERACTION) {
+    auto grenade = std::make_unique<GrenadeEntity>();
+    grenade->position = interactor_pos;
+    if (interactor.valid_as<PhysEntity>(*this)) {
+      grenade->velocity = interactor.get_as<PhysEntity>(*this).velocity * 1.2;
+    }
+    grenade->load_assets(*this);
+    push_entity(std::move(grenade));
+  }
 }

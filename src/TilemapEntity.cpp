@@ -1,5 +1,6 @@
 #define _USE_MATH_DEFINES // for C++
 #include "TilemapEntity.h"
+#include "IVec2.h"
 #include "Log.h"
 #include "Vec2.h"
 #include <cmath>
@@ -300,4 +301,38 @@ bool TilemapEntity::is_point_in_tilemap_bounds(const Vec2 &point) {
       AABB(Vec2(0, 0), Vec2((float)this->tilemap_width * this->tile_size.x,
                             (float)this->tilemap_height * this->tile_size.y));
   return tilemap_aabb.contains(in_local_space);
+}
+
+Vec2 TilemapEntity::get_tile_bottom_center_world_pos(IVec2 pos) {
+  return Vec2((float)pos.x * this->tile_size.x + this->tile_size.x / 2.0f,
+              (float)pos.y * this->tile_size.y + this->tile_size.y);
+}
+
+std::optional<IVec2>
+TilemapEntity::get_nearest_walkable_tile_pos(const Vec2 &point) {
+  if (!is_point_in_tilemap_bounds(point)) {
+    return std::nullopt;
+  }
+
+  Vec2 in_local_space = point - this->position;
+  int x = (int)in_local_space.x / this->tile_size.x;
+  int y = (int)in_local_space.y / this->tile_size.y;
+  while (true) {
+
+    if (x < 0 || y < 0 || x >= this->tilemap_width ||
+        y >= this->tilemap_height - 1) {
+      return std::nullopt;
+    }
+    int tile_id = this->tilemap_data[y * this->tilemap_width + x];
+    int tile_below_id = this->tilemap_data[(y + 1) * this->tilemap_width + x];
+    TilesetTileInfo &tile_info = get_tile_info_for_tile_id(tile_id);
+    TilesetTileInfo &tile_below_info = get_tile_info_for_tile_id(tile_below_id);
+
+    if ((tile_info.tile == TileType::AIR ||
+         tile_info.tile == TileType::LADDER) &&
+        tile_below_info.tile == TileType::SOLID) {
+      return IVec2(x, y);
+    }
+    y++;
+  }
 }

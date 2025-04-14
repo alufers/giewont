@@ -37,6 +37,9 @@ public:
 
   EntityRef spawn_player_character(uint32_t peer_id, Vec2 position) override;
 
+  void
+  perform_interaction(const net::InteractNetMessage::Reader &message) override;
+
 private:
   std::string tmj_path;
   uint32_t net_id_counter = 1;
@@ -49,6 +52,7 @@ private:
   void handle_incoming_message(ClientPeer &peer,
                                const net::BaseNetMessage::Reader &message);
 
+  /// @brief Validate incoming interact message and call perform_interaction
   void handle_interact_message(ClientPeer &peer,
                                const net::InteractNetMessage::Reader &message);
 
