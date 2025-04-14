@@ -17,9 +17,20 @@ namespace giewont {
 class CharacterController;
 class KeyboardCharacterController;
 
-enum class CharacterAnimState { STAND, WALK, JUMP };
+enum class CharacterAnimState { STAND, WALK, JUMP, CLIMB, SWIM };
 
 enum class CharacterDirection { LEFT, RIGHT };
+
+template <class T, std::size_t N> struct EnumClassArray : std::array<T, N> {
+  template <typename I> T &operator[](const I &i) {
+    return std::array<T, N>::operator[](
+        static_cast<std::underlying_type<I>::type>(i));
+  }
+  template <typename I> const T &operator[](const I &i) const {
+    return std::array<T, N>::operator[](
+        static_cast<std::underlying_type<I>::type>(i));
+  }
+};
 
 class CharacterAnimFrame {
 public:
@@ -44,7 +55,8 @@ public:
   CharacterAnimState anim_state = CharacterAnimState::STAND;
   CharacterDirection direction = CharacterDirection::RIGHT;
   int anim_frame = 0;
-  float anim_frame_duration = 0.03f;
+  static constexpr EnumClassArray<float, 5> anim_frame_durations = {
+      0.03f, 0.03f, 0.03f, 0.15f, 0.15f};
   float anim_frame_timer = 0.0f;
 
   int health = 100;
@@ -55,6 +67,8 @@ public:
   float max_fall_hurt_height = 500.0f;
   float fall_max_damage_factor =
       0.5f; // falling can take a maximum of 50% of the health
+
+  bool is_on_ladder = false;
 
   GameplayTeam team = GameplayTeam::UNKNOWN_TEAM;
   std::string nickname = "";
