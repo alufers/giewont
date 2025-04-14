@@ -136,6 +136,7 @@ enum InteractionType {
     primaryClick @1;
     secondaryClick @2;
     throwInteraction @3;
+    aiNotifyFlagStuck @4; # Used by AI characters when it cannot pathfind to the enemy base while holding the flag
 }
 
 

@@ -14,7 +14,7 @@ namespace giewont {
 
 enum class FlagEntitySpriteType { POLE, WAVING, DEFORM_UP, DEFORM_DOWN };
 
-class FLagEntitySprite {
+class FlagEntitySprite {
 public:
   int spritesheet_x;
   int spritesheet_y;
@@ -65,7 +65,7 @@ public:
   GW_DATABINDER_AUTO_INSPECTOR(klass);
 
 private:
-  std::unordered_map<FlagEntitySpriteType, std::vector<FLagEntitySprite>>
+  std::unordered_map<FlagEntitySpriteType, std::vector<FlagEntitySprite>>
       sprites;
   std::string _texture_path;
   res_id _texture_id;

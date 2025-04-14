@@ -59,6 +59,10 @@ struct SmartAIState {
   float dwellTime = 1.0f;
 
   float waypointReachTime = 0.0f;
+
+  int noPathAttempts = 0.0f;
+
+  float enemyAttachCheckTime = 10.0f;
 };
 
 struct SmartAIThinkCtx {

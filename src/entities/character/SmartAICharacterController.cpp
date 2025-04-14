@@ -22,11 +22,45 @@ const float WAYPOINT_REACH_MAX_TIME = 5.0f;
 void SmartAICharacterController::update(Game &game, CharacterEntity &character,
                                         float delta_time) {
   SmartAIThinkCtx ctx{game, character, state};
+
+  if (ctx.state.enemyAttachCheckTime > 0.0f) {
+    ctx.state.enemyAttachCheckTime -= delta_time;
+  } else {
+    bool didThrow = false;
+    if (ctx.character.is_propped_by_level) {
+      for (auto &entity : ctx.game.valid_entities()) {
+        if (CharacterEntity *enemy =
+                dynamic_cast<CharacterEntity *>(entity.get())) {
+          if (enemy->team != ctx.character.team &&
+              (enemy->position - ctx.character.position).length() < 300.0f) {
+            capnp::MallocMessageBuilder message;
+            auto interact = message.initRoot<net::InteractNetMessage>();
+            interact.setType(net::InteractionType::THROW_INTERACTION);
+            interact.setInteractorNetId(character.net_id);
+            game.perform_interaction(interact);
+            didThrow = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if(didThrow) {
+      ctx.state.enemyAttachCheckTime = rand_float(5.0f, 10.0f);
+    } else {
+      ctx.state.enemyAttachCheckTime = rand_float(0.01f, 1.8f);
+    }
+  }
   if (ctx.state.dwellTime > 0.0f) {
     ctx.state.dwellTime -= delta_time;
     return;
   }
   if (ctx.state.path.empty()) {
+    ctx.state.noPathAttempts++;
+
+    if (ctx.state.noPathAttempts > 20) {
+      character.health = 0;
+    }
 
     EntityRef flag_ref = get_enemy_flag(ctx);
     if (flag_ref.valid_as<FlagEntity>(game)) {
@@ -48,7 +82,6 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
             FlagEntity::FLAG_GRAB_DISTANCE) {
           capnp::MallocMessageBuilder message;
           auto interact = message.initRoot<net::InteractNetMessage>();
-
           interact.setType(net::InteractionType::USE_INTERACTION);
           interact.setInteractorNetId(character.net_id);
           game.perform_interaction(interact);
@@ -63,7 +96,7 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
   }
   CharacterMovementCommand command = giewont::CharacterMovementCommand::NONE;
   if (!ctx.state.path.empty()) {
-
+    ctx.state.noPathAttempts = 0;
     // LOG_DEBUG() << "Path size: " << ctx.state.path.size() << std::endl;
     auto feetPos = ctx.character.world_feet_pos() - Vec2(0, 1.0f);
     auto &currentNode = ctx.state.path[0];
@@ -78,20 +111,44 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
     bool hasReachedCurrentNode =
         currentNode.world_pos.distance(feetPos) < WAYPOINT_REACHED_THRESHOLD;
 
-    // LOG_DEBUG() <<  "feetPos: " << feetPos.x << ", " << feetPos.y
-    //             << " currentNode: " << currentNode.world_pos.x << ", "
-    //             << currentNode.world_pos.y << std::endl;
-
     IVec2 feetTilePos =
         ctx.state.last_tilemap->world_pos_to_tilemap_pos(feetPos);
+
+    float min_target_x = currentNode.world_pos.x;
+    float max_target_x = currentNode.world_pos.x;
+
+    // Permit overshooting if the next node iso on the same y
+    if (ctx.state.path.size() > 1) {
+      auto nextNode = ctx.state.path[1];
+      if (nextNode.tile_pos.y == currentNode.tile_pos.y &&
+          !(nextNode.flags & AiPathNodeFlag::JUMP_BEFORE_REACHING)) {
+        min_target_x = std::min(currentNode.world_pos.x, nextNode.world_pos.x);
+        max_target_x = std::max(currentNode.world_pos.x, nextNode.world_pos.x);
+
+        if (std::abs(feetPos.y - nextNode.world_pos.y) <
+                WAYPOINT_REACHED_THRESHOLD / 2.0 &&
+            (feetPos.x > min_target_x) && (feetPos.x < max_target_x)) {
+          LOG_DEBUG() << "Reached node by overshooting to the next one"
+                      << std::endl;
+          hasReachedCurrentNode = true;
+        }
+      }
+    }
+
     ctx.state.tilemapFeetPos = feetTilePos;
+
     if (currentNode.flags & AiPathNodeFlag::LANDING_SITE &&
         !hasReachedCurrentNode) {
-
       if (feetTilePos == currentNode.tile_pos) {
         hasReachedCurrentNode = true;
       }
     }
+
+    // wait for stopping when reaching the target
+    if (hasReachedCurrentNode && ctx.state.path.size() == 1) {
+      hasReachedCurrentNode = ctx.character.velocity.length() < 30.0f;
+    }
+
     if (hasReachedCurrentNode) {
       ctx.state.did_jump_for_current_waypoint = false;
       ctx.state.waypointReachTime = 0.0f;
@@ -101,19 +158,26 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
         ctx.state.dwellTime = rand_float(0.05f, 3.2f);
       }
     } else {
-      auto x_dist = std::abs(currentNode.world_pos.x - feetPos.x);
 
-      if (x_dist > X_CLOSE_THRESHOLD) {
-        // Move towards the current node
-        bool should_move_right = feetPos.x < currentNode.world_pos.x;
+      // auto x_dist = std::abs(currentNode.world_pos.x - feetPos.x);
 
-        if (should_move_right) {
+      // if (x_dist > X_CLOSE_THRESHOLD) {
+      //   // Move towards the current node
+      //   bool should_move_right = feetPos.x < currentNode.world_pos.x;
 
-          command |= giewont::CharacterMovementCommand::MOVE_RIGHT;
-        } else {
+      //   if (should_move_right) {
 
-          command |= giewont::CharacterMovementCommand::MOVE_LEFT;
-        }
+      //     command |= giewont::CharacterMovementCommand::MOVE_RIGHT;
+      //   } else {
+
+      //     command |= giewont::CharacterMovementCommand::MOVE_LEFT;
+      //   }
+      // }
+
+      if (min_target_x - feetPos.x > X_CLOSE_THRESHOLD) {
+        command |= giewont::CharacterMovementCommand::MOVE_RIGHT;
+      } else if (feetPos.x - max_target_x > X_CLOSE_THRESHOLD) {
+        command |= giewont::CharacterMovementCommand::MOVE_LEFT;
       }
 
       bool should_jump = (feetPos.y - currentNode.world_pos.y) > 10.0f;
@@ -126,6 +190,9 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
     if (ctx.state.waypointReachTime > WAYPOINT_REACH_MAX_TIME) {
       ctx.state.path.clear();
       ctx.state.dwellTime = rand_float(0.05f, 1.2f);
+      if (rand_float(0.0f, 1.0f) < 0.5f) {
+        command |= giewont::CharacterMovementCommand::MOVE_LEFT;
+      }
     }
   }
   character.perform_movement(game, delta_time, command);
