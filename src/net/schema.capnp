@@ -33,6 +33,7 @@ enum EntityType {
     grenade @5;
     teamChoiceGUI @6;
     tombstone @7;
+    projectile @8;
 }
 
 struct SyncEntityNetMessage {
@@ -50,6 +51,7 @@ struct SyncEntityNetMessage {
         gameplayManagerData @9 :GameplayManagerData;
         grenadeData @10 :GrenadeData;
         tombstoneData @11 :SyncTombstoneEntityData;
+        projectileData @12 :SyncProjectileEntityData;
     }
 }
 
@@ -92,8 +94,11 @@ struct SyncTombstoneEntityData {
     fadeOutTime @2 :Float32;
     fadingOut @3 :Bool;
     deadPlayerPeerId @4 :UInt32;
+}
 
-
+struct SyncProjectileEntityData {
+    lifetime @0 :Float32;
+    lifetimeLeft @1 :Float32;
 }
 
 struct InstantiatePrefabNetMessage {
