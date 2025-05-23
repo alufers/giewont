@@ -10,3 +10,6 @@
 [submodule "libs/capnproto"]
 	path = libs/capnproto
 	url = https://github.com/capnproto/capnproto.git
+[submodule "libs/mbedtls"]
+	path = libs/mbedtls
+	url = https://github.com/Mbed-TLS/mbedtls.git

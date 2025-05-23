@@ -1,0 +1,68 @@
+{
+  "height": 0,
+  "id": 3,
+  "name": "",
+  "point": true,
+  "properties": [
+    {
+      "name": "emission_rate",
+      "type": "float",
+      "value": 1000.0
+    },
+    {
+      "name": "gravity_factor",
+      "type": "float",
+      "value": 0.5
+    },
+    {
+      "name": "initial_velocity_angle",
+      "type": "float",
+      "value": 6.28
+    },
+    {
+      "name": "particle_texture_path",
+      "type": "string",
+      "value": "spark_particle_flare.png"
+    },
+    {
+      "name": "particle_size",
+      "type": "float",
+      "value": 0.2
+    },
+    {
+      "name": "particle_size_variation",
+      "type": "float",
+      "value": 0.5
+    },
+    {
+      "name": "max_particles",
+      "type": "int",
+      "value": 50
+    },
+    {
+      "name": "initial_velocity",
+      "value": [-50.0, -200.0]
+    },
+    {
+      "name": "max_lifetime",
+      "type": "float",
+      "value": 0.5
+    },
+    {
+      "name": "velocity_variation",
+      "type": "float",
+      "value": 0.2
+    },
+    {
+      "name": "system_lifetime",
+      "type": "float",
+      "value": 0.2
+    }
+  ],
+  "rotation": 0,
+  "type": "particle_system",
+  "visible": true,
+  "width": 0,
+  "x": 0,
+  "y": 0
+}

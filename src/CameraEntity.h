@@ -73,6 +73,8 @@ public:
 #ifdef GIEWONT_HAS_GRAPHICS
   void begin_mode2d();
   void end_mode2d();
+
+  Vec2 screenToWorldPos(Vector2 raylib_pos);
 #endif
 
 #ifdef GIEWONT_HAS_GRAPHICS

@@ -43,13 +43,48 @@ set(CMAKE_PROJECT_VERSION "AAAAA")
 
 
 add_subdirectory(libs/json)
+set(ENABLE_PROGRAMS OFF CACHE BOOL "" FORCE)
+set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+add_compile_definitions(MBEDTLS_SSL_DTLS_SRTP=1)
+add_compile_options(-Wno-error=unterminated-string-initialization)
+set(MBEDTLS_TARGET_PREFIX "mbedtls-" CACHE STRING "" FORCE)
+set(DISABLE_PACKAGE_CONFIG_AND_INSTALL OFF CACHE BOOL "" FORCE)
+add_subdirectory(libs/mbedtls)
+add_library(MbedTLS::MbedTLS ALIAS mbedtls-mbedtls)
 
+# set(EXTERNAL_MBEDTLS_C_FLAGS "-Wno-error=unterminated-string-initialization")
+# ExternalProject_Add(
+#         mbedtls
+#         SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/libs/mbedtls"
+#         INSTALL_DIR ${CMAKE_BINARY_DIR}
+#         CMAKE_ARGS 
+#             -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> 
+#             -DCMAKE_C_FLAGS=${EXTERNAL_MBEDTLS_C_FLAGS} 
+#             -DENABLE_TESTING:BOOL=OFF
+#             -DENABLE_PROGRAMS:BOOL=OFF
+#         )
+
+function(print_all_targets DIR)
+    get_property(TGTS DIRECTORY "${DIR}" PROPERTY BUILDSYSTEM_TARGETS)
+    foreach(TGT IN LISTS TGTS)
+        message(STATUS "Target: ${TGT}")
+        # TODO: Do something about it
+    endforeach()
+
+    get_property(SUBDIRS DIRECTORY "${DIR}" PROPERTY SUBDIRECTORIES)
+    foreach(SUBDIR IN LISTS SUBDIRS)
+        print_all_targets("${SUBDIR}")
+    endforeach()
+endfunction()
+
+print_all_targets(.)
 
 set(NO_TESTS ON CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(INSTALL_DEPS_LIBS OFF CACHE BOOL "" FORCE)
 set(NO_MEDIA ON CACHE BOOL "" FORCE)
 set(NO_EXAMPLES ON CACHE BOOL "" FORCE)
-set(OPENSSL_USE_STATIC_LIBS ON CACHE BOOL "" FORCE)
+set(USE_MBEDTLS ON CACHE BOOL "" FORCE)
 add_subdirectory(libs/libdatachannel)
 
 
@@ -92,6 +127,7 @@ set(COMMON_SOURCES
         src/entities/gui/TeamChoiceGUIEntity.cpp
         src/entities/decorative/TombstoneEntity.cpp
         src/math/RandUtil.cpp
+        src/entities/gameplay/ProjectileEntity.cpp
 )
 set(COMMON_INCLUDES
         "${CMAKE_CURRENT_LIST_DIR}/src/"

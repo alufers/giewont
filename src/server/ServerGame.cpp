@@ -7,6 +7,7 @@
 #include "entities/character/CharacterEntity.h"
 #include "entities/character/DumbAICharacterController.h"
 #include "entities/character/SmartAICharacterController.h"
+#include "entities/gameplay/ProjectileEntity.h"
 #include "entities/gui/TeamChoiceGUIEntity.h"
 #include "nbnet_helper.h"
 #include "net/net_common.h"
@@ -386,5 +387,13 @@ void ServerGame::perform_interaction(
     }
     grenade->load_assets(*this);
     push_entity(std::move(grenade));
+  } else if (message.getType() == net::InteractionType::PRIMARY_CLICK) {
+    auto projectile = std::make_unique<ProjectileEntity>();
+    projectile->position = interactor_pos;
+    auto mouse_offset = Vec2(message.getCharacterToMouseOffset());
+    projectile->velocity = mouse_offset.normalized() * 1500.0f;
+    projectile->shooter_net_id = interactor.get(*this).net_id;
+    projectile->load_assets(*this);
+    push_entity(std::move(projectile));
   }
 }

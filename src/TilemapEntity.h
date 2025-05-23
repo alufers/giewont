@@ -83,6 +83,7 @@ public:
                                 TilemapCollisionManifold manifolds[],
                                 size_t max_manifolds);
 
+  /// @brief Get tile type at the given world position
   TileType check_collision_point(const Vec2 &point);
   /// @brief Check if world space point is in tilemap bounds
   bool is_point_in_tilemap_bounds(const Vec2 &point);
