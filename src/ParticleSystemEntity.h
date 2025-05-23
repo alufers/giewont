@@ -17,7 +17,7 @@ enum class ParticleTilemapCollisionAction { NONE, KILL, BOUNCE };
 class Particle {
 public:
   Particle()
-      : lifetime(NAN), position({0.0f, 0.0f}), velocity({0.0f, 0.0f}),
+      : lifetime(NAN), position(0.0f, 0.0f), velocity(0.0f, 0.0f),
         size(1.0) {}
   float lifetime; // if NaN, the particle is dead
   float total_lifetime;

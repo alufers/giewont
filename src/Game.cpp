@@ -19,6 +19,7 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
+#include "entities/gameplay/ProjectileEntity.h"
 
 using namespace giewont;
 
@@ -108,6 +109,9 @@ void Game::apply_sync_entity(const net::SyncEntityNetMessage::Reader &message) {
         break;
       case net::EntityType::TOMBSTONE:
         entToCreate = std::make_unique<TombstoneEntity>();
+        break;
+      case net::EntityType::PROJECTILE:
+        entToCreate = std::make_unique<ProjectileEntity>();
         break;
       default:
         LOG_WARN() << "apply_sync_entity: Unknown entity type "

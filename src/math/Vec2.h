@@ -18,6 +18,10 @@ public:
 
   Vec2(net::NetVec2::Reader reader) : x(reader.getX()), y(reader.getY()) {}
 
+#ifdef GIEWONT_HAS_GRAPHICS
+  Vec2(Vector2 raylib_vec) : x(raylib_vec.x), y(raylib_vec.y) {}
+#endif
+
   Vec2 operator+(const Vec2 &other) const {
     return Vec2(x + other.x, y + other.y);
   }

@@ -189,4 +189,13 @@ void VignetteEffect::on_after_end_mode2d() {
       Color{raylib_color.r, raylib_color.g, raylib_color.b, alpha});
 }
 
+#ifdef GIEWONT_HAS_GRAPHICS
+
+Vec2 CameraEntity::screenToWorldPos(Vector2 raylib_pos) {
+  Vector2 world_pos = GetScreenToWorld2D(raylib_pos, camera_after_effects);
+  return Vec2(world_pos);
+}
+
+#endif
+
 #endif
