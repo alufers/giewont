@@ -4,6 +4,8 @@ using namespace giewont;
 
 std::string giewont::goap_blackboard_key_to_string(GoapBlackboardKey key) {
   switch (key) {
+  case GoapBlackboardKey::INVALID:
+    return "INVALID";
   case GoapBlackboardKey::IS_PROPPED:
     return "IS_PROPPED";
   case GoapBlackboardKey::HEALTH_PERCENTAGE:
@@ -14,6 +16,8 @@ std::string giewont::goap_blackboard_key_to_string(GoapBlackboardKey key) {
     return "DIST_TO_ENEMY_BASE";
   case GoapBlackboardKey::IS_HOLDING_ENEMY_FLAG:
     return "IS_HOLDING_ENEMY_FLAG";
+  case GoapBlackboardKey::IS_ANYBODY_HOLDING_ENEMY_FLAG:
+    return "IS_ANYBODY_HOLDING_ENEMY_FLAG";
   case GoapBlackboardKey::ENEMY_FLAG_DIST_TO_OWN_BASE:
     return "ENEMY_FLAG_DIST_TO_OWN_BASE";
   case GoapBlackboardKey::DIST_TO_CLOSEST_ENEMY:
@@ -22,8 +26,10 @@ std::string giewont::goap_blackboard_key_to_string(GoapBlackboardKey key) {
     return "DIST_TO_CLOSEST_FRIENDLY";
   case GoapBlackboardKey::DIST_TO_OWN_FLAG:
     return "DIST_TO_OWN_FLAG";
-  case GoapBlackboardKey::IS_ENEMY_HOLDING_OWN_FLAG:
-    return "IS_ENEMY_HOLDING_OWN_FLAG";
+  case GoapBlackboardKey::DIST_TO_OWN_BASE:
+    return "DIST_TO_OWN_BASE";
+  case GoapBlackboardKey::IS_ANYBODY_HOLDING_OWN_FLAG:
+    return "IS_ANYBODY_HOLDING_OWN_FLAG";
   case GoapBlackboardKey::OWN_POINTS:
     return "OWN_POINTS";
   case GoapBlackboardKey::UPDATES_SINCE_LAST_PATHFINDING:

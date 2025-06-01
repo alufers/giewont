@@ -124,6 +124,7 @@ set(COMMON_SOURCES
         src/entities/character/SmartAICharacterController.cpp
         src/entities/character/GoapSensors.cpp
         src/entities/character/GoapInterfaces.cpp
+        src/entities/character/GoapSelectors.cpp
         src/Util.cpp
         src/entities/gui/MainMenuGUIEntity.cpp
         src/entities/gui/TeamChoiceGUIEntity.cpp

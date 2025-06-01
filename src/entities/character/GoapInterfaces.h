@@ -14,6 +14,7 @@ namespace giewont {
 class SmartAIThinkCtx;
 
 enum class GoapBlackboardKey {
+  INVALID = 0,
   IS_PROPPED,
   HEALTH_PERCENTAGE,
 
@@ -21,13 +22,15 @@ enum class GoapBlackboardKey {
   DIST_TO_ENEMY_BASE,
 
   IS_HOLDING_ENEMY_FLAG,
+  IS_ANYBODY_HOLDING_ENEMY_FLAG,
   ENEMY_FLAG_DIST_TO_OWN_BASE,
 
   DIST_TO_CLOSEST_ENEMY,
   DIST_TO_CLOSEST_FRIENDLY,
 
   DIST_TO_OWN_FLAG,
-  IS_ENEMY_HOLDING_OWN_FLAG,
+  DIST_TO_OWN_BASE,
+  IS_ANYBODY_HOLDING_OWN_FLAG,
 
   OWN_POINTS,
 
@@ -94,8 +97,14 @@ virtual ~GoapGoal() = default;
   /// @brief Get the goal name
   virtual std::string get_name() const = 0;
 
-  virtual bool is_goal_reached(SmartAIThinkCtx &ctx,
+  virtual float get_reward(SmartAIThinkCtx &ctx,
+                          const GoapBlackboard &initial_state,
+                          const GoapBlackboard &result_state) const = 0;
+
+  virtual float percentage_reached(SmartAIThinkCtx &ctx,
                           const GoapBlackboard &initial_state, const GoapBlackboard &result_state) const = 0;
+
+                        
 };
 
 } // namespace giewont

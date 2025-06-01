@@ -159,7 +159,7 @@ void GameplayManager::check_gameplay_state(Game &game) {
       state.did_spawn_ai_first_time = true;
       for (size_t i = 0; i < initial_ai_spawn_count; i++) {
         
-        spawn_player_with_team(game, 0, team);
+        // spawn_player_with_team(game, 0, team);
       }
     }
   }
