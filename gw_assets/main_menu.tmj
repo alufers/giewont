@@ -20,7 +20,25 @@
           "width": 0,
           "x": 0,
           "y": 0
-        }
+        },
+         {
+                 "height":0,
+                 "id":12,
+                 "name":"",
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"texture_path",
+                         "type":"string",
+                         "value":"background\/blue_grass.png"
+                        }],
+                 "rotation":0,
+                 "type":"backdrop",
+                 "visible":true,
+                 "width":0,
+                 "x":776.606060606061,
+                 "y":329.212121212121
+                }
       ],
       "opacity": 1,
       "type": "objectgroup",

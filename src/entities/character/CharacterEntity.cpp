@@ -319,6 +319,15 @@ void CharacterEntity::draw_debug(const Game &game) {
 #endif
 }
 
+void CharacterEntity::draw_inspector_ui(Game &game) {
+#ifdef GIEWONT_HAS_GRAPHICS
+  PhysEntity::draw_inspector_ui(game);
+
+  ImGui::Text("Nickname: %s", nickname.c_str());
+  this->controller->draw_inspector_ui(game);
+#endif
+}
+
 void CharacterEntity::draw_raylib_ui(const Game &game) {
 #ifdef GIEWONT_HAS_GRAPHICS
   if (this->net_owner_peer_id != game.my_peer_id) {

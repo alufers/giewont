@@ -19,9 +19,19 @@ const float WAYPOINT_REACHED_THRESHOLD = 38.0f;
 const float X_CLOSE_THRESHOLD = 20.0f;
 const float WAYPOINT_REACH_MAX_TIME = 5.0f;
 
+SmartAICharacterController::SmartAICharacterController()
+    : CharacterController() {
+  state.sensors = construct_goap_sensors();
+}
+
 void SmartAICharacterController::update(Game &game, CharacterEntity &character,
                                         float delta_time) {
   SmartAIThinkCtx ctx{game, character, state};
+
+  
+  // Goap stuff
+  this->process_sensors(ctx);
+
 
   if (ctx.state.enemyAttachCheckTime > 0.0f) {
     ctx.state.enemyAttachCheckTime -= delta_time;
@@ -45,7 +55,7 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
       }
     }
 
-    if(didThrow) {
+    if (didThrow) {
       ctx.state.enemyAttachCheckTime = rand_float(5.0f, 10.0f);
     } else {
       ctx.state.enemyAttachCheckTime = rand_float(0.01f, 1.8f);
@@ -592,4 +602,33 @@ void SmartAICharacterController::reconstruct_path(SmartAIThinkCtx &ctx,
       }
     }
   }
+}
+
+void SmartAICharacterController::process_sensors(SmartAIThinkCtx &ctx) {
+  for (auto &sensor : ctx.state.sensors) {
+
+    if (sensor->last_update_frame % sensor->sense_frequency == 0) {
+      sensor->last_update_frame = 0;
+      GoapBlackboardValue value = sensor->sense(ctx);
+      ctx.state.current_state[sensor->get_key()] = value;
+    }
+    sensor->last_update_frame++;
+  }
+}
+
+void SmartAICharacterController::draw_inspector_ui(Game &game) {
+#ifdef GIEWONT_HAS_GRAPHICS
+  ImGui::Text("Current sensor state:");
+  ImGui::Separator();
+  ImGui::BeginTable("Sensor State", 2);
+  for (const auto &pair : state.current_state) {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::Text("%s", goap_blackboard_key_to_string(pair.first).c_str());
+    ImGui::TableNextColumn();
+    ImGui::Text("%s", goap_blackboard_value_to_string(pair.second).c_str());
+  }
+  ImGui::EndTable();
+
+#endif
 }
