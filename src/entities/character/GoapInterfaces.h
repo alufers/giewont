@@ -23,6 +23,7 @@ enum class GoapBlackboardKey {
 
   // @brief Keys about enemy state
   IS_ANYBODY_HOLDING_ENEMY_FLAG,
+  IS_ENEMY_FLAG_IN_CAPTURED_ANIMATION, // The flag has been captured and is being raised by the base.
 
   // @brief positions of various points of interest
   OWN_POS,

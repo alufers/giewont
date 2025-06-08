@@ -53,7 +53,9 @@ private:
 
 class FlagStateSensor : public GoapSensor {
 public:
-  FlagStateSensor(GoapBlackboardKey key, GoapEntitySelectorFunc flag_selector, GoapEntityFilterFunc holder_filter) : key(key) , flag_selector(flag_selector), holder_filter(holder_filter) {}
+  FlagStateSensor(GoapBlackboardKey key, GoapEntitySelectorFunc flag_selector,
+                  GoapEntityFilterFunc holder_filter)
+      : key(key), flag_selector(flag_selector), holder_filter(holder_filter) {}
   GoapBlackboardKey get_key() const override { return key; }
   GoapBlackboardValue sense(SmartAIThinkCtx &ctx) override;
 
@@ -65,6 +67,31 @@ private:
   GoapEntityFilterFunc holder_filter;
 };
 
+/**
+ * @brief Given a predicted blackboard state (after some actions were performed
+ * by the character), apply any gameplay logic external to the AI which might
+ * change the sensors.
+ *
+ * For example, if the player has the flag, then update it's position in the
+ * blackboard.
+ *
+ * @param ctx The context (used to extract gameplay variables)
+ * @param blackboard The blackboard to apply the logic to
+ */
+void apply_gameplay_logic_to_predicted_blackboard(SmartAIThinkCtx &ctx,
+                                                  GoapBlackboard &blackboard);
 
+/**
+ * @brief Given two blackboard *_POS keys, calculate the distance between them.
+ *
+ * @param blackboard The blackboard to extract the positions from
+ * @param key1 The first position key
+ * @param key2 The second position key
+ * @return float  The distance between the two positions, or INFINITY if either
+ * position is invalid.
+ */
+float blackboard_pos_distance(const GoapBlackboard &blackboard,
+                              GoapBlackboardKey key1, GoapBlackboardKey key2);
 
+                              
 } // namespace giewont

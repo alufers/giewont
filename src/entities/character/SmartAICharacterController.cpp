@@ -666,6 +666,8 @@ SmartAICharacterController::consider_next_plan_item(
     float cost = action->get_reward(ctx, initial_state, finish_state);
     if (!std::isnan(cost) && std::isfinite(cost)) {
 
+      apply_gameplay_logic_to_predicted_blackboard(ctx, finish_state);
+
       float goal_reward = 0.0f;
       for (auto &goal : ctx.state.goals) {
         goal_reward += goal->get_reward(ctx, initial_state, finish_state);

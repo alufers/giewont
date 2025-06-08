@@ -74,4 +74,17 @@ public:
   bool perform(SmartAIThinkCtx &ctx) override;
 };
 
+
+class DwellAtOwnBaseWaitingForFlagToBeCaptured : public GoapAction {
+public:
+  DwellAtOwnBaseWaitingForFlagToBeCaptured();
+
+  std::string get_name() const override;
+
+  float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+                 GoapBlackboard &finish_state_out) const override;
+
+  bool perform(SmartAIThinkCtx &ctx) override;
+};
+
 } // namespace giewont

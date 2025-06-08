@@ -44,6 +44,9 @@ std::vector<std::unique_ptr<GoapSensor>> giewont::construct_goap_sensors() {
   sensors.push_back(std::make_unique<FlagStateSensor>(
       GoapBlackboardKey::IS_HOLDING_ENEMY_FLAG, first_selector(is_enemy_flag),
       is_self));
+  sensors.push_back(std::make_unique<FlagStateSensor>(
+      GoapBlackboardKey::IS_ENEMY_FLAG_IN_CAPTURED_ANIMATION,
+      first_selector(is_enemy_flag), is_friendly_base));
 
   // Add other sensors here as needed
   return sensors;
@@ -86,4 +89,42 @@ GoapBlackboardValue FlagStateSensor::sense(SmartAIThinkCtx &ctx) {
   auto &flag = flag_entity.get_as<FlagEntity>(ctx.game);
 
   return GoapBlackboardValue(holder_filter(ctx, flag.flag_holder));
+}
+
+void giewont::apply_gameplay_logic_to_predicted_blackboard(
+    SmartAIThinkCtx &ctx, GoapBlackboard &blackboard) {
+  if (blackboard.contains(GoapBlackboardKey::IS_HOLDING_ENEMY_FLAG) &&
+      std::get<bool>(blackboard[GoapBlackboardKey::IS_HOLDING_ENEMY_FLAG]) ==
+          true) {
+    // If the character is holding the enemy flag, then it's position will be
+    // the same as the character's position
+    blackboard[GoapBlackboardKey::ENEMY_FLAG_POS] =
+        std::get<Vec2>(blackboard[GoapBlackboardKey::OWN_POS]);
+
+    blackboard[GoapBlackboardKey::IS_ANYBODY_HOLDING_ENEMY_FLAG] =
+        true; // We are anybody
+  }
+
+  // if (blackboard_pos_distance(blackboard, GoapBlackboardKey::ENEMY_FLAG_POS,
+  //                             GoapBlackboardKey::OWN_BASE_POS) <
+  //     ctx.game.get_gvar<float>(GVarType::BASE_ACTIVATION_DIST)) {
+  //   // If the own flag is close enough to the own base, then we are holding it
+  //   blackboard[GoapBlackboardKey::IS_ANYBODY_HOLDING_ENEMY_FLAG] = true; // The team base is counted as a "holder" of the flag during the capture animation
+  //   blackboard[GoapBlackboardKey::IS_ENEMY_FLAG_IN_CAPTURED_ANIMATION] =
+  //       true; // The flag is in the captured animation state
+  // }
+}
+
+float giewont::blackboard_pos_distance(const GoapBlackboard &blackboard,
+                              GoapBlackboardKey key1, GoapBlackboardKey key2) {
+  if (!blackboard.contains(key1) || !blackboard.contains(key2)) {
+    return INFINITY; // One of the keys is not present in the blackboard
+  }
+
+  const auto &pos1 = std::get<Vec2>(blackboard.at(key1));
+  const auto &pos2 = std::get<Vec2>(blackboard.at(key2));
+  if (!pos1.isfinite() || !pos2.isfinite()) {
+    return INFINITY; // One of the positions is invalid
+  }
+  return pos1.distance(pos2);
 }

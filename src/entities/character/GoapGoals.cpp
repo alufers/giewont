@@ -47,10 +47,12 @@ float BringEnemyFlagToBaseGoal::get_reward(
   auto percentage_reached =
       1 - std::clamp(flag_dist_to_own_base / dist_to_reach, 0.0f, 1.0f);
 
-    // LOG_DEBUG() << "[AI] Evaluated BringEnemyFlagToBaseGoal: enemy_flag_pos: "
-    //             << enemy_flag_pos << ", own_base_pos: " << own_base_pos
-    //            << ", percentage_reached: "
-    //             << percentage_reached << std::endl;
+  float extra_reward = 0.0f;
 
-  return total_reward * percentage_reached;
+  if (std::get<bool>(result_state.at(GoapBlackboardKey::IS_ENEMY_FLAG_IN_CAPTURED_ANIMATION))) {
+    // If the flag is in the captured animation state, we get extra reward
+    extra_reward = 20.0f; // MAGICNUMBER
+  }
+
+  return total_reward * percentage_reached + extra_reward;
 }
