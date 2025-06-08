@@ -28,7 +28,7 @@ public:
     return GoapBlackboardKey::HEALTH_PERCENTAGE;
   }
 
-  GoapBlackboardValue sense(SmartAIThinkCtx &ctx);
+  GoapBlackboardValue sense(SmartAIThinkCtx &ctx) override;
 
   ~HealthPercentageSensor() override = default;
 };
