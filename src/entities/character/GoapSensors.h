@@ -33,25 +33,20 @@ public:
   ~HealthPercentageSensor() override = default;
 };
 
-// Implements a sensor measuring the distance to various entities of interest.
-class DistToSensor : public GoapSensor {
+// Implements a sensor which determines the position of various entities
+class PositionSensor : public GoapSensor {
 public:
-  DistToSensor(GoapBlackboardKey key, GoapEntitySelectorFunc target_selector,
-               GoapEntitySelectorFunc actor_selector =
-                   goap_selectors::first_selector(goap_selectors::is_self))
-      : key(key), target_selector(target_selector),
-        actor_selector(actor_selector) {}
+  PositionSensor(GoapBlackboardKey key, GoapEntitySelectorFunc target_selector)
+      : key(key), target_selector(target_selector) {}
   GoapBlackboardKey get_key() const override { return key; }
   GoapBlackboardValue sense(SmartAIThinkCtx &ctx) override;
 
-  ~DistToSensor() override = default;
+  ~PositionSensor() override = default;
 
 private:
   GoapBlackboardKey key;
-  EntityRef closest_entity;
-  EntityRef actor_entity;
+  EntityRef selected_entity;
   GoapEntitySelectorFunc target_selector;
-  GoapEntitySelectorFunc actor_selector;
 
   uint32_t entity_scan_counter = 0;
 };

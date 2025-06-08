@@ -22,19 +22,20 @@ enum class GoapBlackboardKey {
   IS_HOLDING_ENEMY_FLAG,
 
   // @brief Keys about enemy state
-  DIST_TO_ENEMY_FLAG,
-  DIST_TO_ENEMY_BASE,
   IS_ANYBODY_HOLDING_ENEMY_FLAG,
-  ENEMY_FLAG_DIST_TO_OWN_BASE,
-  DIST_BETWEEN_BASES,
 
-  // @brief Keys about other characters
-  DIST_TO_CLOSEST_ENEMY,
-  DIST_TO_CLOSEST_FRIENDLY,
+
+  // @brief positions of various points of interest
+  OWN_POS,
+  ENEMY_FLAG_POS,
+  ENEMY_BASE_POS,
+  OWN_FLAG_POS,
+  OWN_BASE_POS,
+  CLOSEST_ENEMY_POS,
+  CLOSEST_FRIENDLY_POS,
+
 
   // @brief Keys about own team state
-  DIST_TO_OWN_FLAG,
-  DIST_TO_OWN_BASE,
   IS_ANYBODY_HOLDING_OWN_FLAG,
   OWN_POINTS,
 
@@ -89,6 +90,8 @@ public:
   /// @return true if the actions should be continued, false if the action is
   /// finished
   virtual bool perform(SmartAIThinkCtx &ctx) = 0;
+
+   float _last_cost_value = 0.0f; // The last cost value for debugging
 };
 
 class GoapGoal {

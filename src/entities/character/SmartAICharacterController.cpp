@@ -3,6 +3,7 @@
 #include "Entity.h"
 #include "FlagEntity.h"
 #include "GameplayManager.h"
+#include "GoapActions.h"
 #include "GoapGoals.h"
 #include "IVec2.h"
 #include "Log.h"
@@ -24,6 +25,7 @@ SmartAICharacterController::SmartAICharacterController()
     : CharacterController() {
   state.sensors = construct_goap_sensors();
   state.goals = construct_goap_goals();
+  state.actions = construct_goap_actions();
 }
 
 void SmartAICharacterController::update(Game &game, CharacterEntity &character,
@@ -33,6 +35,7 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
   // Goap stuff
   this->process_sensors(ctx);
   this->process_goals(ctx);
+  this->process_actions(ctx);
 
   if (ctx.state.enemyAttachCheckTime > 0.0f) {
     ctx.state.enemyAttachCheckTime -= delta_time;
@@ -624,6 +627,14 @@ void SmartAICharacterController::process_goals(SmartAIThinkCtx &ctx) {
   }
 }
 
+void SmartAICharacterController::process_actions(SmartAIThinkCtx &ctx) {
+  for (auto &action : ctx.state.actions) {
+    GoapBlackboard finishState = ctx.state.current_state;
+    float cost = action->get_cost(ctx, ctx.state.current_state, finishState);
+    action->_last_cost_value = cost;
+  }
+}
+
 void SmartAICharacterController::draw_inspector_ui(Game &game) {
 #ifdef GIEWONT_HAS_GRAPHICS
   ImGui::Text("Current sensor state:");
@@ -646,7 +657,19 @@ void SmartAICharacterController::draw_inspector_ui(Game &game) {
     ImGui::TableNextColumn();
     ImGui::Text("%s", goal->get_name().c_str());
     ImGui::TableNextColumn();
-    ImGui::Text("%.2f", goal->_last_reward_value);
+    ImGui::Text("Reward: %.2f", goal->_last_reward_value);
+  }
+  ImGui::EndTable();
+
+  ImGui::Text("Current action state:");
+  ImGui::Separator();
+  ImGui::BeginTable("Action State", 2);
+  for (const auto &action : state.actions) {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::Text("%s", action->get_name().c_str());
+    ImGui::TableNextColumn();
+    ImGui::Text("Cost: %.2f", action->_last_cost_value);
   }
   ImGui::EndTable();
 

@@ -6,32 +6,42 @@
 using namespace giewont;
 
 std::vector<std::unique_ptr<GoapGoal>> giewont::construct_goap_goals() {
-    std::vector<std::unique_ptr<GoapGoal>> goals;
-    
-    goals.push_back(std::make_unique<BringEnemyFlagToBaseGoal>());
-    
-   
-    return goals;
+  std::vector<std::unique_ptr<GoapGoal>> goals;
+
+  goals.push_back(std::make_unique<BringEnemyFlagToBaseGoal>());
+
+  return goals;
 }
 
 float BringEnemyFlagToBaseGoal::get_reward(
     SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
     const GoapBlackboard &result_state) const {
 
-  float flag_dist_to_own_base = std::get<float>(
-      result_state.at(GoapBlackboardKey::ENEMY_FLAG_DIST_TO_OWN_BASE));
+  Vec2 own_base_pos =
+      std::get<Vec2>(result_state.at(GoapBlackboardKey::OWN_BASE_POS));
+  Vec2 enemy_flag_pos =
+      std::get<Vec2>(result_state.at(GoapBlackboardKey::ENEMY_FLAG_POS));
+  Vec2 enemy_base_pos =
+      std::get<Vec2>(result_state.at(GoapBlackboardKey::ENEMY_BASE_POS));
 
-  float dist_between_bases =
-      std::get<float>(result_state.at(GoapBlackboardKey::DIST_BETWEEN_BASES));
+  if (!own_base_pos.isfinite() || !enemy_flag_pos.isfinite() ||
+      !enemy_base_pos.isfinite()) {
+    return 0.0f; // Invalid state, no reward
+  }
+
+
+  float flag_dist_to_own_base = enemy_flag_pos.distance(own_base_pos);
+
+  float dist_between_bases = enemy_base_pos.distance(own_base_pos);
 
   float base_activation_dist =
       ctx.game.get_gvar<float>(GVarType::BASE_ACTIVATION_DIST);
 
   float dist_to_reach = dist_between_bases - base_activation_dist;
 
-  if (!std::isfinite(flag_dist_to_own_base) || !std::isfinite(dist_to_reach) ||
-      dist_to_reach <= 0.0f) {
-    return 0.0f; // Invalid state, no reward
+  if (dist_to_reach <= 0.0f) {
+    // Bases are too close, no reward for reaching the flag
+    return 0.0f;
   }
 
   auto percentage_reached =

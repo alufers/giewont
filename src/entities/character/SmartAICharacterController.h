@@ -26,6 +26,7 @@ public:
 private:
   void process_sensors(SmartAIThinkCtx &ctx);
   void process_goals(SmartAIThinkCtx &ctx);
+  void process_actions(SmartAIThinkCtx &ctx);
 
   /// @brief Find a path to the target position using A* algorithm
   void find_path(SmartAIThinkCtx &ctx, Vec2 target_pos);

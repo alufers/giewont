@@ -97,6 +97,11 @@ public:
   }
 
   float distance(const Vec2 &other) const { return (*this - other).length(); }
+
+
+  bool isfinite() const {
+    return std::isfinite(x) && std::isfinite(y);
+  }
 };
 
 inline Vec2 operator*(float scalar, const Vec2 &v) { return v * scalar; }

@@ -14,31 +14,24 @@ std::vector<std::unique_ptr<GoapSensor>> giewont::construct_goap_sensors() {
   sensors.push_back(std::make_unique<HealthPercentageSensor>());
 
   // Distance sensors
+
+  sensors.push_back(std::make_unique<PositionSensor>(GoapBlackboardKey::OWN_POS,
+                                                     first_selector(is_self)));
+  sensors.push_back(std::make_unique<PositionSensor>(
+      GoapBlackboardKey::ENEMY_FLAG_POS, first_selector(is_enemy_flag)));
+  sensors.push_back(std::make_unique<PositionSensor>(
+      GoapBlackboardKey::ENEMY_BASE_POS, first_selector(is_enemy_base)));
+  sensors.push_back(std::make_unique<PositionSensor>(
+      GoapBlackboardKey::OWN_FLAG_POS, closest_selector(is_friendly_flag)));
+  sensors.push_back(std::make_unique<PositionSensor>(
+      GoapBlackboardKey::OWN_BASE_POS, first_selector(is_friendly_base)));
   sensors.push_back(
-      std::make_unique<DistToSensor>(GoapBlackboardKey::DIST_TO_CLOSEST_ENEMY,
-                                     closest_selector(is_enemy_character)));
-  sensors.push_back(std::make_unique<DistToSensor>(
-      GoapBlackboardKey::DIST_TO_CLOSEST_FRIENDLY,
+      std::make_unique<PositionSensor>(GoapBlackboardKey::CLOSEST_ENEMY_POS,
+                                       closest_selector(is_enemy_character)));
+  sensors.push_back(std::make_unique<PositionSensor>(
+      GoapBlackboardKey::CLOSEST_FRIENDLY_POS,
       closest_selector(
           and_filter(is_friendly_character, negate_filter(is_self)))));
-  sensors.push_back(std::make_unique<DistToSensor>(
-      GoapBlackboardKey::DIST_TO_ENEMY_FLAG, closest_selector(is_enemy_flag)));
-  sensors.push_back(std::make_unique<DistToSensor>(
-      GoapBlackboardKey::DIST_TO_ENEMY_BASE, closest_selector(is_enemy_base)));
-  sensors.push_back(std::make_unique<DistToSensor>(
-      GoapBlackboardKey::DIST_TO_OWN_FLAG, closest_selector(is_friendly_flag)));
-  sensors.push_back(std::make_unique<DistToSensor>(
-      GoapBlackboardKey::DIST_TO_OWN_BASE, closest_selector(is_friendly_base)));
-  sensors.push_back(std::make_unique<DistToSensor>(
-      GoapBlackboardKey::ENEMY_FLAG_DIST_TO_OWN_BASE,
-      closest_selector(is_friendly_base), closest_selector(is_enemy_flag)));
-
-  auto dist_between_bases_sensor = std::make_unique<DistToSensor>(
-      GoapBlackboardKey::DIST_BETWEEN_BASES, closest_selector(is_friendly_base),
-      closest_selector(is_enemy_base));
-  dist_between_bases_sensor->sense_frequency =
-      999; // The bases don't move, so we can check this sensor very rarely
-  sensors.push_back(std::move(dist_between_bases_sensor));
 
   sensors.push_back(std::make_unique<OwnFlagStateSensor>(
       GoapBlackboardKey::IS_ANYBODY_HOLDING_OWN_FLAG));
@@ -63,25 +56,19 @@ GoapBlackboardValue HealthPercentageSensor::sense(SmartAIThinkCtx &ctx) {
   return GoapBlackboardValue(health_percentage);
 }
 
-GoapBlackboardValue DistToSensor::sense(SmartAIThinkCtx &ctx) {
-  if (!this->closest_entity.valid(ctx.game) ||
+GoapBlackboardValue PositionSensor::sense(SmartAIThinkCtx &ctx) {
+  if (!this->selected_entity.valid(ctx.game) ||
       (entity_scan_counter % 20) == 0) {
-    this->closest_entity = target_selector(ctx);
+    this->selected_entity = target_selector(ctx);
   }
 
-  if (!this->actor_entity.valid(ctx.game) || (entity_scan_counter % 20) == 0) {
-    this->actor_entity = actor_selector(ctx);
-  }
   entity_scan_counter++;
-  if (!this->closest_entity.valid(ctx.game) ||
-      !this->actor_entity.valid(ctx.game)) {
-    return GoapBlackboardValue(INFINITY); // No target or actor found
+  if (!this->selected_entity.valid(ctx.game)) {
+    return GoapBlackboardValue(
+        Vec2(INFINITY, INFINITY)); // No target or actor found
   }
 
-  Vec2 target_pos = this->closest_entity.get(ctx.game).position;
-  Vec2 actor_pos = this->actor_entity.get(ctx.game).position;
-  float distance = (target_pos - actor_pos).length();
-  return GoapBlackboardValue(distance);
+  return GoapBlackboardValue(this->selected_entity.get(ctx.game).position);
 }
 
 GoapBlackboardValue OwnFlagStateSensor::sense(SmartAIThinkCtx &ctx) {
