@@ -8,7 +8,7 @@ namespace giewont {
 
 
 
-std::vector<std::unique_ptr<GoapAction>> construct_goap_actions();
+std::vector<std::shared_ptr<GoapAction>> construct_goap_actions();
 
 
 /**
@@ -38,8 +38,10 @@ public:
    * state after the action is completed. Takes into account changing the
    * position of the flag, if the character is holding it.
    */
-  float get_cost(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+  float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
                  GoapBlackboard &finish_state_out) const override;
+
+  void on_begin(SmartAIThinkCtx &ctx) override;
 
   bool perform(SmartAIThinkCtx &ctx) override;
 
@@ -52,7 +54,7 @@ private:
 class GoToEnemyFlagGoapAction : public GoToEntityGoapAction {
 public:
   GoToEnemyFlagGoapAction();
-  float get_cost(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+  float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
                  GoapBlackboard &finish_state_out) const override;
 };
 
@@ -66,7 +68,7 @@ public:
 
   std::string get_name() const override;
 
-  float get_cost(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+  float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
                  GoapBlackboard &finish_state_out) const override;
 
   bool perform(SmartAIThinkCtx &ctx) override;

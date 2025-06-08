@@ -51,28 +51,20 @@ private:
   uint32_t entity_scan_counter = 0;
 };
 
-class OwnFlagStateSensor : public GoapSensor {
+class FlagStateSensor : public GoapSensor {
 public:
-  OwnFlagStateSensor(GoapBlackboardKey key) : key(key) {}
+  FlagStateSensor(GoapBlackboardKey key, GoapEntitySelectorFunc flag_selector, GoapEntityFilterFunc holder_filter) : key(key) , flag_selector(flag_selector), holder_filter(holder_filter) {}
   GoapBlackboardKey get_key() const override { return key; }
   GoapBlackboardValue sense(SmartAIThinkCtx &ctx) override;
 
-  ~OwnFlagStateSensor() override = default;
+  ~FlagStateSensor() override = default;
 
 private:
   GoapBlackboardKey key;
+  GoapEntitySelectorFunc flag_selector;
+  GoapEntityFilterFunc holder_filter;
 };
 
-class EnemyFlagStateSensor : public GoapSensor {
-public:
-  EnemyFlagStateSensor(GoapBlackboardKey key) : key(key) {}
-  GoapBlackboardKey get_key() const override { return key; }
-  GoapBlackboardValue sense(SmartAIThinkCtx &ctx) override;
 
-  ~EnemyFlagStateSensor() override = default;
-
-private:
-  GoapBlackboardKey key;
-};
 
 } // namespace giewont

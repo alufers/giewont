@@ -24,7 +24,6 @@ enum class GoapBlackboardKey {
   // @brief Keys about enemy state
   IS_ANYBODY_HOLDING_ENEMY_FLAG,
 
-
   // @brief positions of various points of interest
   OWN_POS,
   ENEMY_FLAG_POS,
@@ -33,7 +32,6 @@ enum class GoapBlackboardKey {
   OWN_BASE_POS,
   CLOSEST_ENEMY_POS,
   CLOSEST_FRIENDLY_POS,
-
 
   // @brief Keys about own team state
   IS_ANYBODY_HOLDING_OWN_FLAG,
@@ -69,15 +67,16 @@ class GoapAction {
 public:
   virtual ~GoapAction() = default;
 
-  /// @brief Compute the cost of the action and the resulting state
+  /// @brief Compute the cost (negative reward) of the action and the resulting
+  /// state
   /// @param ctx The context of the AI thinking
   /// @param initial_state The initial state of the blackboard
   /// @param[out] finish_state_out The state after the action is performed, if
   /// it is possible to perform the action
   /// @return The cost of the action, or NAN if the action cannot be performed
-  virtual float get_cost(SmartAIThinkCtx &ctx,
-                         const GoapBlackboard &initial_state,
-                         GoapBlackboard &finish_state_out) const = 0;
+  virtual float get_reward(SmartAIThinkCtx &ctx,
+                           const GoapBlackboard &initial_state,
+                           GoapBlackboard &finish_state_out) const = 0;
 
   /// @brief Get the action name
   virtual std::string get_name() const = 0;
@@ -91,7 +90,7 @@ public:
   /// finished
   virtual bool perform(SmartAIThinkCtx &ctx) = 0;
 
-   float _last_cost_value = 0.0f; // The last cost value for debugging
+  float _last_reward_value = 0.0f; // The last cost value for debugging
 };
 
 class GoapGoal {
@@ -116,6 +115,16 @@ public:
   /// @brief The reward based on the current world state is stored here to
   /// display during debugging
   float _last_reward_value = 0.0f;
+};
+
+class GoapPlanItem {
+public:
+  std::weak_ptr<GoapAction> action; // The action to perform
+  GoapBlackboard state;             // The state after the action is performed
+  float action_reward = 0.0f; // The (negative) reward obtained from the action
+  float goal_reward = 0.0f; // The (positive) reward value obtained from judging the state after the action is performed
+  uint32_t item_depth = 0;
+  bool did_begin = false; // Used to call on_begin() only once for the action
 };
 
 } // namespace giewont

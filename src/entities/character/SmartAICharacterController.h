@@ -10,6 +10,7 @@
 #include <optional>
 #include <vector>
 
+
 namespace giewont {
 
 // SmartAICharacterController controls a character using pathfinding.
@@ -27,6 +28,8 @@ private:
   void process_sensors(SmartAIThinkCtx &ctx);
   void process_goals(SmartAIThinkCtx &ctx);
   void process_actions(SmartAIThinkCtx &ctx);
+  void generate_goap_plan(SmartAIThinkCtx &ctx);
+  std::optional<std::vector<GoapPlanItem>> consider_next_plan_item(SmartAIThinkCtx &ctx, std::vector<GoapPlanItem> const &curr_plan);
 
   /// @brief Find a path to the target position using A* algorithm
   void find_path(SmartAIThinkCtx &ctx, Vec2 target_pos);

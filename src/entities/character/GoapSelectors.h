@@ -19,6 +19,10 @@ bool is_friendly_flag(SmartAIThinkCtx &ctx, EntityRef entity_ref);
 bool is_enemy_base(SmartAIThinkCtx &ctx, EntityRef entity_ref);
 bool is_friendly_base(SmartAIThinkCtx &ctx, EntityRef entity_ref);
 
+/// @brief Returns true if the EntityRef is any valid entity
+bool is_valid_entity(SmartAIThinkCtx &ctx, EntityRef entity_ref);
+
+
 /// @brief Checks if the entity is the same as the character in context
 bool is_self(SmartAIThinkCtx &ctx, EntityRef entity_ref);
 

@@ -48,9 +48,11 @@ struct SmartAIState {
   GoapBlackboard current_state;
   std::vector<std::unique_ptr<GoapSensor>> sensors;
   std::vector<std::unique_ptr<GoapGoal>> goals;
-  std::vector<std::unique_ptr<GoapAction>> actions;
+  std::vector<std::shared_ptr<GoapAction>> actions;
+  std::vector<GoapPlanItem> currentGoapPlan;
 
   // Pathfinding stuff
+  Vec2 pathfindingTarget = Vec2(INFINITY, INFINITY);
   std::vector<AiPathNode> path;
 
   TilemapEntity *last_tilemap = nullptr;

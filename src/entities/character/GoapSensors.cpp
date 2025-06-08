@@ -33,12 +33,17 @@ std::vector<std::unique_ptr<GoapSensor>> giewont::construct_goap_sensors() {
       closest_selector(
           and_filter(is_friendly_character, negate_filter(is_self)))));
 
-  sensors.push_back(std::make_unique<OwnFlagStateSensor>(
-      GoapBlackboardKey::IS_ANYBODY_HOLDING_OWN_FLAG));
-  sensors.push_back(std::make_unique<OwnFlagStateSensor>(
-      GoapBlackboardKey::IS_HOLDING_ENEMY_FLAG));
-  sensors.push_back(std::make_unique<EnemyFlagStateSensor>(
-      GoapBlackboardKey::IS_ANYBODY_HOLDING_ENEMY_FLAG));
+  sensors.push_back(std::make_unique<FlagStateSensor>(
+      GoapBlackboardKey::IS_ANYBODY_HOLDING_OWN_FLAG,
+      first_selector(is_friendly_flag), is_valid_entity));
+
+  sensors.push_back(std::make_unique<FlagStateSensor>(
+      GoapBlackboardKey::IS_ANYBODY_HOLDING_ENEMY_FLAG,
+      first_selector(is_enemy_flag), is_valid_entity));
+
+  sensors.push_back(std::make_unique<FlagStateSensor>(
+      GoapBlackboardKey::IS_HOLDING_ENEMY_FLAG, first_selector(is_enemy_flag),
+      is_self));
 
   // Add other sensors here as needed
   return sensors;
@@ -71,31 +76,14 @@ GoapBlackboardValue PositionSensor::sense(SmartAIThinkCtx &ctx) {
   return GoapBlackboardValue(this->selected_entity.get(ctx.game).position);
 }
 
-GoapBlackboardValue OwnFlagStateSensor::sense(SmartAIThinkCtx &ctx) {
-  for (auto &entity : ctx.game.valid_entities()) {
-    if (FlagEntity *flag = dynamic_cast<FlagEntity *>(entity.get())) {
-      if (flag->team == ctx.character.team) {
-        if (key == GoapBlackboardKey::IS_ANYBODY_HOLDING_OWN_FLAG) {
-          return GoapBlackboardValue(flag->flag_holder.valid(ctx.game));
-        }
-      }
-    }
-  }
-  return GoapBlackboardValue(false); // No flag found for our team
-}
+GoapBlackboardValue FlagStateSensor::sense(SmartAIThinkCtx &ctx) {
+  auto flag_entity = flag_selector(ctx);
 
-GoapBlackboardValue EnemyFlagStateSensor::sense(SmartAIThinkCtx &ctx) {
-  for (auto &entity : ctx.game.valid_entities()) {
-    if (FlagEntity *flag = dynamic_cast<FlagEntity *>(entity.get())) {
-      if (flag->team != ctx.character.team) {
-        if (key == GoapBlackboardKey::IS_ANYBODY_HOLDING_ENEMY_FLAG) {
-          return GoapBlackboardValue(flag->flag_holder.valid(ctx.game));
-        } else if (key == GoapBlackboardKey::IS_HOLDING_ENEMY_FLAG) {
-          return GoapBlackboardValue(flag->flag_holder ==
-                                     ctx.character.get_ref());
-        }
-      }
-    }
+  if (!flag_entity.valid_as<FlagEntity>(ctx.game)) {
+    return GoapBlackboardValue(false); // No flag found
   }
-  return GoapBlackboardValue(INFINITY); // No flag found for enemy team
+
+  auto &flag = flag_entity.get_as<FlagEntity>(ctx.game);
+
+  return GoapBlackboardValue(holder_filter(ctx, flag.flag_holder));
 }

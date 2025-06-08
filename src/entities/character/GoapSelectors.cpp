@@ -94,6 +94,11 @@ bool goap_selectors::is_friendly_base(SmartAIThinkCtx &ctx,
   return false;
 }
 
+bool goap_selectors::is_valid_entity(SmartAIThinkCtx &ctx,
+                                     EntityRef entity_ref) {
+  return entity_ref.valid(ctx.game);
+}
+
 bool goap_selectors::is_self(SmartAIThinkCtx &ctx, EntityRef entity_ref) {
   return entity_ref == ctx.character.get_ref();
 }

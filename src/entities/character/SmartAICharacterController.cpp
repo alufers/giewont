@@ -36,77 +36,49 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
   this->process_sensors(ctx);
   this->process_goals(ctx);
   this->process_actions(ctx);
+  this->generate_goap_plan(ctx);
 
-  if (ctx.state.enemyAttachCheckTime > 0.0f) {
-    ctx.state.enemyAttachCheckTime -= delta_time;
-  } else {
-    bool didThrow = false;
-    if (ctx.character.is_propped_by_level) {
-      for (auto &entity : ctx.game.valid_entities()) {
-        if (CharacterEntity *enemy =
-                dynamic_cast<CharacterEntity *>(entity.get())) {
-          if (enemy->team != ctx.character.team &&
-              (enemy->position - ctx.character.position).length() < 300.0f) {
-            capnp::MallocMessageBuilder message;
-            auto interact = message.initRoot<net::InteractNetMessage>();
-            interact.setType(net::InteractionType::THROW_INTERACTION);
-            interact.setInteractorNetId(character.net_id);
-            game.perform_interaction(interact);
-            didThrow = true;
-            break;
-          }
+  if (!ctx.state.currentGoapPlan.empty()) {
+    auto &currentPlainItem = ctx.state.currentGoapPlan.front();
+    if (std::shared_ptr<GoapAction> action = currentPlainItem.action.lock()) {
+      if (currentPlainItem.did_begin == false) {
+        LOG_DEBUG() << "[AI] Starting action: " << action->get_name()
+                    << std::endl;
+
+        GoapBlackboard uselessState;
+        float reward =
+            action->get_reward(ctx, ctx.state.current_state, uselessState);
+        if (std::isnan(reward) || !std::isfinite(reward)) {
+          LOG_DEBUG() << "[AI] Action " << action->get_name()
+                      << " can no longer be performed, replanning."
+                      << std::endl;
+          ctx.state.currentGoapPlan.clear();
+
+        } else {
+          action->on_begin(ctx);
+          currentPlainItem.did_begin = true;
+        }
+      } else {
+        bool done = action->perform(ctx);
+        if (done) {
+          LOG_DEBUG() << "[AI] Finished action: " << action->get_name()
+                      << std::endl;
+          ctx.state.currentGoapPlan.erase(ctx.state.currentGoapPlan.begin());
         }
       }
     }
+  }
 
-    if (didThrow) {
-      ctx.state.enemyAttachCheckTime = rand_float(5.0f, 10.0f);
-    } else {
-      ctx.state.enemyAttachCheckTime = rand_float(0.01f, 1.8f);
-    }
-  }
-  if (ctx.state.dwellTime > 0.0f) {
-    ctx.state.dwellTime -= delta_time;
-    return;
-  }
-  if (ctx.state.path.empty()) {
+  if (ctx.state.path.empty() && ctx.state.pathfindingTarget.isfinite()) {
     ctx.state.noPathAttempts++;
 
     if (ctx.state.noPathAttempts > 20) {
       character.health = 0;
     }
 
-    EntityRef flag_ref = get_enemy_flag(ctx);
-    if (flag_ref.valid_as<FlagEntity>(game)) {
-      auto &flag_ent = flag_ref.get_as<FlagEntity>(game);
-      Vec2 enemy_flag_pos = flag_ent.position;
-
-      if (flag_ent.flag_holder.valid(game) &&
-          flag_ent.flag_holder == character.get_ref()) {
-        // We are holding it
-        EntityRef base_ref = get_own_base(ctx);
-        if (base_ref.valid_as<TeamBaseEntity>(game)) {
-          auto &base_ent = base_ref.get_as<TeamBaseEntity>(game);
-          Vec2 own_base_pos = base_ent.position;
-
-          this->find_path(ctx, own_base_pos);
-        }
-      } else {
-        if ((character.position - enemy_flag_pos).length() <
-            game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
-          capnp::MallocMessageBuilder message;
-          auto interact = message.initRoot<net::InteractNetMessage>();
-          interact.setType(net::InteractionType::USE_INTERACTION);
-          interact.setInteractorNetId(character.net_id);
-          game.perform_interaction(interact);
-          ctx.state.dwellTime = rand_float(0.8f, 1.2f);
-        } else {
-          this->find_path(ctx, enemy_flag_pos);
-          ctx.state.dwellTime = rand_float(0.05f, 1.2f);
-          ctx.state.waypointReachTime = 0.0f;
-        }
-      }
-    }
+    this->find_path(ctx, ctx.state.pathfindingTarget);
+    LOG_DEBUG() << "[AI] Pathfinding to target: " << ctx.state.pathfindingTarget
+                << " nodes: " << ctx.state.path.size() << std::endl;
   }
   CharacterMovementCommand command = giewont::CharacterMovementCommand::NONE;
   if (!ctx.state.path.empty()) {
@@ -447,6 +419,15 @@ void SmartAICharacterController::find_path(SmartAIThinkCtx &ctx,
       currTile.y++;
     }
 
+    TileType comingFromTileType =
+        tilemap->get_tile_type_at(comingFrom->tile_pos);
+    TileType tileAboveComingFrom =
+        tilemap->get_tile_type_at(comingFrom->tile_pos + IVec2(0, 1));
+    if (comingFromTileType == TileType::LADDER &&
+        tileAboveComingFrom == TileType::LADDER) {
+      return; // Do not allow jumping from non-ending ladder tiles
+    }
+
     // Try looking if we can jump up
     currTile = columnPos - IVec2(0, 1);
 
@@ -628,11 +609,101 @@ void SmartAICharacterController::process_goals(SmartAIThinkCtx &ctx) {
 }
 
 void SmartAICharacterController::process_actions(SmartAIThinkCtx &ctx) {
-  for (auto &action : ctx.state.actions) {
-    GoapBlackboard finishState = ctx.state.current_state;
-    float cost = action->get_cost(ctx, ctx.state.current_state, finishState);
-    action->_last_cost_value = cost;
+  // for (auto &action : ctx.state.actions) {
+  //   GoapBlackboard finishState = ctx.state.current_state;
+  //   float cost = action->get_reward(ctx, ctx.state.current_state,
+  //   finishState); action->_last_reward_value = cost;
+  // }
+}
+
+void SmartAICharacterController::generate_goap_plan(SmartAIThinkCtx &ctx) {
+  if (this->state.currentGoapPlan.size() > 0) {
+    return;
   }
+
+  std::vector<GoapPlanItem> initial_plan;
+  auto next_plan = this->consider_next_plan_item(ctx, initial_plan);
+  if (next_plan.has_value()) {
+    LOG_DEBUG() << "[AI] Found a plan with " << next_plan.value().size()
+                << " items" << std::endl;
+
+    for (const auto &item : next_plan.value()) {
+      LOG_DEBUG() << "[AI] Action: " << item.action.lock()->get_name()
+                  << ", Action Reward: " << item.action_reward
+                  << ", Goal Reward: " << item.goal_reward << std::endl;
+    }
+    this->state.currentGoapPlan = next_plan.value();
+  } else {
+    LOG_DEBUG() << "[AI] No plan found" << std::endl;
+  }
+}
+
+std::optional<std::vector<GoapPlanItem>>
+SmartAICharacterController::consider_next_plan_item(
+    SmartAIThinkCtx &ctx, std::vector<GoapPlanItem> const &curr_plan) {
+  if (curr_plan.size() > 8) {
+    return std::nullopt; // Too long plan, don't consider it
+  }
+
+  GoapBlackboard initial_state = ctx.state.current_state;
+  if (!curr_plan.empty()) {
+    initial_state = curr_plan.back().state;
+  }
+
+  std::optional<std::vector<GoapPlanItem>> best_plan = std::nullopt;
+  float best_plan_reward = -INFINITY;
+  if (!curr_plan.empty()) {
+    // If we already have a plan, use it's reward as the best one,
+    // to prevent taking nonsense paths
+    best_plan_reward = curr_plan.back().goal_reward;
+    for (const auto &item : curr_plan) {
+      best_plan_reward += item.action_reward;
+    }
+  }
+
+  for (auto &action : ctx.state.actions) {
+    GoapBlackboard finish_state = initial_state;
+    float cost = action->get_reward(ctx, initial_state, finish_state);
+    if (!std::isnan(cost) && std::isfinite(cost)) {
+
+      float goal_reward = 0.0f;
+      for (auto &goal : ctx.state.goals) {
+        goal_reward += goal->get_reward(ctx, initial_state, finish_state);
+      }
+
+      // This action can be performed
+      std::vector<GoapPlanItem> new_plan = curr_plan;
+      new_plan.push_back(GoapPlanItem{
+          .action = action,
+          .state = finish_state,
+          .action_reward = cost,
+          .goal_reward = goal_reward,
+      });
+
+      // Now recusively consider the next plan item after the action
+      auto next_plan = this->consider_next_plan_item(ctx, new_plan);
+      if (next_plan.has_value()) {
+        new_plan = next_plan.value();
+      }
+
+      // Calculate the total reward of the plan
+      float total_reward = 0.0f;
+      for (const auto &item : new_plan) {
+        total_reward += item.action_reward; // Sum up action rewards
+      }
+      total_reward +=
+          new_plan[new_plan.size() - 1]
+              .goal_reward; // Add the goal reward for the last state
+
+      if (total_reward > best_plan_reward) {
+
+        best_plan_reward = total_reward;
+        best_plan = new_plan; // Update the best plan if this one is better
+      }
+    }
+  }
+
+  return best_plan;
 }
 
 void SmartAICharacterController::draw_inspector_ui(Game &game) {
@@ -669,7 +740,7 @@ void SmartAICharacterController::draw_inspector_ui(Game &game) {
     ImGui::TableNextColumn();
     ImGui::Text("%s", action->get_name().c_str());
     ImGui::TableNextColumn();
-    ImGui::Text("Cost: %.2f", action->_last_cost_value);
+    ImGui::Text("Cost: %.2f", action->_last_reward_value);
   }
   ImGui::EndTable();
 
