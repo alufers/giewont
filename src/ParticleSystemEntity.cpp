@@ -194,7 +194,7 @@ void ParticleSystemEntity::update(Game &game, float delta_time) {
       particle.lifetime = NAN;
       continue;
     }
-    particle.velocity += game.gravity * delta_time * this->gravity_factor;
+    particle.velocity += game.get_gvar<Vec2>(GVarType::GRAVITY) * delta_time * this->gravity_factor;
     particle.position += particle.velocity * delta_time;
 
     if (tilemap_for_system != nullptr &&

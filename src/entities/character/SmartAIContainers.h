@@ -47,6 +47,7 @@ struct SmartAIState {
   // Goap stuff
   GoapBlackboard current_state;
   std::vector<std::unique_ptr<GoapSensor>> sensors;
+  std::vector<std::unique_ptr<GoapGoal>> goals;
 
   // Pathfinding stuff
   std::vector<AiPathNode> path;

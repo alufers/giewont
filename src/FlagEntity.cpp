@@ -165,7 +165,7 @@ bool FlagEntity::handle_interaction(
 
   auto dist = (interactor.get(game).position - position).length();
 
-  if (dist > FLAG_GRAB_DISTANCE) {
+  if (dist > game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
     return false;
   }
 

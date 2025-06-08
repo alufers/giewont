@@ -34,6 +34,8 @@ std::string giewont::goap_blackboard_key_to_string(GoapBlackboardKey key) {
     return "OWN_POINTS";
   case GoapBlackboardKey::UPDATES_SINCE_LAST_PATHFINDING:
     return "UPDATES_SINCE_LAST_PATHFINDING";
+  case GoapBlackboardKey::DIST_BETWEEN_BASES:
+    return "DIST_BETWEEN_BASES";
   }
   return "UNKNOWN_KEY";
 }

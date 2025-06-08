@@ -166,3 +166,16 @@ struct GuiInteractionNetMessage {
     netId @0 :UInt32; # Net ID of the GUI element / entity
     name @1 :Text;
 }
+
+# Contains global variables which affect the gameplay and are used by multiple subsystems.
+# For example both the flag entity and the AI must know how close to the flag the AI should be to pick it up.
+struct GameplayVariable {
+  union {
+    gravity @0 :NetVec2;
+    entityInteractionRange @1 :Float32;
+    baseActivationDist @2 :Float32; # The range at which a flag is considered being captured by a base.
+
+    max @3 :Void; # Sentinel value
+  }
+}
+

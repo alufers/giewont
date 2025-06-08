@@ -95,7 +95,7 @@ void TeamBaseEntity::update(Game &game, float delta_time) {
     captured_flag = the_flag->get_ref();
   }
 
-  float activation_dist = 70.0f * 2.0f;
+  float activation_dist = game.get_gvar<float>(GVarType::BASE_ACTIVATION_DIST);
 
   if (activation_level > 0.99f) {
     activation_level += delta_time * 0.2f;

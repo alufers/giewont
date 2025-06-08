@@ -3,6 +3,7 @@
 #include "Entity.h"
 #include "FlagEntity.h"
 #include "GameplayManager.h"
+#include "GoapGoals.h"
 #include "IVec2.h"
 #include "Log.h"
 #include "TeamBaseEntity.h"
@@ -22,16 +23,16 @@ const float WAYPOINT_REACH_MAX_TIME = 5.0f;
 SmartAICharacterController::SmartAICharacterController()
     : CharacterController() {
   state.sensors = construct_goap_sensors();
+  state.goals = construct_goap_goals();
 }
 
 void SmartAICharacterController::update(Game &game, CharacterEntity &character,
                                         float delta_time) {
   SmartAIThinkCtx ctx{game, character, state};
 
-  
   // Goap stuff
   this->process_sensors(ctx);
-
+  this->process_goals(ctx);
 
   if (ctx.state.enemyAttachCheckTime > 0.0f) {
     ctx.state.enemyAttachCheckTime -= delta_time;
@@ -89,7 +90,7 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
         }
       } else {
         if ((character.position - enemy_flag_pos).length() <
-            FlagEntity::FLAG_GRAB_DISTANCE) {
+            game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
           capnp::MallocMessageBuilder message;
           auto interact = message.initRoot<net::InteractNetMessage>();
           interact.setType(net::InteractionType::USE_INTERACTION);
@@ -327,7 +328,7 @@ void SmartAICharacterController::find_path(SmartAIThinkCtx &ctx,
 
   // Calculate character capabilities
   float maxJumpHeight = (ctx.character.jump_speed * ctx.character.jump_speed) /
-                        (2.0f * ctx.game.gravity.y);
+                        (2.0f * ctx.game.get_gvar<Vec2>(GVarType::GRAVITY).y);
   float characterHeight = ctx.character.get_aabb().height();
   int charcterHeightInTiles =
       static_cast<int>(std::ceil(characterHeight / tilemap->tile_size.y));
@@ -616,6 +617,13 @@ void SmartAICharacterController::process_sensors(SmartAIThinkCtx &ctx) {
   }
 }
 
+void SmartAICharacterController::process_goals(SmartAIThinkCtx &ctx) {
+  for (auto &goal : ctx.state.goals) {
+    goal->_last_reward_value =
+        goal->get_reward(ctx, ctx.state.current_state, ctx.state.current_state);
+  }
+}
+
 void SmartAICharacterController::draw_inspector_ui(Game &game) {
 #ifdef GIEWONT_HAS_GRAPHICS
   ImGui::Text("Current sensor state:");
@@ -627,6 +635,18 @@ void SmartAICharacterController::draw_inspector_ui(Game &game) {
     ImGui::Text("%s", goap_blackboard_key_to_string(pair.first).c_str());
     ImGui::TableNextColumn();
     ImGui::Text("%s", goap_blackboard_value_to_string(pair.second).c_str());
+  }
+  ImGui::EndTable();
+
+  ImGui::Text("Current goal state:");
+  ImGui::Separator();
+  ImGui::BeginTable("Goal State", 2);
+  for (const auto &goal : state.goals) {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::Text("%s", goal->get_name().c_str());
+    ImGui::TableNextColumn();
+    ImGui::Text("%.2f", goal->_last_reward_value);
   }
   ImGui::EndTable();
 
