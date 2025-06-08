@@ -5,6 +5,7 @@
 #include "SmartAIContainers.h"
 #include "TeamBaseEntity.h"
 using namespace giewont;
+using namespace giewont::goap_selectors;
 
 std::vector<std::unique_ptr<GoapSensor>> giewont::construct_goap_sensors() {
   std::vector<std::unique_ptr<GoapSensor>> sensors;
@@ -12,24 +13,21 @@ std::vector<std::unique_ptr<GoapSensor>> giewont::construct_goap_sensors() {
   sensors.push_back(std::make_unique<IsProppedSensor>());
   sensors.push_back(std::make_unique<HealthPercentageSensor>());
 
-  sensors.push_back(std::make_unique<DistToSensor>(
-      GoapBlackboardKey::DIST_TO_CLOSEST_ENEMY,
-      goap_selectors::closest_selector(goap_selectors::is_enemy_character)));
+  sensors.push_back(
+      std::make_unique<DistToSensor>(GoapBlackboardKey::DIST_TO_CLOSEST_ENEMY,
+                                     closest_selector(is_enemy_character)));
   sensors.push_back(std::make_unique<DistToSensor>(
       GoapBlackboardKey::DIST_TO_CLOSEST_FRIENDLY,
-      goap_selectors::closest_selector(goap_selectors::is_friendly_character)));
+      closest_selector(
+          and_filter(is_friendly_character, negate_filter(is_self)))));
   sensors.push_back(std::make_unique<DistToSensor>(
-      GoapBlackboardKey::DIST_TO_ENEMY_FLAG,
-      goap_selectors::closest_selector(goap_selectors::is_enemy_flag)));
+      GoapBlackboardKey::DIST_TO_ENEMY_FLAG, closest_selector(is_enemy_flag)));
   sensors.push_back(std::make_unique<DistToSensor>(
-      GoapBlackboardKey::DIST_TO_ENEMY_BASE,
-      goap_selectors::closest_selector(goap_selectors::is_enemy_base)));
+      GoapBlackboardKey::DIST_TO_ENEMY_BASE, closest_selector(is_enemy_base)));
   sensors.push_back(std::make_unique<DistToSensor>(
-      GoapBlackboardKey::DIST_TO_OWN_FLAG,
-      goap_selectors::closest_selector(goap_selectors::is_friendly_flag)));
+      GoapBlackboardKey::DIST_TO_OWN_FLAG, closest_selector(is_friendly_flag)));
   sensors.push_back(std::make_unique<DistToSensor>(
-      GoapBlackboardKey::DIST_TO_OWN_BASE,
-      goap_selectors::closest_selector(goap_selectors::is_friendly_base)));
+      GoapBlackboardKey::DIST_TO_OWN_BASE, closest_selector(is_friendly_base)));
 
   sensors.push_back(std::make_unique<OwnFlagStateSensor>(
       GoapBlackboardKey::IS_ANYBODY_HOLDING_OWN_FLAG));
@@ -57,16 +55,22 @@ GoapBlackboardValue HealthPercentageSensor::sense(SmartAIThinkCtx &ctx) {
 GoapBlackboardValue DistToSensor::sense(SmartAIThinkCtx &ctx) {
   if (!this->closest_entity.valid(ctx.game) ||
       (entity_scan_counter % 20) == 0) {
-    this->closest_entity = selector(ctx);
+    this->closest_entity = target_selector(ctx);
+  }
+
+  if (!this->actor_entity.valid(ctx.game) ||
+      (entity_scan_counter % 20) == 0) {
+    this->actor_entity = actor_selector(ctx);
   }
   entity_scan_counter++;
-  if (!this->closest_entity.valid(ctx.game)) {
-    return GoapBlackboardValue(INFINITY); // No target found
+  if (!this->closest_entity.valid(ctx.game) || 
+      !this->actor_entity.valid(ctx.game)) {
+    return GoapBlackboardValue(INFINITY); // No target or actor found
   }
 
   Vec2 target_pos = this->closest_entity.get(ctx.game).position;
-  Vec2 character_pos = ctx.character.position;
-  float distance = (target_pos - character_pos).length();
+  Vec2 actor_pos = this->actor_entity.get(ctx.game).position;
+  float distance = (target_pos - actor_pos).length();
   return GoapBlackboardValue(distance);
 }
 

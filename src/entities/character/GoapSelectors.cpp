@@ -93,3 +93,21 @@ bool goap_selectors::is_friendly_base(SmartAIThinkCtx &ctx,
 
   return false;
 }
+
+bool goap_selectors::is_self(SmartAIThinkCtx &ctx, EntityRef entity_ref) {
+  return entity_ref == ctx.character.get_ref();
+}
+
+GoapEntityFilterFunc
+goap_selectors::negate_filter(const GoapEntityFilterFunc filter) {
+  return [filter](SmartAIThinkCtx &ctx, EntityRef entity_ref) {
+    return !filter(ctx, entity_ref);
+  };
+}
+
+GoapEntityFilterFunc goap_selectors::and_filter(const GoapEntityFilterFunc a,
+                                                const GoapEntityFilterFunc b) {
+  return [a, b](SmartAIThinkCtx &ctx, EntityRef entity_ref) {
+    return a(ctx, entity_ref) && b(ctx, entity_ref);
+  };
+}

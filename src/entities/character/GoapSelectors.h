@@ -19,6 +19,17 @@ bool is_friendly_flag(SmartAIThinkCtx &ctx, EntityRef entity_ref);
 bool is_enemy_base(SmartAIThinkCtx &ctx, EntityRef entity_ref);
 bool is_friendly_base(SmartAIThinkCtx &ctx, EntityRef entity_ref);
 
+/// @brief Checks if the entity is the same as the character in context
+bool is_self(SmartAIThinkCtx &ctx, EntityRef entity_ref);
+
+/// @brief Negates the filter function
+GoapEntityFilterFunc negate_filter(const GoapEntityFilterFunc filter);
+
+/// @brief Ands two filter functions together
+GoapEntityFilterFunc and_filter(const GoapEntityFilterFunc a, const  GoapEntityFilterFunc b);
+
+
+
 /// @brief Selects the closest entity that matches the filter
 GoapEntitySelectorFunc closest_selector(GoapEntityFilterFunc filter);
 

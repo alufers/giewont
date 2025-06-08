@@ -1,9 +1,9 @@
 #pragma once
 
 #include "GoapInterfaces.h"
+#include "GoapSelectors.h"
 #include <memory>
 #include <vector>
-#include "GoapSelectors.h"
 
 namespace giewont {
 
@@ -36,17 +36,22 @@ public:
 // Implements a sensor measuring the distance to various entities of interest.
 class DistToSensor : public GoapSensor {
 public:
-  DistToSensor(GoapBlackboardKey key, GoapEntitySelectorFunc selector) : key(key), selector(selector) {}
+  DistToSensor(GoapBlackboardKey key, GoapEntitySelectorFunc target_selector,
+               GoapEntitySelectorFunc actor_selector =
+                   goap_selectors::first_selector(goap_selectors::is_self))
+      : key(key), target_selector(target_selector),
+        actor_selector(actor_selector) {}
   GoapBlackboardKey get_key() const override { return key; }
-  GoapBlackboardValue sense(SmartAIThinkCtx &ctx);
+  GoapBlackboardValue sense(SmartAIThinkCtx &ctx) override;
 
   ~DistToSensor() override = default;
 
 private:
   GoapBlackboardKey key;
   EntityRef closest_entity;
-  GoapEntitySelectorFunc selector;
-
+  EntityRef actor_entity;
+  GoapEntitySelectorFunc target_selector;
+  GoapEntitySelectorFunc actor_selector;
 
   uint32_t entity_scan_counter = 0;
 };

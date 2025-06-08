@@ -75,8 +75,6 @@ public:
                          const GoapBlackboard &initial_state,
                          GoapBlackboard &finish_state_out) const = 0;
 
-  /// @brief
-  virtual GoapBlackboard get_action_result() const = 0;
 
   /// @brief Get the action name
   virtual std::string get_name() const = 0;
