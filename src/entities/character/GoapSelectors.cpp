@@ -2,6 +2,8 @@
 #include "FlagEntity.h"
 #include "SmartAIContainers.h"
 #include "TeamBaseEntity.h"
+#include "entities/gameplay/BonusEntity.h"
+
 using namespace giewont;
 
 GoapEntitySelectorFunc
@@ -97,6 +99,14 @@ bool goap_selectors::is_friendly_base(SmartAIThinkCtx &ctx,
 bool goap_selectors::is_valid_entity(SmartAIThinkCtx &ctx,
                                      EntityRef entity_ref) {
   return entity_ref.valid(ctx.game);
+}
+
+bool goap_selectors::is_healthkit(SmartAIThinkCtx &ctx, EntityRef entity_ref) {
+  if (entity_ref.valid_as<BonusEntity>(ctx.game)) {
+    auto &bonus = entity_ref.get_as<BonusEntity>(ctx.game);
+    return bonus.bonus_type == net::BonusEntityType::HEALTHKIT;
+  }
+  return false;
 }
 
 bool goap_selectors::is_self(SmartAIThinkCtx &ctx, EntityRef entity_ref) {

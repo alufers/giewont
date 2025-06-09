@@ -12,6 +12,13 @@ std::vector<std::shared_ptr<GoapAction>> giewont::construct_goap_actions() {
       goap_selectors::closest_selector(goap_selectors::is_friendly_base),
       GoapBlackboardKey::OWN_BASE_POS));
 
+  actions.emplace_back(std::make_shared<GoToEntityGoapAction>(
+      "GoToClosestHealthkit",
+      goap_selectors::closest_selector(goap_selectors::is_healthkit),
+      GoapBlackboardKey::CLOSEST_HEALTHKIT_POS));
+
+  actions.emplace_back(std::make_shared<PickupHealthkit>());
+
   actions.emplace_back(
       std::make_shared<DwellAtOwnBaseWaitingForFlagToBeCaptured>());
 
@@ -29,6 +36,7 @@ std::string GoToEntityGoapAction::get_name() const { return _name; }
 float GoToEntityGoapAction::get_reward(SmartAIThinkCtx &ctx,
                                        const GoapBlackboard &initial_state,
                                        GoapBlackboard &finish_state_out) const {
+                                      
   EntityRef target_entity = _target_entity(ctx);
   if (!target_entity.valid(ctx.game)) {
     return -INFINITY;
@@ -127,6 +135,40 @@ float PickUpEnemyFlag::get_reward(SmartAIThinkCtx &ctx,
 }
 
 bool PickUpEnemyFlag::perform(SmartAIThinkCtx &ctx) {
+
+  capnp::MallocMessageBuilder message;
+  auto interact = message.initRoot<net::InteractNetMessage>();
+  interact.setType(net::InteractionType::USE_INTERACTION);
+  interact.setInteractorNetId(ctx.character.net_id);
+  ctx.game.perform_interaction(interact);
+  return true;
+}
+
+PickupHealthkit::PickupHealthkit() {}
+
+std::string PickupHealthkit::get_name() const { return "PickupHealthkit"; }
+
+float PickupHealthkit::get_reward(SmartAIThinkCtx &ctx,
+                                  const GoapBlackboard &initial_state,
+                                  GoapBlackboard &finish_state_out) const {
+
+  float dist = blackboard_pos_distance(initial_state,
+                                       GoapBlackboardKey::CLOSEST_HEALTHKIT_POS,
+                                       GoapBlackboardKey::OWN_POS);
+  if (dist > ctx.game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
+
+    return -INFINITY; // Too far to pick up the flag
+  }
+
+  finish_state_out[GoapBlackboardKey::HEALTH_PERCENTAGE] = std::clamp(
+      std::get<float>(initial_state.at(GoapBlackboardKey::HEALTH_PERCENTAGE)) +
+          0.3f, // TODO: use the actual health amount from the healthkit
+      0.0f, 1.0f);
+
+  return -3.0f; // MAGICNUMBER
+}
+
+bool PickupHealthkit::perform(SmartAIThinkCtx &ctx) {
 
   capnp::MallocMessageBuilder message;
   auto interact = message.initRoot<net::InteractNetMessage>();

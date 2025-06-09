@@ -13,4 +13,15 @@ public:
   float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
                    const GoapBlackboard &result_state) const override;
 };
+
+
+class KeepHealthAboveHalf : public GoapGoal {
+public:
+  float total_reward = 20000.0f;
+  std::string get_name() const override { return "KeepHealthAboveHalf"; }
+  float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+                   const GoapBlackboard &result_state) const override;
+};
+
+
 }; // namespace giewont

@@ -32,6 +32,11 @@ std::vector<std::unique_ptr<GoapSensor>> giewont::construct_goap_sensors() {
       GoapBlackboardKey::CLOSEST_FRIENDLY_POS,
       closest_selector(
           and_filter(is_friendly_character, negate_filter(is_self)))));
+  sensors.push_back(
+      std::make_unique<PositionSensor>(GoapBlackboardKey::CLOSEST_HEALTHKIT_POS,
+                                       closest_selector(is_healthkit)));
+
+  // Flag state sensors
 
   sensors.push_back(std::make_unique<FlagStateSensor>(
       GoapBlackboardKey::IS_ANYBODY_HOLDING_OWN_FLAG,
@@ -108,15 +113,18 @@ void giewont::apply_gameplay_logic_to_predicted_blackboard(
   // if (blackboard_pos_distance(blackboard, GoapBlackboardKey::ENEMY_FLAG_POS,
   //                             GoapBlackboardKey::OWN_BASE_POS) <
   //     ctx.game.get_gvar<float>(GVarType::BASE_ACTIVATION_DIST)) {
-  //   // If the own flag is close enough to the own base, then we are holding it
-  //   blackboard[GoapBlackboardKey::IS_ANYBODY_HOLDING_ENEMY_FLAG] = true; // The team base is counted as a "holder" of the flag during the capture animation
+  //   // If the own flag is close enough to the own base, then we are holding
+  //   it blackboard[GoapBlackboardKey::IS_ANYBODY_HOLDING_ENEMY_FLAG] = true;
+  //   // The team base is counted as a "holder" of the flag during the capture
+  //   animation
   //   blackboard[GoapBlackboardKey::IS_ENEMY_FLAG_IN_CAPTURED_ANIMATION] =
   //       true; // The flag is in the captured animation state
   // }
 }
 
 float giewont::blackboard_pos_distance(const GoapBlackboard &blackboard,
-                              GoapBlackboardKey key1, GoapBlackboardKey key2) {
+                                       GoapBlackboardKey key1,
+                                       GoapBlackboardKey key2) {
   if (!blackboard.contains(key1) || !blackboard.contains(key2)) {
     return INFINITY; // One of the keys is not present in the blackboard
   }

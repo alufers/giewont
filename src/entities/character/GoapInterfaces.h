@@ -33,6 +33,7 @@ enum class GoapBlackboardKey {
   OWN_BASE_POS,
   CLOSEST_ENEMY_POS,
   CLOSEST_FRIENDLY_POS,
+  CLOSEST_HEALTHKIT_POS,
 
   // @brief Keys about own team state
   IS_ANYBODY_HOLDING_OWN_FLAG,

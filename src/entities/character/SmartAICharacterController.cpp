@@ -641,7 +641,7 @@ void SmartAICharacterController::generate_goap_plan(SmartAIThinkCtx &ctx) {
 std::optional<std::vector<GoapPlanItem>>
 SmartAICharacterController::consider_next_plan_item(
     SmartAIThinkCtx &ctx, std::vector<GoapPlanItem> const &curr_plan) {
-  if (curr_plan.size() > 8) {
+  if (curr_plan.size() > 4) {
     return std::nullopt; // Too long plan, don't consider it
   }
 
@@ -710,9 +710,10 @@ SmartAICharacterController::consider_next_plan_item(
 
 void SmartAICharacterController::draw_inspector_ui(Game &game) {
 #ifdef GIEWONT_HAS_GRAPHICS
-  ImGui::Text("Current sensor state:");
   ImGui::Separator();
-  ImGui::BeginTable("Sensor State", 2);
+  ImGui::Text("Current sensor state:");
+  ImGui::BeginTable("Sensor State", 2, ImGuiTableFlags_Borders);
+
   for (const auto &pair : state.current_state) {
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
@@ -722,8 +723,26 @@ void SmartAICharacterController::draw_inspector_ui(Game &game) {
   }
   ImGui::EndTable();
 
-  ImGui::Text("Current goal state:");
   ImGui::Separator();
+  ImGui::Text("Current plan:");
+  ImGui::BeginTable("Action State", 3, ImGuiTableFlags_Borders);
+  ImGui::TableSetupColumn("Action");
+  ImGui::TableSetupColumn("Action Reward");
+  ImGui::TableSetupColumn("Goal Reward");
+  ImGui::TableHeadersRow();
+  for (const auto &plan_item : state.currentGoapPlan) {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::Text("%s", plan_item.action.lock()->get_name().c_str());
+    ImGui::TableNextColumn();
+    ImGui::Text("%.2f", plan_item.action_reward);
+    ImGui::TableNextColumn();
+    ImGui::Text("%.2f", plan_item.goal_reward);
+  }
+  ImGui::EndTable();
+
+  ImGui::Separator();
+  ImGui::Text("Current goal state:");
   ImGui::BeginTable("Goal State", 2);
   for (const auto &goal : state.goals) {
     ImGui::TableNextRow();
@@ -731,18 +750,6 @@ void SmartAICharacterController::draw_inspector_ui(Game &game) {
     ImGui::Text("%s", goal->get_name().c_str());
     ImGui::TableNextColumn();
     ImGui::Text("Reward: %.2f", goal->_last_reward_value);
-  }
-  ImGui::EndTable();
-
-  ImGui::Text("Current action state:");
-  ImGui::Separator();
-  ImGui::BeginTable("Action State", 2);
-  for (const auto &action : state.actions) {
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn();
-    ImGui::Text("%s", action->get_name().c_str());
-    ImGui::TableNextColumn();
-    ImGui::Text("Cost: %.2f", action->_last_reward_value);
   }
   ImGui::EndTable();
 

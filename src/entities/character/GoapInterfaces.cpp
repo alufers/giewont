@@ -36,6 +36,8 @@ std::string giewont::goap_blackboard_key_to_string(GoapBlackboardKey key) {
     return "UPDATES_SINCE_LAST_PATHFINDING";
   case giewont::GoapBlackboardKey::IS_ENEMY_FLAG_IN_CAPTURED_ANIMATION:
     return "IS_ENEMY_FLAG_IN_CAPTURED_ANIMATION";
+  case giewont::GoapBlackboardKey::CLOSEST_HEALTHKIT_POS:
+    return "CLOSEST_HEALTHKIT_POS";
   }
   return "Unknown Key";
 }

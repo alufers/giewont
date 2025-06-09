@@ -18,6 +18,8 @@ bool is_enemy_flag(SmartAIThinkCtx &ctx, EntityRef entity_ref);
 bool is_friendly_flag(SmartAIThinkCtx &ctx, EntityRef entity_ref);
 bool is_enemy_base(SmartAIThinkCtx &ctx, EntityRef entity_ref);
 bool is_friendly_base(SmartAIThinkCtx &ctx, EntityRef entity_ref);
+bool is_healthkit(SmartAIThinkCtx &ctx, EntityRef entity_ref);
+
 
 /// @brief Returns true if the EntityRef is any valid entity
 bool is_valid_entity(SmartAIThinkCtx &ctx, EntityRef entity_ref);

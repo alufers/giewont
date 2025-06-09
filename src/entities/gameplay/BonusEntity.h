@@ -30,7 +30,7 @@ public:
   AABB &get_aabb() override { return bonus_aabb; }
 
   // Synced variables
-  float total_lifetime = 25.0f;
+  float total_lifetime = 60.0f;
   float lifetime = total_lifetime;
   float amount = 20.0f;
 
