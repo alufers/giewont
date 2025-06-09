@@ -51,11 +51,17 @@ struct SmartAIState {
   std::vector<std::shared_ptr<GoapAction>> actions;
   std::vector<GoapPlanItem> currentGoapPlan;
 
+  float currentPlanAge = 0.0f;
+  float currentPlanExpectedGoalReward = 0.0f;
+  float planReevaluationInterval = 2.0f;
+  float timeUntilPlanReevaluation = 2.0f;
+
 
 
   // State used by the GoToEntity action
   EntityRef goToEntityTarget;
   std::vector<AiPathNode> path;
+  bool cancelScheduled = false;
   TilemapEntity *last_tilemap = nullptr;
   // Contains pathfinding information about nodes calculated in the last search
   // Owns the nodes

@@ -29,6 +29,12 @@ private:
   void process_goals(SmartAIThinkCtx &ctx);
   void process_actions(SmartAIThinkCtx &ctx);
   void generate_goap_plan(SmartAIThinkCtx &ctx);
+
+  /**
+   * @brief Check whether the current Goap plan can still be executed and the goal reward is high enough.\
+   * 
+   */
+  void evaluate_current_goap_plan(SmartAIThinkCtx &ctx);
   std::optional<std::vector<GoapPlanItem>> consider_next_plan_item(SmartAIThinkCtx &ctx, std::vector<GoapPlanItem> const &curr_plan);
 
  

@@ -29,6 +29,8 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
   SmartAIThinkCtx ctx{game, character, state, delta_time};
 
   state.dwellTime -= delta_time;
+  state.timeUntilPlanReevaluation -= delta_time;
+  state.currentPlanAge += delta_time;
 
   if (state.dwellTime > 0.0f) {
     return;
@@ -62,10 +64,14 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
       }
       plan_item.last_result = result;
       switch (result) {
+      case GoapActionResult::NOT_ATTEMPTED:
+        throw std::runtime_error(
+            "[AI] Action " + action->get_name() +
+            " returned NOT_ATTEMPTED, this should not happen.");
+        break;
       case GoapActionResult::FAILED_FORCE_REPLAN:
         LOG_DEBUG() << "[AI] Action " << action->get_name()
                     << " failed, replanning." << std::endl;
-        ctx.state.currentGoapPlan.clear();
         state.dwellTime = rand_float(0.5f, 3.2f);
         return; // No point in continuing, we need to replan
       case GoapActionResult::FAILED_RECOVERABLE:
@@ -77,7 +83,8 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
         if (plan_item.attempt_count > 5) {
           LOG_DEBUG() << "[AI] Action " << action->get_name()
                       << " failed too many times, replanning." << std::endl;
-          ctx.state.currentGoapPlan.clear();
+          plan_item.last_result =
+              GoapActionResult::FAILED_FORCE_REPLAN; // Force replan
         }
         // We can retry the action, so we don't clear the plan
         return;
@@ -98,7 +105,13 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
 
   if (!did_do_any_goap_action) {
     LOG_DEBUG() << "[AI] GOAP plan completed" << std::endl;
-    ctx.state.currentGoapPlan.clear();
+    ctx.state.dwellTime = rand_float(0.5f, 3.2f);
+  }
+
+  if (state.timeUntilPlanReevaluation <= 0.0f) {
+    state.timeUntilPlanReevaluation = state.planReevaluationInterval;
+    LOG_DEBUG() << "[AI] Re-evaluating GOAP plan" << std::endl;
+    this->evaluate_current_goap_plan(ctx);
   }
 }
 
@@ -188,9 +201,22 @@ void SmartAICharacterController::process_actions(SmartAIThinkCtx &ctx) {
 }
 
 void SmartAICharacterController::generate_goap_plan(SmartAIThinkCtx &ctx) {
-  if (this->state.currentGoapPlan.size() > 0) {
-    return;
+
+  bool has_any_performable_actions = false;
+  for (const auto &plan_step : ctx.state.currentGoapPlan) {
+    GoapActionResult res = plan_step.last_result;
+    if (res == GoapActionResult::FAILED_FORCE_REPLAN) {
+      has_any_performable_actions = false;
+      break; // One action failed unrecoverably, we need to replan
+    }
+
+    if (res != GoapActionResult::DONE) {
+      has_any_performable_actions = true;
+    }
   }
+
+  if (has_any_performable_actions)
+    return; // The current plan is still valid.
 
   std::vector<GoapPlanItem> initial_plan;
   auto next_plan = this->consider_next_plan_item(ctx, initial_plan);
@@ -204,6 +230,15 @@ void SmartAICharacterController::generate_goap_plan(SmartAIThinkCtx &ctx) {
                   << ", Goal Reward: " << item.goal_reward << std::endl;
     }
     this->state.currentGoapPlan = next_plan.value();
+
+    this->state.currentPlanAge = 0.0f;
+    if (!this->state.currentGoapPlan.empty()) {
+      this->state.currentPlanExpectedGoalReward =
+          this->state.currentGoapPlan.back().goal_reward;
+    } else {
+      this->state.currentPlanExpectedGoalReward = 0.0f;
+    }
+
   } else {
     LOG_DEBUG() << "[AI] No plan found" << std::endl;
   }
@@ -279,8 +314,93 @@ SmartAICharacterController::consider_next_plan_item(
   return best_plan;
 }
 
+void SmartAICharacterController::evaluate_current_goap_plan(
+    SmartAIThinkCtx &ctx) {
+  if (ctx.state.currentGoapPlan.empty()) {
+    return; // Nothing to evaluate
+  }
+
+  bool needs_replanning = false;
+  GoapBlackboard bb_state = ctx.state.current_state;
+  for (auto &plan_item : ctx.state.currentGoapPlan) {
+    if (plan_item.last_result == GoapActionResult::DONE)
+      continue; // Skip completed actions
+    if (plan_item.last_result == GoapActionResult::FAILED_FORCE_REPLAN)
+      break; // Plan is already invalid don't check further
+    if (plan_item.action.expired()) {
+      needs_replanning = true;
+      break; // Action is no longer valid, we need to replan
+    }
+
+    GoapBlackboard finish_state = bb_state;
+    float reward =
+        plan_item.action.lock()->get_reward(ctx, bb_state, finish_state);
+    if (!std::isfinite(reward) || std::isnan(reward)) {
+      LOG_DEBUG() << "[AI] Action " << plan_item.action.lock()->get_name()
+                  << " returned invalid reward, replanning." << std::endl;
+      needs_replanning = true;
+      break; // Invalid reward, we need to replan
+    }
+    apply_gameplay_logic_to_predicted_blackboard(ctx, finish_state);
+    float goal_reward = 0.0f;
+    for (auto &goal : ctx.state.goals) {
+      goal_reward += goal->get_reward(ctx, bb_state, finish_state);
+    }
+    plan_item.action_reward = reward;
+    plan_item.state = finish_state;
+    plan_item.goal_reward = goal_reward;
+    bb_state = finish_state; // Update the state for the next action
+  }
+
+  if (needs_replanning) {
+    LOG_DEBUG() << "[AI] =======PLAN NEEDS REPLANNING AFTER EVALUATION====="
+                << std::endl;
+    ctx.state.currentGoapPlan.clear();
+  }
+}
+
 void SmartAICharacterController::draw_inspector_ui(Game &game) {
 #ifdef GIEWONT_HAS_GRAPHICS
+
+  ImGui::Separator();
+  ImGui::Text("Current plan:");
+  ImGui::Text("Plan expected goal reward: %.2f",
+              state.currentPlanExpectedGoalReward);
+  ImGui::Text("Plan age: %.2f", state.currentPlanAge);
+  ImGui::BeginTable("Action State", 4, ImGuiTableFlags_Borders);
+  ImGui::TableSetupColumn("Action");
+  ImGui::TableSetupColumn("Result");
+  ImGui::TableSetupColumn("Action Reward");
+  ImGui::TableSetupColumn("Goal Reward");
+  ImGui::TableHeadersRow();
+  for (const auto &plan_item : state.currentGoapPlan) {
+    ImGui::TableNextRow();
+    if (plan_item.last_result == GoapActionResult::IN_PROGRESS) {
+      ImGui::TableSetBgColor(
+          ImGuiTableBgTarget_RowBg0,
+          ImGui::GetColorU32(ImVec4(0.0f, 0.3f, 0.0f, 0.3f)));
+    } else if (plan_item.last_result == GoapActionResult::DONE) {
+      ImGui::TableSetBgColor(
+          ImGuiTableBgTarget_RowBg0,
+          ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.3f, 0.3f)));
+    } else if (plan_item.last_result == GoapActionResult::FAILED_RECOVERABLE) {
+      ImGui::TableSetBgColor(
+          ImGuiTableBgTarget_RowBg0,
+          ImGui::GetColorU32(ImVec4(0.0f, 0.0f, 0.3f, 0.3f)));
+    }
+    ImGui::TableNextColumn();
+    ImGui::Text("%s", plan_item.action.lock()->get_name().c_str());
+    ImGui::TableNextColumn();
+    ImGui::Text("%s",
+                goap_action_result_to_string(plan_item.last_result).c_str());
+
+    ImGui::TableNextColumn();
+    ImGui::Text("%.2f", plan_item.action_reward);
+    ImGui::TableNextColumn();
+    ImGui::Text("%.2f", plan_item.goal_reward);
+  }
+  ImGui::EndTable();
+
   ImGui::Separator();
   ImGui::Text("Current sensor state:");
   ImGui::BeginTable("Sensor State", 2, ImGuiTableFlags_Borders);
@@ -291,28 +411,6 @@ void SmartAICharacterController::draw_inspector_ui(Game &game) {
     ImGui::Text("%s", goap_blackboard_key_to_string(pair.first).c_str());
     ImGui::TableNextColumn();
     ImGui::Text("%s", goap_blackboard_value_to_string(pair.second).c_str());
-  }
-  ImGui::EndTable();
-
-  ImGui::Separator();
-  ImGui::Text("Current plan:");
-  ImGui::BeginTable("Action State", 4, ImGuiTableFlags_Borders);
-  ImGui::TableSetupColumn("Action");
-  ImGui::TableSetupColumn("Result");
-  ImGui::TableSetupColumn("Action Reward");
-  ImGui::TableSetupColumn("Goal Reward");
-  ImGui::TableHeadersRow();
-  for (const auto &plan_item : state.currentGoapPlan) {
-    ImGui::TableNextRow();
-    ImGui::TableNextColumn();
-    ImGui::Text("%s", plan_item.action.lock()->get_name().c_str());
-    ImGui::TableNextColumn();
-    ImGui::Text("%s",
-                goap_action_result_to_string(plan_item.last_result).c_str());
-    ImGui::TableNextColumn();
-    ImGui::Text("%.2f", plan_item.action_reward);
-    ImGui::TableNextColumn();
-    ImGui::Text("%.2f", plan_item.goal_reward);
   }
   ImGui::EndTable();
 

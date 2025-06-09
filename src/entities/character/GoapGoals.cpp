@@ -10,6 +10,7 @@ std::vector<std::unique_ptr<GoapGoal>> giewont::construct_goap_goals() {
 
   goals.push_back(std::make_unique<BringEnemyFlagToBaseGoal>());
   goals.push_back(std::make_unique<KeepHealthAboveHalf>());
+  goals.push_back(std::make_unique<FollowTeammateWithFlag>());
 
   return goals;
 }
@@ -64,8 +65,33 @@ float KeepHealthAboveHalf::get_reward(
 
   float health_percentage =
       std::get<float>(result_state.at(GoapBlackboardKey::HEALTH_PERCENTAGE));
+  float percentage_reached = std::clamp(health_percentage, 0.0f, 1.0f);
+  return total_reward * percentage_reached;
+}
+
+float FollowTeammateWithFlag::get_reward(
+    SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+    const GoapBlackboard &result_state) const {
+
+  bool is_holding_enemy_flag =
+      std::get<bool>(result_state.at(GoapBlackboardKey::IS_HOLDING_ENEMY_FLAG));
+  bool is_anybody_holding_enemy_flag = std::get<bool>(
+      result_state.at(GoapBlackboardKey::IS_ANYBODY_HOLDING_ENEMY_FLAG));
+
+  // No reward if enemy flag is on the floor, or we are holding it
+  if (!is_anybody_holding_enemy_flag || is_holding_enemy_flag)
+    return 0.0f;
+
+  float dist_to_enemy_flag = giewont::blackboard_pos_distance(
+      result_state, GoapBlackboardKey::ENEMY_FLAG_POS,
+      GoapBlackboardKey::OWN_POS);
+  if (!std::isfinite(dist_to_enemy_flag))
+    return 0.0f; // Invalid state, no reward
+
+  float target_dist = 300.0f; // MAGICNUMBER, distance to the teammate with the flag
+
   float percentage_reached = std::clamp(
-      health_percentage,
-      0.0f, 1.0f);
+      (target_dist - dist_to_enemy_flag) / target_dist, 0.0f, 1.0f);
+
   return total_reward * percentage_reached;
 }

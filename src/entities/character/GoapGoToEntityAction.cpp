@@ -40,6 +40,11 @@ float GoToEntityGoapAction::get_reward(SmartAIThinkCtx &ctx,
     target_pos = std::get<Vec2>(initial_state.at(_target_pos_key));
   }
 
+  if (std::get<Vec2>(initial_state.at(GoapBlackboardKey::OWN_POS))
+          .distance(target_pos) < WAYPOINT_REACHED_THRESHOLD) {
+    return -INFINITY; // Don't do anything if we are already close enough
+  }
+
   finish_state_out[GoapBlackboardKey::OWN_POS] = target_pos;
 
   return own_pos.distance(target_pos) * -0.3f - 10.0f; // MAGICNUMBER
@@ -60,6 +65,7 @@ GoapActionResult GoToEntityGoapAction::on_begin(SmartAIThinkCtx &ctx) {
               << ", target position: " << target_pos << std::endl;
 
   this->find_path(ctx, target_pos);
+  ctx.state.cancelScheduled = false;
 
   if (ctx.state.path.empty()) {
     LOG_DEBUG() << "[AI] No path found for GoToEntityGoapAction." << std::endl;
@@ -76,16 +82,33 @@ GoapActionResult GoToEntityGoapAction::perform(SmartAIThinkCtx &ctx) {
   GoapActionResult result = GoapActionResult::IN_PROGRESS;
   CharacterMovementCommand command = giewont::CharacterMovementCommand::NONE;
 
-  if (!ctx.state.goToEntityTarget.valid(ctx.game)) {
-    LOG_DEBUG() << "[AI] Target entity for GoToEntityGoapAction became invalid "
-                   "while following path."
-                << std::endl;
-    result = GoapActionResult::FAILED_FORCE_REPLAN;
-  } else if (ctx.state.path.empty()) {
+  if (ctx.state.path.empty()) {
     LOG_DEBUG() << "[AI] Path buffer empty, GoToEntityGoapAction completed."
                 << std::endl;
     result = GoapActionResult::DONE;
   } else {
+
+    // Check whether the target entity still exists and is close enough to the
+    // end
+    // of the path.
+    if (!ctx.state.goToEntityTarget.valid(ctx.game)) {
+      LOG_DEBUG()
+          << "[AI] Target entity for GoToEntityGoapAction became invalid "
+             "while following path."
+          << std::endl;
+      // Do not abort the movement immediately as it may cause the character to
+      // fall off a ladder. Delay it until the next waypoint is reached.
+      ctx.state.cancelScheduled = true;
+    } else if (ctx.state.path.back().world_pos.distance(
+                   ctx.state.goToEntityTarget.get(ctx.game).position) >
+               ctx.game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
+      LOG_DEBUG()
+          << "[AI] Target entity for GoToEntityGoapAction is too far away, "
+             "replanning."
+          << std::endl;
+      ctx.state.cancelScheduled = true;
+    }
+
     ctx.state.noPathAttempts = 0;
     // LOG_DEBUG() << "Path size: " << ctx.state.path.size() << std::endl;
     auto feetPos = ctx.character.world_feet_pos() - Vec2(0, 1.0f);
@@ -132,6 +155,11 @@ GoapActionResult GoToEntityGoapAction::perform(SmartAIThinkCtx &ctx) {
       if (feetTilePos == currentNode.tile_pos) {
         hasReachedCurrentNode = true;
       }
+    }
+
+    // If a cancel was scheduled, then we should abort now
+    if (ctx.state.cancelScheduled && hasReachedCurrentNode) {
+      result = GoapActionResult::FAILED_FORCE_REPLAN;
     }
 
     // wait for stopping when reaching the target

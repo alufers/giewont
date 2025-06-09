@@ -25,7 +25,6 @@ std::vector<std::shared_ptr<GoapAction>> giewont::construct_goap_actions() {
   return actions;
 }
 
-
 GoToEnemyFlagGoapAction::GoToEnemyFlagGoapAction()
     : GoToEntityGoapAction(
           "GoToEnemyFlag",
@@ -77,7 +76,12 @@ float PickUpEnemyFlag::get_reward(SmartAIThinkCtx &ctx,
 }
 
 GoapActionResult PickUpEnemyFlag::perform(SmartAIThinkCtx &ctx) {
+  if (ctx.character.position.distance(std::get<Vec2>(
+          ctx.state.current_state.at(GoapBlackboardKey::ENEMY_FLAG_POS))) >
+      ctx.game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
 
+    return GoapActionResult::FAILED_FORCE_REPLAN;
+  }
   capnp::MallocMessageBuilder message;
   auto interact = message.initRoot<net::InteractNetMessage>();
   interact.setType(net::InteractionType::USE_INTERACTION);
@@ -99,7 +103,7 @@ float PickupHealthkit::get_reward(SmartAIThinkCtx &ctx,
                                        GoapBlackboardKey::OWN_POS);
   if (dist > ctx.game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
 
-    return -INFINITY; // Too far to pick up the flag
+    return -INFINITY; // Too far to pick up the healthkit
   }
 
   finish_state_out[GoapBlackboardKey::HEALTH_PERCENTAGE] = std::clamp(
@@ -107,11 +111,19 @@ float PickupHealthkit::get_reward(SmartAIThinkCtx &ctx,
           0.3f, // TODO: use the actual health amount from the healthkit
       0.0f, 1.0f);
 
+  finish_state_out[GoapBlackboardKey::CLOSEST_HEALTHKIT_POS] =
+      Vec2(INFINITY, INFINITY);
+
   return -3.0f; // MAGICNUMBER
 }
 
 GoapActionResult PickupHealthkit::perform(SmartAIThinkCtx &ctx) {
+  if (ctx.character.position.distance(std::get<Vec2>(ctx.state.current_state.at(
+          GoapBlackboardKey::CLOSEST_HEALTHKIT_POS))) >
+      ctx.game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
 
+    return GoapActionResult::FAILED_FORCE_REPLAN;
+  }
   capnp::MallocMessageBuilder message;
   auto interact = message.initRoot<net::InteractNetMessage>();
   interact.setType(net::InteractionType::USE_INTERACTION);
@@ -165,7 +177,8 @@ float DwellAtOwnBaseWaitingForFlagToBeCaptured::get_reward(
   return INFINITY;
 }
 
-GoapActionResult DwellAtOwnBaseWaitingForFlagToBeCaptured::perform(SmartAIThinkCtx &ctx) {
+GoapActionResult
+DwellAtOwnBaseWaitingForFlagToBeCaptured::perform(SmartAIThinkCtx &ctx) {
   float base_activation_dist =
       ctx.game.get_gvar<float>(GVarType::BASE_ACTIVATION_DIST);
   bool is_flag_in_capture_animation = std::get<bool>(ctx.state.current_state.at(
@@ -174,7 +187,8 @@ GoapActionResult DwellAtOwnBaseWaitingForFlagToBeCaptured::perform(SmartAIThinkC
           ctx.state.current_state, GoapBlackboardKey::ENEMY_FLAG_POS,
           GoapBlackboardKey::OWN_BASE_POS) < base_activation_dist ||
       is_flag_in_capture_animation) {
-    return GoapActionResult::IN_PROGRESS; // Flag is still being captured, do not finish the action
+    return GoapActionResult::IN_PROGRESS; // Flag is still being captured, do
+                                          // not finish the action
   }
   return GoapActionResult::DONE; // Finished waiting at the base
 }

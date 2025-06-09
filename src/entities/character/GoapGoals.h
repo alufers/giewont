@@ -24,4 +24,13 @@ public:
 };
 
 
+class FollowTeammateWithFlag : public GoapGoal {
+public:
+  float total_reward = 30000.0f;
+  std::string get_name() const override { return "FollowTeammateWithFlag"; }
+  float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+                   const GoapBlackboard &result_state) const override;
+};
+
+
 }; // namespace giewont
