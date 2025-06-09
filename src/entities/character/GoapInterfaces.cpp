@@ -78,6 +78,8 @@ std::string giewont::goap_action_result_to_string(GoapActionResult result) {
     return "FAILED_RECOVERABLE";
   case GoapActionResult::FAILED_FORCE_REPLAN:
     return "FAILED_FORCE_REPLAN";
+  case GoapActionResult::RESTART_IMMEDIATE:
+    return "RESTART_IMMEDIATE";
   }
   return "Unknown Result";
 }

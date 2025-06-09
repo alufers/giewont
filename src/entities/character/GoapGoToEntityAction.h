@@ -41,6 +41,10 @@ public:
 
   GoapActionResult perform(SmartAIThinkCtx &ctx) override;
 
+protected:
+
+  bool allow_target_entity_movement = false; // If true movement of the target entity will not be considered as a pathfinding failure
+
 private:
   std::string _name;
   GoapEntitySelectorFunc _target_entity;

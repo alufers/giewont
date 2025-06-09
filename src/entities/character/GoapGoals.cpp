@@ -19,6 +19,11 @@ float BringEnemyFlagToBaseGoal::get_reward(
     SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
     const GoapBlackboard &result_state) const {
 
+  bool is_holding_enemy_flag =
+      std::get<bool>(result_state.at(GoapBlackboardKey::IS_HOLDING_ENEMY_FLAG));
+  if (!is_holding_enemy_flag) {
+    return 0.0f; // No reward if we are not holding the enemy flag
+  }
   Vec2 own_base_pos =
       std::get<Vec2>(result_state.at(GoapBlackboardKey::OWN_BASE_POS));
   Vec2 enemy_flag_pos =
@@ -88,10 +93,11 @@ float FollowTeammateWithFlag::get_reward(
   if (!std::isfinite(dist_to_enemy_flag))
     return 0.0f; // Invalid state, no reward
 
-  float target_dist = 300.0f; // MAGICNUMBER, distance to the teammate with the flag
+  float target_dist =
+      300.0f; // MAGICNUMBER, distance to the teammate with the flag
 
-  float percentage_reached = std::clamp(
-      (target_dist - dist_to_enemy_flag) / target_dist, 0.0f, 1.0f);
+  float percentage_reached =
+      std::clamp((target_dist - dist_to_enemy_flag) / target_dist, 0.0f, 1.0f);
 
   return total_reward * percentage_reached;
 }

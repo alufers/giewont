@@ -97,6 +97,9 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
         plan_item.did_begin = true;
         plan_item.did_complete = true;
         break;
+      case GoapActionResult::RESTART_IMMEDIATE:
+        plan_item.did_begin = false; // Restart the action immediately
+        return; // No point in continuing, we need to replan
       }
 
       break; // We only execute one action at a time

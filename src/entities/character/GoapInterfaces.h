@@ -70,6 +70,7 @@ enum class GoapActionResult {
   DONE,     /// @brief The action has been successfully completed, next plan item can be performed
   FAILED_RECOVERABLE, /// @brief The action has failed, but it can be begun again
   FAILED_FORCE_REPLAN, /// @brief The action has failed and the action plan must be re-calculated
+  RESTART_IMMEDIATE, /// @brief Restart the action immediately, without dwelling and counting the action as failed
 };
 
 std::string goap_action_result_to_string(GoapActionResult result);

@@ -6,6 +6,7 @@
 #include <raylib.h>
 #endif
 #include "Util.h"
+#include "entities/character/CharacterEntity.h"
 
 using namespace giewont;
 
@@ -167,6 +168,11 @@ bool FlagEntity::handle_interaction(
     return false;
   }
 
+  if (interactor.valid_as<CharacterEntity>(game) &&
+      interactor.get_as<CharacterEntity>(game).team == team) {
+    return false; // Cannot pick up own flag
+  }
+
   auto dist = (interactor.get(game).position - position).length();
 
   if (dist > game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
@@ -177,8 +183,7 @@ bool FlagEntity::handle_interaction(
   return true;
 }
 
-bool FlagEntity::check_interaction_possible(
-    Game &game, EntityRef interactor) {
+bool FlagEntity::check_interaction_possible(Game &game, EntityRef interactor) {
   if (!interactor.valid(game)) {
     return false;
   }
@@ -188,6 +193,11 @@ bool FlagEntity::check_interaction_possible(
   }
 
   auto dist = (interactor.get(game).position - position).length();
+
+  if (interactor.valid_as<CharacterEntity>(game) &&
+      interactor.get_as<CharacterEntity>(game).team == team) {
+    return false; // Cannot pick up own flag
+  }
 
   if (dist > game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
     return false;

@@ -6,6 +6,7 @@ using namespace giewont;
 std::vector<std::shared_ptr<GoapAction>> giewont::construct_goap_actions() {
   std::vector<std::shared_ptr<GoapAction>> actions;
   actions.emplace_back(std::make_shared<GoToEnemyFlagGoapAction>());
+  actions.emplace_back(std::make_shared<FollowEnemyFlagAction>());
   actions.emplace_back(std::make_shared<PickUpEnemyFlag>());
   actions.emplace_back(std::make_shared<GoToEntityGoapAction>(
       "GoToOwnBase",
@@ -41,6 +42,33 @@ float GoToEnemyFlagGoapAction::get_reward(
   }
 
   return GoToEntityGoapAction::get_reward(ctx, initial_state, finish_state_out);
+}
+
+FollowEnemyFlagAction::FollowEnemyFlagAction()
+    : GoToEntityGoapAction(
+          "FollowToEnemyFlag",
+          goap_selectors::first_selector(goap_selectors::is_enemy_flag),
+          GoapBlackboardKey::ENEMY_FLAG_POS) {
+  allow_target_entity_movement = true; // Allow the enemy flag to move while we
+                                       // are following it
+}
+
+float FollowEnemyFlagAction::get_reward(
+    SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+    GoapBlackboard &finish_state_out) const {
+
+  if (std::get<bool>(
+          initial_state.at(GoapBlackboardKey::IS_HOLDING_ENEMY_FLAG))) {
+    return -INFINITY; // Cannot go to enemy flag if we are already holding it
+  }
+
+   if (!std::get<bool>(
+          initial_state.at(GoapBlackboardKey::IS_ANYBODY_HOLDING_ENEMY_FLAG))) {
+    return -INFINITY; // Aonly allow following the flag if somebody is holding it
+  }
+
+  // Make following the flag more rewarding than going to it once.
+  return GoToEntityGoapAction::get_reward(ctx, initial_state, finish_state_out) + 10.0f;
 }
 
 PickUpEnemyFlag::PickUpEnemyFlag() {}

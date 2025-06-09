@@ -21,6 +21,17 @@ public:
 };
 
 /**
+ * @brief Pathfinds to the enemy flag, and if it moves it re-pathfinds without
+ * any delays.
+ */
+class FollowEnemyFlagAction : public GoToEntityGoapAction {
+public:
+  FollowEnemyFlagAction();
+  float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+                 GoapBlackboard &finish_state_out) const override;
+};
+
+/**
  * @brief An action which uses the interaction system to pick up the enemy
  * flag, if the character is close enough to it.
  */

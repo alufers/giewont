@@ -82,6 +82,14 @@ GoapActionResult GoToEntityGoapAction::perform(SmartAIThinkCtx &ctx) {
   GoapActionResult result = GoapActionResult::IN_PROGRESS;
   CharacterMovementCommand command = giewont::CharacterMovementCommand::NONE;
 
+  float out_of_range_dist =
+      ctx.game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE) * 1.2f;
+
+  if (this->allow_target_entity_movement) {
+    out_of_range_dist *=
+        2.0f; // Allow more distance if the target entity can move
+  }
+
   if (ctx.state.path.empty()) {
     LOG_DEBUG() << "[AI] Path buffer empty, GoToEntityGoapAction completed."
                 << std::endl;
@@ -101,12 +109,18 @@ GoapActionResult GoToEntityGoapAction::perform(SmartAIThinkCtx &ctx) {
       ctx.state.cancelScheduled = true;
     } else if (ctx.state.path.back().world_pos.distance(
                    ctx.state.goToEntityTarget.get(ctx.game).position) >
-               ctx.game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
+               out_of_range_dist) {
       LOG_DEBUG()
           << "[AI] Target entity for GoToEntityGoapAction is too far away, "
              "replanning."
           << std::endl;
-      ctx.state.cancelScheduled = true;
+      if (this->allow_target_entity_movement) {
+        result = GoapActionResult::RESTART_IMMEDIATE; // Restart the action
+                                                      // immediately to re-path
+      } else {
+        ctx.state.cancelScheduled = true; // Cancel the action alltogether, but
+                                          // first stop for a waypoint
+      }
     }
 
     ctx.state.noPathAttempts = 0;
