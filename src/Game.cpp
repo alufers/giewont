@@ -14,6 +14,7 @@
 #include "entities/character/CharacterEntity.h"
 #include "entities/decorative/TombstoneEntity.h"
 #include "entities/gameplay/ProjectileEntity.h"
+#include "entities/gameplay/BonusEntity.h"
 #include "entities/gui/TeamChoiceGUIEntity.h"
 #include <cstdint>
 #include <format>
@@ -116,6 +117,9 @@ void Game::apply_sync_entity(const net::SyncEntityNetMessage::Reader &message) {
         break;
       case net::EntityType::PROJECTILE:
         entToCreate = std::make_unique<ProjectileEntity>();
+        break;
+      case net::EntityType::BONUS:
+        entToCreate = std::make_unique<BonusEntity>();
         break;
       default:
         LOG_WARN() << "apply_sync_entity: Unknown entity type "

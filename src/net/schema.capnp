@@ -34,6 +34,7 @@ enum EntityType {
     teamChoiceGUI @6;
     tombstone @7;
     projectile @8;
+    bonus @9;
 }
 
 struct SyncEntityNetMessage {
@@ -52,6 +53,7 @@ struct SyncEntityNetMessage {
         grenadeData @10 :GrenadeData;
         tombstoneData @11 :SyncTombstoneEntityData;
         projectileData @12 :SyncProjectileEntityData;
+        bonusData @13 :SyncBonusEntityData;
     }
 }
 
@@ -100,6 +102,18 @@ struct SyncProjectileEntityData {
     lifetime @0 :Float32;
     lifetimeLeft @1 :Float32;
 }
+
+enum BonusEntityType {
+    healthkit @0;
+}
+
+struct SyncBonusEntityData {
+    bonusType @0 :BonusEntityType;
+    lifetime @1 :Float32;
+    totalLifetime @2 :Float32;
+    amount @3 :UInt32; # For healthkit, this is the amount of health it restores
+}
+
 
 struct InstantiatePrefabNetMessage {
     prefabPath @0 :Text;

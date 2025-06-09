@@ -90,7 +90,11 @@ void CharacterEntity::apply_hurt_message(
   if (this->health < 0) {
     this->health = 0;
   }
-  if (!game.is_server() && this->net_owner_peer_id == game.my_peer_id) {
+  if (this->health > max_health) {
+    this->health = max_health;
+  }
+  if (!game.is_server() && this->net_owner_peer_id == game.my_peer_id &&
+      msg.getDamage() > 0) {
     // Add some camera shake if we have been hurt
     std::unique_ptr<CameraShakeEffect> shake_effect =
         std::make_unique<CameraShakeEffect>();
@@ -310,6 +314,8 @@ void CharacterEntity::draw(const Game &game) {
   }
 
   DrawTexturePro(*tex, src_rect, dest_rect, {0, 0}, 0.0f, WHITE);
+
+  this->controller->draw(game);
 #endif
 }
 void CharacterEntity::draw_debug(const Game &game) {

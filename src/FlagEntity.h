@@ -24,8 +24,6 @@ public:
 
 class FlagEntity : public PhysEntity {
 public:
-
- 
   FlagEntity();
   FlagEntity(nlohmann::json data);
   const char *get_type_name() const override { return "FlagEntity"; }
@@ -45,7 +43,6 @@ public:
   int32_t get_z_index() override { return 500; }
   AABB &get_aabb() override;
 
-
   // Synced state
   GColor color = GColor(1.0f, 0.0f, 0.0f, 1.0f);
   GameplayTeam team = GameplayTeam::UNKNOWN_TEAM;
@@ -60,6 +57,8 @@ public:
 
   bool handle_interaction(
       Game &game, const net::InteractNetMessage::Reader interaction) override;
+
+  bool check_interaction_possible(Game &game, EntityRef interactor) override;
 
   GW_DATABINDER_DECLARE(FlagEntity);
   GW_DATABINDER_AUTO_INSPECTOR(klass);

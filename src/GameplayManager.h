@@ -54,6 +54,7 @@ public:
   GW_DATABINDER_AUTO_INSPECTOR(klass);
 
   float time_until_gameplay_state_check = 0.5f;
+  float time_until_bonus_spawn = 5.0f;
 
   std::unordered_map<GameplayTeam, GameplayTeamState> team_states;
 
@@ -74,6 +75,8 @@ private:
    * @param game
    */
   void check_gameplay_state(Game &game);
+
+  void spawn_bonus(Game &game);
 };
 
 } // namespace giewont

@@ -133,7 +133,9 @@ set(COMMON_SOURCES
         src/entities/decorative/TombstoneEntity.cpp
         src/math/RandUtil.cpp
         src/entities/gameplay/ProjectileEntity.cpp
+        src/entities/gameplay/BonusEntity.cpp
 )
+
 set(COMMON_INCLUDES
         "${CMAKE_CURRENT_LIST_DIR}/src/"
         "${CMAKE_CURRENT_LIST_DIR}/src/math"

@@ -122,6 +122,16 @@ public:
     return false;
   }
 
+  /**
+   * @brief Used to draw a border around a highlighted entity.
+   * 
+   * @param game 
+   * @param interactor 
+   * @return true 
+   * @return false 
+   */
+  virtual bool check_interaction_possible(Game &game, EntityRef interactor);
+
   virtual void handle_gui_interaction(
       Game &game, const net::GuiInteractionNetMessage::Reader interaction) {}
 

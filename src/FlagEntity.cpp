@@ -151,7 +151,7 @@ void FlagEntity::draw(const Game &game) {
 
 bool FlagEntity::handle_interaction(
     Game &game, const net::InteractNetMessage::Reader interaction) {
-      
+
   EntityRef interactor =
       game.get_entity_by_net_id(interaction.getInteractorNetId());
   if (flag_holder.valid(game)) {
@@ -163,16 +163,37 @@ bool FlagEntity::handle_interaction(
     return false;
   }
 
+  if (!interactor.valid(game)) {
+    return false;
+  }
+
   auto dist = (interactor.get(game).position - position).length();
 
   if (dist > game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
     return false;
   }
 
-  
-
   flag_holder = interactor;
   return true;
+}
+
+bool FlagEntity::check_interaction_possible(
+    Game &game, EntityRef interactor) {
+  if (!interactor.valid(game)) {
+    return false;
+  }
+
+  if (flag_holder.valid(game) && flag_holder == interactor) {
+    return true; // Can drop the flag
+  }
+
+  auto dist = (interactor.get(game).position - position).length();
+
+  if (dist > game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
+    return false;
+  }
+
+  return true; // Can pick up the flag
 }
 
 void FlagEntity::update_from_sync_message(
