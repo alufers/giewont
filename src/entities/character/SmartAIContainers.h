@@ -51,8 +51,9 @@ struct SmartAIState {
   std::vector<std::shared_ptr<GoapAction>> actions;
   std::vector<GoapPlanItem> currentGoapPlan;
 
+
   // Pathfinding stuff
-  Vec2 pathfindingTarget = Vec2(INFINITY, INFINITY);
+  
   std::vector<AiPathNode> path;
 
   TilemapEntity *last_tilemap = nullptr;
@@ -71,6 +72,7 @@ struct SmartAIThinkCtx {
   Game &game;
   CharacterEntity &character;
   SmartAIState &state;
+  float delta_time = 0.0f;
 };
 
 } // namespace giewont

@@ -64,6 +64,16 @@ public:
   uint32_t last_update_frame = 0;
 };
 
+enum class GoapActionResult {
+  NOT_ATTEMPTED, /// @brief The action has not been attempted yet
+  IN_PROGRESS, /// @brief The action is still being successfully performed
+  DONE,     /// @brief The action has been successfully completed, next plan item can be performed
+  FAILED_RECOVERABLE, /// @brief The action has failed, but it can be begun again
+  FAILED_FORCE_REPLAN, /// @brief The action has failed and the action plan must be re-calculated
+};
+
+std::string goap_action_result_to_string(GoapActionResult result);
+
 /// @brief Represents one action that the Agent can perform
 class GoapAction {
 public:
@@ -84,13 +94,15 @@ public:
   virtual std::string get_name() const = 0;
 
   /// @brief Called when the action is selected for execution
-  virtual void on_begin(SmartAIThinkCtx &ctx) {}
+  virtual GoapActionResult on_begin(SmartAIThinkCtx &ctx) {
+    return GoapActionResult::IN_PROGRESS;
+  }
 
   /// @brief Execute the action
   /// @param ctx The context of the AI thinking
   /// @return true if the actions should be continued, false if the action is
   /// finished
-  virtual bool perform(SmartAIThinkCtx &ctx) = 0;
+  virtual GoapActionResult perform(SmartAIThinkCtx &ctx) = 0;
 
   float _last_reward_value = 0.0f; // The last cost value for debugging
 };
@@ -127,6 +139,9 @@ public:
   float goal_reward = 0.0f; // The (positive) reward value obtained from judging the state after the action is performed
   uint32_t item_depth = 0;
   bool did_begin = false; // Used to call on_begin() only once for the action
+  bool did_complete = false;
+  size_t attempt_count = 0;
+  GoapActionResult last_result = GoapActionResult::NOT_ATTEMPTED;
 };
 
 } // namespace giewont

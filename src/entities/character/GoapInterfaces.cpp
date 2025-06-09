@@ -65,3 +65,19 @@ giewont::goap_blackboard_value_to_string(const GoapBlackboardValue &value) {
       },
       value);
 }
+
+std::string giewont::goap_action_result_to_string(GoapActionResult result) {
+  switch (result) {
+  case GoapActionResult::NOT_ATTEMPTED:
+    return "NOT_ATTEMPTED";
+  case GoapActionResult::DONE:
+    return "DONE";
+  case GoapActionResult::IN_PROGRESS:
+    return "IN_PROGRESS";
+  case GoapActionResult::FAILED_RECOVERABLE:
+    return "FAILED_RECOVERABLE";
+  case GoapActionResult::FAILED_FORCE_REPLAN:
+    return "FAILED_FORCE_REPLAN";
+  }
+  return "Unknown Result";
+}

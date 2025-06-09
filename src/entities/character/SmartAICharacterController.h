@@ -31,15 +31,9 @@ private:
   void generate_goap_plan(SmartAIThinkCtx &ctx);
   std::optional<std::vector<GoapPlanItem>> consider_next_plan_item(SmartAIThinkCtx &ctx, std::vector<GoapPlanItem> const &curr_plan);
 
-  /// @brief Find a path to the target position using A* algorithm
-  void find_path(SmartAIThinkCtx &ctx, Vec2 target_pos);
+ 
 
-  /// @brief Fill in state.path with the path from start to goal given a goal
-  /// node
-  void reconstruct_path(SmartAIThinkCtx &ctx, AiPathNode *goalNode);
 
-  EntityRef get_own_base(SmartAIThinkCtx &ctx);
-  EntityRef get_enemy_flag(SmartAIThinkCtx &ctx);
   SmartAIState state;
 };
 

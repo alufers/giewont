@@ -25,64 +25,6 @@ std::vector<std::shared_ptr<GoapAction>> giewont::construct_goap_actions() {
   return actions;
 }
 
-GoToEntityGoapAction::GoToEntityGoapAction(std::string name,
-                                           GoapEntitySelectorFunc target_entity,
-                                           GoapBlackboardKey target_pos_key)
-    : _name(std::move(name)), _target_entity(target_entity),
-      _target_pos_key(target_pos_key) {}
-
-std::string GoToEntityGoapAction::get_name() const { return _name; }
-
-float GoToEntityGoapAction::get_reward(SmartAIThinkCtx &ctx,
-                                       const GoapBlackboard &initial_state,
-                                       GoapBlackboard &finish_state_out) const {
-                                      
-  EntityRef target_entity = _target_entity(ctx);
-  if (!target_entity.valid(ctx.game)) {
-    return -INFINITY;
-  }
-
-  Vec2 own_pos = std::get<Vec2>(initial_state.at(GoapBlackboardKey::OWN_POS));
-
-  if (!own_pos.isfinite()) {
-    return -INFINITY;
-  }
-
-  Vec2 target_pos = target_entity.get(ctx.game).position;
-
-  if (_target_pos_key != GoapBlackboardKey::INVALID &&
-      initial_state.contains(_target_pos_key)) {
-    target_pos = std::get<Vec2>(initial_state.at(_target_pos_key));
-  }
-
-  finish_state_out[GoapBlackboardKey::OWN_POS] = target_pos;
-
-  return own_pos.distance(target_pos) * -0.3f - 10.0f; // MAGICNUMBER
-}
-
-void GoToEntityGoapAction::on_begin(SmartAIThinkCtx &ctx) {
-  EntityRef target_entity = _target_entity(ctx);
-  Vec2 target_pos = Vec2(INFINITY, INFINITY);
-  if (!target_entity.valid(ctx.game)) {
-    LOG_DEBUG() << "[AI] Target entity for GoToEntityGoapAction is invalid."
-                << std::endl;
-
-  } else {
-    target_pos = target_entity.get(ctx.game).position;
-  }
-
-  LOG_DEBUG() << "[AI] Starting action: " << _name
-              << ", target position: " << target_pos << std::endl;
-
-  ctx.state.pathfindingTarget = target_pos;
-}
-
-bool GoToEntityGoapAction::perform(SmartAIThinkCtx &ctx) {
-  if (ctx.state.path.empty()) {
-    return true;
-  }
-  return false;
-}
 
 GoToEnemyFlagGoapAction::GoToEnemyFlagGoapAction()
     : GoToEntityGoapAction(
@@ -134,14 +76,14 @@ float PickUpEnemyFlag::get_reward(SmartAIThinkCtx &ctx,
   return -3.0f; // MAGICNUMBER
 }
 
-bool PickUpEnemyFlag::perform(SmartAIThinkCtx &ctx) {
+GoapActionResult PickUpEnemyFlag::perform(SmartAIThinkCtx &ctx) {
 
   capnp::MallocMessageBuilder message;
   auto interact = message.initRoot<net::InteractNetMessage>();
   interact.setType(net::InteractionType::USE_INTERACTION);
   interact.setInteractorNetId(ctx.character.net_id);
   ctx.game.perform_interaction(interact);
-  return true;
+  return GoapActionResult::DONE;
 }
 
 PickupHealthkit::PickupHealthkit() {}
@@ -168,14 +110,14 @@ float PickupHealthkit::get_reward(SmartAIThinkCtx &ctx,
   return -3.0f; // MAGICNUMBER
 }
 
-bool PickupHealthkit::perform(SmartAIThinkCtx &ctx) {
+GoapActionResult PickupHealthkit::perform(SmartAIThinkCtx &ctx) {
 
   capnp::MallocMessageBuilder message;
   auto interact = message.initRoot<net::InteractNetMessage>();
   interact.setType(net::InteractionType::USE_INTERACTION);
   interact.setInteractorNetId(ctx.character.net_id);
   ctx.game.perform_interaction(interact);
-  return true;
+  return GoapActionResult::DONE;
 }
 
 DwellAtOwnBaseWaitingForFlagToBeCaptured::
@@ -223,7 +165,7 @@ float DwellAtOwnBaseWaitingForFlagToBeCaptured::get_reward(
   return INFINITY;
 }
 
-bool DwellAtOwnBaseWaitingForFlagToBeCaptured::perform(SmartAIThinkCtx &ctx) {
+GoapActionResult DwellAtOwnBaseWaitingForFlagToBeCaptured::perform(SmartAIThinkCtx &ctx) {
   float base_activation_dist =
       ctx.game.get_gvar<float>(GVarType::BASE_ACTIVATION_DIST);
   bool is_flag_in_capture_animation = std::get<bool>(ctx.state.current_state.at(
@@ -232,7 +174,7 @@ bool DwellAtOwnBaseWaitingForFlagToBeCaptured::perform(SmartAIThinkCtx &ctx) {
           ctx.state.current_state, GoapBlackboardKey::ENEMY_FLAG_POS,
           GoapBlackboardKey::OWN_BASE_POS) < base_activation_dist ||
       is_flag_in_capture_animation) {
-    return false; // Flag is still being captured, do not finish the action
+    return GoapActionResult::IN_PROGRESS; // Flag is still being captured, do not finish the action
   }
-  return true; // Finished waiting at the base
+  return GoapActionResult::DONE; // Finished waiting at the base
 }

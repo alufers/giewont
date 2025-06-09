@@ -168,7 +168,7 @@ void GameplayManager::check_gameplay_state(Game &game) {
       state.did_spawn_ai_first_time = true;
       for (size_t i = 0; i < initial_ai_spawn_count; i++) {
 
-        // spawn_player_with_team(game, 0, team);
+        spawn_player_with_team(game, 0, team);
       }
     }
   }
@@ -306,7 +306,7 @@ void GameplayManager::spawn_bonus(Game &game) {
       // Found a valid position for the bonus
       Vec2 tile_world_pos =
           tilemap->get_tile_bottom_center_world_pos(random_tile_pos) +
-          Vec2(0, tilemap->tile_size.y * 2.0f);
+          Vec2(0, -tilemap->tile_size.y * 2.0f);
       auto bonus = std::make_unique<BonusEntity>();
       bonus->position = tile_world_pos;
       bonus->load_assets(game);
