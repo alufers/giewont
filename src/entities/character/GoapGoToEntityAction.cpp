@@ -46,16 +46,16 @@ float GoToEntityGoapAction::get_reward(SmartAIThinkCtx &ctx,
 }
 
 GoapActionResult GoToEntityGoapAction::on_begin(SmartAIThinkCtx &ctx) {
-  EntityRef target_entity = _target_entity(ctx);
+  ctx.state.goToEntityTarget = _target_entity(ctx);
 
-  if (!target_entity.valid(ctx.game)) {
+  if (!ctx.state.goToEntityTarget.valid(ctx.game)) {
     LOG_DEBUG() << "[AI] Target entity for GoToEntityGoapAction is invalid."
                 << std::endl;
     return GoapActionResult::FAILED_FORCE_REPLAN; // Retrying won't help, the
                                                   // entity is gone
   }
 
-  Vec2 target_pos = target_entity.get(ctx.game).position;
+  Vec2 target_pos = ctx.state.goToEntityTarget.get(ctx.game).position;
   LOG_DEBUG() << "[AI] Starting action: " << _name
               << ", target position: " << target_pos << std::endl;
 
@@ -75,8 +75,15 @@ GoapActionResult GoToEntityGoapAction::perform(SmartAIThinkCtx &ctx) {
 
   GoapActionResult result = GoapActionResult::IN_PROGRESS;
   CharacterMovementCommand command = giewont::CharacterMovementCommand::NONE;
-  if (ctx.state.path.empty()) {
-    LOG_DEBUG() << "[AI] Path buffer empty, GoToEntityGoapAction completed." << std::endl;
+
+  if (!ctx.state.goToEntityTarget.valid(ctx.game)) {
+    LOG_DEBUG() << "[AI] Target entity for GoToEntityGoapAction became invalid "
+                   "while following path."
+                << std::endl;
+    result = GoapActionResult::FAILED_FORCE_REPLAN;
+  } else if (ctx.state.path.empty()) {
+    LOG_DEBUG() << "[AI] Path buffer empty, GoToEntityGoapAction completed."
+                << std::endl;
     result = GoapActionResult::DONE;
   } else {
     ctx.state.noPathAttempts = 0;

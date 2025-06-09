@@ -52,10 +52,10 @@ struct SmartAIState {
   std::vector<GoapPlanItem> currentGoapPlan;
 
 
-  // Pathfinding stuff
-  
-  std::vector<AiPathNode> path;
 
+  // State used by the GoToEntity action
+  EntityRef goToEntityTarget;
+  std::vector<AiPathNode> path;
   TilemapEntity *last_tilemap = nullptr;
   // Contains pathfinding information about nodes calculated in the last search
   // Owns the nodes
