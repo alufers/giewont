@@ -20,7 +20,18 @@ using namespace giewont;
 SmartAICharacterController::SmartAICharacterController()
     : CharacterController() {
   state.sensors = construct_goap_sensors();
-  state.goals = construct_goap_goals();
+
+  int ai_class = rand_int(0, 3);
+  if (ai_class == 0) {
+    state.goals = construct_goap_goals();
+  } else if (ai_class == 1) {
+    state.goals = construct_killer_goap_goals();
+  } else if (ai_class == 2) {
+    state.goals = construct_protector_goap_goals();
+  } else {
+    state.goals = construct_goap_goals();
+  }
+
   state.actions = construct_goap_actions();
 }
 
@@ -55,8 +66,6 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
 
       did_do_any_goap_action = true;
       if (!plan_item.did_begin) {
-        LOG_DEBUG() << "[AI] Starting action: " << action->get_name()
-                    << std::endl;
         result = action->on_begin(ctx);
       } else {
 
@@ -107,13 +116,13 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
   }
 
   if (!did_do_any_goap_action) {
-    
+
     ctx.state.dwellTime = rand_float(0.5f, 3.2f);
   }
 
   if (state.timeUntilPlanReevaluation <= 0.0f) {
     state.timeUntilPlanReevaluation = state.planReevaluationInterval;
-   
+
     this->evaluate_current_goap_plan(ctx);
   }
 }
@@ -253,7 +262,7 @@ void SmartAICharacterController::generate_goap_plan(SmartAIThinkCtx &ctx) {
 std::optional<std::vector<GoapPlanItem>>
 SmartAICharacterController::consider_next_plan_item(
     SmartAIThinkCtx &ctx, std::vector<GoapPlanItem> const &curr_plan) {
-  if (curr_plan.size() > 5) {
+  if (curr_plan.size() > 3) {
     return std::nullopt; // Too long plan, don't consider it
   }
 
@@ -370,7 +379,7 @@ void SmartAICharacterController::draw_inspector_ui(Game &game) {
 
   ImGui::Separator();
   ImGui::Text("Current plan:");
-  
+
   ImGui::Text("Plan age: %.2f", state.currentPlanAge);
   if (ImGui::Button("Force replan")) {
     state.currentGoapPlan.clear();

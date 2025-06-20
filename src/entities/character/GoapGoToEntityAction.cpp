@@ -26,6 +26,11 @@ float GoToEntityGoapAction::get_reward(SmartAIThinkCtx &ctx,
     // We can't pathfind from water
     return -INFINITY;
   }
+
+  if (std::get<bool>(initial_state.at(GoapBlackboardKey::NEEDS_NUDGE))) {
+    // We can't pathfind if we need a nudge after a fail
+    return -INFINITY;
+  }
   EntityRef target_entity = _target_entity(ctx);
   if (!target_entity.valid(ctx.game)) {
     return -INFINITY;
@@ -65,15 +70,15 @@ GoapActionResult GoToEntityGoapAction::on_begin(SmartAIThinkCtx &ctx) {
 
   Vec2 target_pos = ctx.state.goToEntityTarget.get(ctx.game).position;
 
-
   this->find_path(ctx, target_pos);
   ctx.state.cancelScheduled = false;
 
   if (ctx.state.path.empty()) {
- 
+
     return GoapActionResult::FAILED_RECOVERABLE; // Retrying might help
   }
 
+  ctx.state.waypoint_reach_time_fail_count = 0;
   return GoapActionResult::IN_PROGRESS;
 }
 
@@ -145,7 +150,7 @@ GoapActionResult GoToEntityGoapAction::perform(SmartAIThinkCtx &ctx) {
         if (std::abs(feetPos.y - nextNode.world_pos.y) <
                 WAYPOINT_REACHED_THRESHOLD / 2.0 &&
             (feetPos.x > min_target_x) && (feetPos.x < max_target_x)) {
-          
+
           hasReachedCurrentNode = true;
         }
       }
@@ -173,6 +178,7 @@ GoapActionResult GoToEntityGoapAction::perform(SmartAIThinkCtx &ctx) {
     if (hasReachedCurrentNode) {
       ctx.state.did_jump_for_current_waypoint = false;
       ctx.state.waypointReachTime = 0.0f;
+      ctx.state.waypoint_reach_time_fail_count = 0;
       // We are close to the node, remove it from the path
       ctx.state.path.erase(ctx.state.path.begin());
       if (ctx.state.path.empty()) {
@@ -198,7 +204,14 @@ GoapActionResult GoToEntityGoapAction::perform(SmartAIThinkCtx &ctx) {
       if (rand_float(0.0f, 1.0f) < 0.5f) {
         command |= giewont::CharacterMovementCommand::MOVE_LEFT;
       }
-      result = GoapActionResult::FAILED_RECOVERABLE;
+      ctx.state.waypoint_reach_time_fail_count++;
+
+      if (ctx.state.waypoint_reach_time_fail_count > 4) {
+        ctx.state.needs_nudge = true;
+        result = GoapActionResult::FAILED_FORCE_REPLAN;
+      } else {
+        result = GoapActionResult::FAILED_RECOVERABLE;
+      }
     }
   }
   ctx.character.perform_movement(ctx.game, ctx.delta_time, command);
@@ -220,16 +233,27 @@ void GoToEntityGoapAction::find_path(SmartAIThinkCtx &ctx, Vec2 target_pos) {
     }
   }
   if (tilemap == nullptr) {
+    ctx.state.tilemap_not_found_fail_count++;
+    if (ctx.state.tilemap_not_found_fail_count > 8) {
+      // If we failed to find a tilemap for pathfinding too many times, we
+      // should destroy the AI character
+      LOG_ERROR() << "Failed to find tilemap for pathfinding too many times, "
+                     "destroying AI character."
+                  << std::endl;
+      ctx.character.destroy();
+    }
     LOG_ERROR() << "No tilemap found for pathfinding" << std::endl;
     return;
   }
+
+  ctx.state.tilemap_not_found_fail_count = 0; // Reset the fail count
 
   ctx.state.last_tilemap = tilemap;
 
   auto nearestWalkableTargetPosOption =
       tilemap->get_nearest_walkable_tile_pos(target_pos);
   if (!nearestWalkableTargetPosOption.has_value()) {
-    
+
     return;
   }
 
@@ -237,7 +261,7 @@ void GoToEntityGoapAction::find_path(SmartAIThinkCtx &ctx, Vec2 target_pos) {
       tilemap->get_nearest_walkable_tile_pos(feet_pos);
 
   if (!nearestWalkableStartPosOption.has_value()) {
-    
+
     return;
   }
 
@@ -259,7 +283,6 @@ void GoToEntityGoapAction::find_path(SmartAIThinkCtx &ctx, Vec2 target_pos) {
 
   auto startTile = nearestWalkableStartPosOption.value();
   auto targetTile = nearestWalkableTargetPosOption.value();
-
 
   auto &nodes = ctx.state.aStarData;
   nodes.resize(tilemap->tilemap_width *
@@ -446,7 +469,7 @@ void GoToEntityGoapAction::find_path(SmartAIThinkCtx &ctx, Vec2 target_pos) {
     //             << " isGoal: " << currentNode->isGoal
     //             << " fScore: " << currentNode->fScore << std::endl;
     if (currentNode->isGoal) {
-     
+
       // We found the goal
       reconstruct_path(ctx, currentNode);
       return;
@@ -480,7 +503,6 @@ void GoToEntityGoapAction::find_path(SmartAIThinkCtx &ctx, Vec2 target_pos) {
                        AiPathNodeFlag::LADDER_CLIMB);
     }
   }
-
 }
 
 void GoToEntityGoapAction::reconstruct_path(SmartAIThinkCtx &ctx,

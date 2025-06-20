@@ -22,6 +22,17 @@ public:
   ~IsProppedSensor() override = default;
 };
 
+class NeedsNudgeSensor : public GoapSensor {
+public:
+  GoapBlackboardKey get_key() const override {
+    return GoapBlackboardKey::NEEDS_NUDGE;
+  }
+
+  GoapBlackboardValue sense(SmartAIThinkCtx &ctx) override;
+
+  ~NeedsNudgeSensor() override = default;
+};
+
 class IsInWaterSensor : public GoapSensor {
 public:
   GoapBlackboardKey get_key() const override {

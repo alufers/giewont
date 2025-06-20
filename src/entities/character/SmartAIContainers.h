@@ -72,6 +72,13 @@ struct SmartAIState {
   std::vector<AiPathNode> path;
   bool cancelScheduled = false;
   TilemapEntity *last_tilemap = nullptr;
+  size_t tilemap_not_found_fail_count = 0; // For destrying self if we can't find a tilemap
+  size_t waypoint_reach_time_fail_count = 0;
+  bool needs_nudge = false; // Set to false after failing to follow a waypoint
+
+  // Stuff used by the GoToEnemy action
+  size_t num_frames_with_line_of_sight_to_enemy = 0;
+
   // Contains pathfinding information about nodes calculated in the last search
   // Owns the nodes
   std::vector<AiPathNode *> aStarData;

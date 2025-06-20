@@ -6,6 +6,9 @@
 namespace giewont {
 
 std::vector<std::unique_ptr<GoapGoal>> construct_goap_goals();
+std::vector<std::unique_ptr<GoapGoal>> construct_killer_goap_goals();
+std::vector<std::unique_ptr<GoapGoal>> construct_protector_goap_goals();
+
 class BringEnemyFlagToBaseGoal : public GoapGoal {
 public:
   float total_reward = 10000.0f;
@@ -39,6 +42,23 @@ public:
   float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
                    const GoapBlackboard &result_state) const override;
 };
+
+class KillEnemiesGoapGoal : public GoapGoal {
+public:
+  float total_reward = 90000.0f;
+  std::string get_name() const override { return "KillEnemiesGoapGoal"; }
+  float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+                   const GoapBlackboard &result_state) const override;
+};
+
+class StayNearOwnFlagGoapGoal : public GoapGoal {
+public:
+  float total_reward = 100000.0f;
+  std::string get_name() const override { return "StayNearOwnFlagGoapGoal"; }
+  float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+                   const GoapBlackboard &result_state) const override;
+};
+
 
 
 }; // namespace giewont

@@ -21,6 +21,7 @@ enum class GoapBlackboardKey {
   HEALTH_PERCENTAGE,
   IS_HOLDING_ENEMY_FLAG,
   IS_IN_WATER,
+  NEEDS_NUDGE, //
 
   // @brief Keys about enemy state
   IS_ANYBODY_HOLDING_ENEMY_FLAG,
@@ -45,7 +46,7 @@ enum class GoapBlackboardKey {
   OWN_POINTS,
 
   // @brief Keys about pathfinding and updates
-  UPDATES_SINCE_LAST_PATHFINDING,
+  
 
 };
 

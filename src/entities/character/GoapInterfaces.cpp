@@ -32,8 +32,8 @@ std::string giewont::goap_blackboard_key_to_string(GoapBlackboardKey key) {
     return "IS_ANYBODY_HOLDING_OWN_FLAG";
   case GoapBlackboardKey::OWN_POINTS:
     return "OWN_POINTS";
-  case GoapBlackboardKey::UPDATES_SINCE_LAST_PATHFINDING:
-    return "UPDATES_SINCE_LAST_PATHFINDING";
+  case GoapBlackboardKey::NEEDS_NUDGE:
+    return "NEEDS_NUDGE";
   case giewont::GoapBlackboardKey::IS_ENEMY_FLAG_IN_CAPTURED_ANIMATION:
     return "IS_ENEMY_FLAG_IN_CAPTURED_ANIMATION";
   case giewont::GoapBlackboardKey::CLOSEST_HEALTHKIT_POS:

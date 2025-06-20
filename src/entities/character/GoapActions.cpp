@@ -9,6 +9,7 @@ std::vector<std::shared_ptr<GoapAction>> giewont::construct_goap_actions() {
   std::vector<std::shared_ptr<GoapAction>> actions;
   actions.emplace_back(std::make_shared<GoToEnemyFlagGoapAction>());
   actions.emplace_back(std::make_shared<FollowEnemyFlagAction>());
+  actions.emplace_back(std::make_shared<FollowOwnFlagAction>());
   actions.emplace_back(std::make_shared<PickUpEnemyFlag>());
   actions.emplace_back(std::make_shared<DropEnemyFlag>());
 
@@ -16,6 +17,8 @@ std::vector<std::shared_ptr<GoapAction>> giewont::construct_goap_actions() {
       "GoToOwnBase",
       goap_selectors::closest_selector(goap_selectors::is_friendly_base),
       GoapBlackboardKey::OWN_BASE_POS));
+
+  actions.emplace_back(std::make_shared<GoToClosestEnemyGoapAction>());
 
   actions.emplace_back(std::make_shared<GoToEntityGoapAction>(
       "GoToClosestHealthkit",
@@ -30,6 +33,52 @@ std::vector<std::shared_ptr<GoapAction>> giewont::construct_goap_actions() {
   actions.emplace_back(std::make_shared<ShootAtClosestEnemy>());
 
   return actions;
+}
+
+GoToClosestEnemyGoapAction::GoToClosestEnemyGoapAction()
+    : GoToEntityGoapAction(
+          "GoToClosestEnemy",
+          goap_selectors::closest_selector(goap_selectors::is_enemy_character),
+          GoapBlackboardKey::CLOSEST_ENEMY_POS) {
+  allow_target_entity_movement = true;
+}
+float GoToClosestEnemyGoapAction::get_reward(
+    SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+    GoapBlackboard &finish_state_out) const {
+
+  float reward =
+      GoToEntityGoapAction::get_reward(ctx, initial_state, finish_state_out);
+  if (std::isfinite(reward)) {
+    // Let's assume that we can see the closest enemy if we are going to him
+    finish_state_out[GoapBlackboardKey::HAS_LINE_OF_SIGHT_TO_CLOSEST_ENEMY] =
+        true;
+  }
+  return reward;
+}
+
+GoapActionResult GoToClosestEnemyGoapAction::on_begin(SmartAIThinkCtx &ctx) {
+  ctx.state.num_frames_with_line_of_sight_to_enemy = 0;
+
+  return GoToEntityGoapAction::on_begin(ctx);
+}
+
+GoapActionResult GoToClosestEnemyGoapAction::perform(SmartAIThinkCtx &ctx) {
+  bool has_line_of_sight = std::get<bool>(ctx.state.current_state.at(
+      GoapBlackboardKey::HAS_LINE_OF_SIGHT_TO_CLOSEST_ENEMY));
+
+  if (has_line_of_sight) {
+    ctx.state.num_frames_with_line_of_sight_to_enemy++;
+    if (ctx.state.num_frames_with_line_of_sight_to_enemy >
+        20) { // MAGICNUMBER, 40 frames of line of sight
+      // We have line of sight to the enemy for too long, so we can shoot
+      return GoapActionResult::DONE;
+    }
+  } else {
+    ctx.state.num_frames_with_line_of_sight_to_enemy = 0;
+  }
+
+  // We don't have line of sight to the enemy, so we need to replan
+  return GoToEntityGoapAction::perform(ctx);
 }
 
 GoToEnemyFlagGoapAction::GoToEnemyFlagGoapAction()
@@ -52,11 +101,20 @@ float GoToEnemyFlagGoapAction::get_reward(
 
 FollowEnemyFlagAction::FollowEnemyFlagAction()
     : GoToEntityGoapAction(
-          "FollowToEnemyFlag",
+          "FollowEnemyFlag",
           goap_selectors::first_selector(goap_selectors::is_enemy_flag),
           GoapBlackboardKey::ENEMY_FLAG_POS) {
   allow_target_entity_movement = true; // Allow the enemy flag to move while we
                                        // are following it
+}
+
+FollowOwnFlagAction::FollowOwnFlagAction()
+    : GoToEntityGoapAction(
+          "FollowOwnFlagAction",
+          goap_selectors::first_selector(goap_selectors::is_friendly_flag),
+          GoapBlackboardKey::OWN_FLAG_POS) {
+  // allow_target_entity_movement = true; // Allow the enemy flag to move while we
+  //                                      // are following it
 }
 
 float FollowEnemyFlagAction::get_reward(
@@ -284,6 +342,7 @@ float JumpAndMoveLeft::get_reward(SmartAIThinkCtx &ctx,
     return -INFINITY; // Cannot jump if not propped or in water
   }
   finish_state_out[GoapBlackboardKey::IS_IN_WATER] = false;
+  finish_state_out[GoapBlackboardKey::NEEDS_NUDGE] = false;
 
   return -10.0f;
 }
@@ -293,6 +352,7 @@ GoapActionResult JumpAndMoveLeft::perform(SmartAIThinkCtx &ctx) {
       CharacterMovementCommand::MOVE_LEFT | CharacterMovementCommand::JUMP;
   ctx.character.perform_movement(ctx.game, ctx.delta_time, cmd);
   ctx.state.dwellTime = rand_float(0.05f, 0.40f);
+  ctx.state.needs_nudge = false; 
   return GoapActionResult::DONE; // Finished waiting at the base
 }
 
