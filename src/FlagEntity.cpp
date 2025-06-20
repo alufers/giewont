@@ -89,6 +89,10 @@ void FlagEntity::update(Game &game, float delta_time) {
     if (flag_holder.valid_as<PhysEntity>(game)) {
       velocity = flag_holder.get_as<PhysEntity>(game).velocity;
     }
+  } else {
+    if (this->is_propped_by_level) {
+      this->velocity *= 0.99f;
+    }
   }
 
   needs_flip = velocity.x < 0;
