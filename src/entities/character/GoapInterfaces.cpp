@@ -38,6 +38,8 @@ std::string giewont::goap_blackboard_key_to_string(GoapBlackboardKey key) {
     return "IS_ENEMY_FLAG_IN_CAPTURED_ANIMATION";
   case giewont::GoapBlackboardKey::CLOSEST_HEALTHKIT_POS:
     return "CLOSEST_HEALTHKIT_POS";
+  case giewont::GoapBlackboardKey::IS_IN_WATER:
+    return "IS_IN_WATER";
   }
   return "Unknown Key";
 }

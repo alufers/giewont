@@ -163,6 +163,10 @@ struct InteractNetMessage {
    interactorNetId @0 :Int32;
    characterToMouseOffset @1 :NetVec2;
    type @2 :InteractionType;
+   targetHint :union {
+         none @3 :Void;
+         netId @4 :UInt32; # Net ID of the entity to interact with
+   }
 }
 
 

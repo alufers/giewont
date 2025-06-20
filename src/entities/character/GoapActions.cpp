@@ -1,6 +1,8 @@
 #include "GoapActions.h"
 #include "Log.h"
+#include "RandUtil.h"
 #include "SmartAIContainers.h"
+
 using namespace giewont;
 
 std::vector<std::shared_ptr<GoapAction>> giewont::construct_goap_actions() {
@@ -8,6 +10,8 @@ std::vector<std::shared_ptr<GoapAction>> giewont::construct_goap_actions() {
   actions.emplace_back(std::make_shared<GoToEnemyFlagGoapAction>());
   actions.emplace_back(std::make_shared<FollowEnemyFlagAction>());
   actions.emplace_back(std::make_shared<PickUpEnemyFlag>());
+  actions.emplace_back(std::make_shared<DropEnemyFlag>());
+
   actions.emplace_back(std::make_shared<GoToEntityGoapAction>(
       "GoToOwnBase",
       goap_selectors::closest_selector(goap_selectors::is_friendly_base),
@@ -22,6 +26,7 @@ std::vector<std::shared_ptr<GoapAction>> giewont::construct_goap_actions() {
 
   actions.emplace_back(
       std::make_shared<DwellAtOwnBaseWaitingForFlagToBeCaptured>());
+  actions.emplace_back(std::make_shared<JumpAndMoveLeft>());
 
   return actions;
 }
@@ -62,13 +67,16 @@ float FollowEnemyFlagAction::get_reward(
     return -INFINITY; // Cannot go to enemy flag if we are already holding it
   }
 
-   if (!std::get<bool>(
+  if (!std::get<bool>(
           initial_state.at(GoapBlackboardKey::IS_ANYBODY_HOLDING_ENEMY_FLAG))) {
-    return -INFINITY; // Aonly allow following the flag if somebody is holding it
+    return -INFINITY; // Aonly allow following the flag if somebody is holding
+                      // it
   }
 
   // Make following the flag more rewarding than going to it once.
-  return GoToEntityGoapAction::get_reward(ctx, initial_state, finish_state_out) + 10.0f;
+  return GoToEntityGoapAction::get_reward(ctx, initial_state,
+                                          finish_state_out) +
+         10.0f;
 }
 
 PickUpEnemyFlag::PickUpEnemyFlag() {}
@@ -118,6 +126,37 @@ GoapActionResult PickUpEnemyFlag::perform(SmartAIThinkCtx &ctx) {
   return GoapActionResult::DONE;
 }
 
+DropEnemyFlag::DropEnemyFlag() {}
+
+std::string DropEnemyFlag::get_name() const { return "DropEnemyFlag"; }
+
+float DropEnemyFlag::get_reward(SmartAIThinkCtx &ctx,
+                                const GoapBlackboard &initial_state,
+                                GoapBlackboard &finish_state_out) const {
+  if (!std::get<bool>(
+          initial_state.at(GoapBlackboardKey::IS_HOLDING_ENEMY_FLAG))) {
+    return -INFINITY; // Cannot pickup enemy flag if it is already held by
+                      // someone
+  }
+
+  finish_state_out[GoapBlackboardKey::IS_HOLDING_ENEMY_FLAG] = false;
+  finish_state_out[GoapBlackboardKey::IS_ANYBODY_HOLDING_ENEMY_FLAG] = false;
+
+  return -60.0f; // MAGICNUMBER
+}
+
+GoapActionResult DropEnemyFlag::perform(SmartAIThinkCtx &ctx) {
+  
+  capnp::MallocMessageBuilder message;
+  auto interact = message.initRoot<net::InteractNetMessage>();
+  interact.setType(net::InteractionType::USE_INTERACTION);
+  interact.setInteractorNetId(ctx.character.net_id);
+  ctx.game.perform_interaction(interact);
+  ctx.state.dwellTime = rand_float(0.5f, 3.2f); // Wait a bit for the flag to move away
+                                            
+  return GoapActionResult::DONE;
+}
+
 PickupHealthkit::PickupHealthkit() {}
 
 std::string PickupHealthkit::get_name() const { return "PickupHealthkit"; }
@@ -126,6 +165,11 @@ float PickupHealthkit::get_reward(SmartAIThinkCtx &ctx,
                                   const GoapBlackboard &initial_state,
                                   GoapBlackboard &finish_state_out) const {
 
+  if (std::get<bool>(
+          initial_state.at(GoapBlackboardKey::IS_HOLDING_ENEMY_FLAG))) {
+    return -INFINITY; // Cannot pickup healthkit if we are holding the enemy
+                      // flag
+  }
   float dist = blackboard_pos_distance(initial_state,
                                        GoapBlackboardKey::CLOSEST_HEALTHKIT_POS,
                                        GoapBlackboardKey::OWN_POS);
@@ -202,7 +246,7 @@ float DwellAtOwnBaseWaitingForFlagToBeCaptured::get_reward(
     return -3.0f;
   }
 
-  return INFINITY;
+  return -INFINITY;
 }
 
 GoapActionResult
@@ -218,5 +262,34 @@ DwellAtOwnBaseWaitingForFlagToBeCaptured::perform(SmartAIThinkCtx &ctx) {
     return GoapActionResult::IN_PROGRESS; // Flag is still being captured, do
                                           // not finish the action
   }
+  return GoapActionResult::DONE; // Finished waiting at the base
+}
+
+JumpAndMoveLeft::JumpAndMoveLeft() {}
+
+std::string JumpAndMoveLeft::get_name() const { return "JumpAndMoveLeft"; }
+
+float JumpAndMoveLeft::get_reward(SmartAIThinkCtx &ctx,
+                                  const GoapBlackboard &initial_state,
+                                  GoapBlackboard &finish_state_out) const {
+
+  bool is_propped =
+      std::get<bool>(initial_state.at(GoapBlackboardKey::IS_PROPPED));
+  bool is_in_water =
+      std::get<bool>(initial_state.at(GoapBlackboardKey::IS_IN_WATER));
+
+  if (!is_propped && !is_in_water) {
+    return -INFINITY; // Cannot jump if not propped or in water
+  }
+  finish_state_out[GoapBlackboardKey::IS_IN_WATER] = false;
+
+  return -10.0f;
+}
+
+GoapActionResult JumpAndMoveLeft::perform(SmartAIThinkCtx &ctx) {
+  CharacterMovementCommand cmd =
+      CharacterMovementCommand::MOVE_LEFT | CharacterMovementCommand::JUMP;
+  ctx.character.perform_movement(ctx.game, ctx.delta_time, cmd);
+  ctx.state.dwellTime = rand_float(0.05f, 0.40f);
   return GoapActionResult::DONE; // Finished waiting at the base
 }

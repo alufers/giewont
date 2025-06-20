@@ -20,6 +20,7 @@ enum class GoapBlackboardKey {
   IS_PROPPED,
   HEALTH_PERCENTAGE,
   IS_HOLDING_ENEMY_FLAG,
+  IS_IN_WATER,
 
   // @brief Keys about enemy state
   IS_ANYBODY_HOLDING_ENEMY_FLAG,

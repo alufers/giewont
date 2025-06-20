@@ -22,6 +22,10 @@ float GoToEntityGoapAction::get_reward(SmartAIThinkCtx &ctx,
                                        const GoapBlackboard &initial_state,
                                        GoapBlackboard &finish_state_out) const {
 
+  if (std::get<bool>(initial_state.at(GoapBlackboardKey::IS_IN_WATER))) {
+    // We can't pathfind from water
+    return -INFINITY;
+  }
   EntityRef target_entity = _target_entity(ctx);
   if (!target_entity.valid(ctx.game)) {
     return -INFINITY;
@@ -83,7 +87,7 @@ GoapActionResult GoToEntityGoapAction::perform(SmartAIThinkCtx &ctx) {
   CharacterMovementCommand command = giewont::CharacterMovementCommand::NONE;
 
   float out_of_range_dist =
-      ctx.game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE) * 1.2f;
+      ctx.game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE);
 
   if (this->allow_target_entity_movement) {
     out_of_range_dist *=
@@ -358,8 +362,9 @@ void GoToEntityGoapAction::find_path(SmartAIThinkCtx &ctx, Vec2 target_pos) {
           tileBelowFeet == TileType::SOLID || tileBelowFeet == TileType::LADDER;
 
       if (can_stand_in_tile && can_stand_on_tile_below) {
-        float cost = std::abs(currTile.x - comingFrom->tile_pos.x) * 10.0f +
-                     std::abs(currTile.y - comingFrom->tile_pos.y) * 20.0f;
+        float cost =
+            std::abs(currTile.x - comingFrom->tile_pos.x) * 10.0f +
+            std::pow(std::abs(currTile.y - comingFrom->tile_pos.y), 2) * 20.0f;
         // We can fall (or walk) down here
         processNeighbour(comingFrom, currTile, cost,
                          (currTile.y == comingFrom->tile_pos.y)
@@ -374,6 +379,7 @@ void GoToEntityGoapAction::find_path(SmartAIThinkCtx &ctx, Vec2 target_pos) {
         tilemap->get_tile_type_at(comingFrom->tile_pos);
     TileType tileAboveComingFrom =
         tilemap->get_tile_type_at(comingFrom->tile_pos + IVec2(0, 1));
+
     if (comingFromTileType == TileType::LADDER &&
         tileAboveComingFrom == TileType::LADDER) {
       return; // Do not allow jumping from non-ending ladder tiles
@@ -478,6 +484,7 @@ void GoToEntityGoapAction::find_path(SmartAIThinkCtx &ctx, Vec2 target_pos) {
                                   currentNode);
     generateNeighboursForHoleJump(currentNode->tile_pos + IVec2(2, 0),
                                   currentNode);
+
     generateNeighboursForHoleJump(currentNode->tile_pos + IVec2(-3, 0),
                                   currentNode);
     generateNeighboursForHoleJump(currentNode->tile_pos + IVec2(3, 0),
@@ -526,6 +533,7 @@ void GoToEntityGoapAction::reconstruct_path(SmartAIThinkCtx &ctx,
           nextNode.tile_pos.y == currNode.tile_pos.y) {
         ctx.state.path.erase(ctx.state.path.begin() + i);
         i--;
+        continue; 
       }
     }
 
@@ -535,6 +543,19 @@ void GoToEntityGoapAction::reconstruct_path(SmartAIThinkCtx &ctx,
           nextNode.tile_pos.x == currNode.tile_pos.x) {
         ctx.state.path.erase(ctx.state.path.begin() + i);
         i--;
+        continue; 
+      }
+    }
+
+    if (currNode.flags & AiPathNodeFlag::LANDING_SITE) {
+      // Only permit a landing site node if we were moving in the same x direction 
+      // as the previous and next node
+      bool is_x_increasing = (prevNode.world_pos.x < currNode.world_pos.x) &&
+                             (nextNode.world_pos.x > currNode.world_pos.x);
+      bool is_x_decreasing = (prevNode.world_pos.x > currNode.world_pos.x) &&
+                             (nextNode.world_pos.x < currNode.world_pos.x);
+      if (!is_x_increasing && !is_x_decreasing) {
+        currNode.flags &= ~AiPathNodeFlag::LANDING_SITE; // Remove the landing site flag
       }
     }
   }

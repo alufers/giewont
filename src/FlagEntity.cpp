@@ -1,6 +1,7 @@
 #include "FlagEntity.h"
 #include "Log.h"
 #include "PhysEntity.h"
+#include "RandUtil.h"
 #ifdef GIEWONT_HAS_GRAPHICS
 #include "imgui.h"
 #include <raylib.h>
@@ -158,7 +159,11 @@ bool FlagEntity::handle_interaction(
   if (flag_holder.valid(game)) {
     if (flag_holder == interactor) {
       flag_holder = EntityRef();
-      this->velocity *= 2; // Throw the flag
+      this->velocity +=
+          (Vec2(0, 100.0) * rand_float(1.0, 2.0))
+              .rotated(rand_float(
+                  -0.5f * M_PI,
+                  0.5f * M_PI)); // Drop the flag with some random force
       return true;
     }
     return false;

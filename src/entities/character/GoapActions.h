@@ -47,6 +47,23 @@ public:
   GoapActionResult perform(SmartAIThinkCtx &ctx) override;
 };
 
+
+/**
+ * @brief Drops the enemy flag if the character is holding it.
+ */
+class DropEnemyFlag : public GoapAction {
+public:
+  DropEnemyFlag();
+
+  std::string get_name() const override;
+
+  float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+                 GoapBlackboard &finish_state_out) const override;
+
+  GoapActionResult perform(SmartAIThinkCtx &ctx) override;
+};
+
+
 /**
  * @brief An action which uses the interaction system to pick up a healthkit.
  */
@@ -67,6 +84,22 @@ public:
 class DwellAtOwnBaseWaitingForFlagToBeCaptured : public GoapAction {
 public:
   DwellAtOwnBaseWaitingForFlagToBeCaptured();
+
+  std::string get_name() const override;
+
+  float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+                 GoapBlackboard &finish_state_out) const override;
+
+  GoapActionResult perform(SmartAIThinkCtx &ctx) override;
+};
+
+/**
+ * @brief An action which makes the character jump and move left, used for
+ * exiting water.
+ */
+class JumpAndMoveLeft : public GoapAction {
+public:
+  JumpAndMoveLeft();
 
   std::string get_name() const override;
 

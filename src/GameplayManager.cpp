@@ -206,11 +206,11 @@ void GameplayManager::spawn_player_with_team(Game &game, uint32_t peer_id,
 
   player.team = team;
 
-  if(peer_id == 0) {
-    player.velocity.x += rand_float(-300.0f, 300.0f); // Give the AI a random push, to prevent them from stacking up
+  if (peer_id == 0) {
+    player.velocity.x += rand_float(
+        -300.0f,
+        300.0f); // Give the AI a random push, to prevent them from stacking up
     player.velocity.y = -300.0f;
-    LOG_INFO() << "spawning AI player with team "
-               <<  player.velocity << std::endl;
   }
 
   LOG_INFO() << "spawning player with team "

@@ -12,6 +12,7 @@ std::vector<std::unique_ptr<GoapSensor>> giewont::construct_goap_sensors() {
 
   sensors.push_back(std::make_unique<IsProppedSensor>());
   sensors.push_back(std::make_unique<HealthPercentageSensor>());
+  sensors.push_back(std::make_unique<IsInWaterSensor>());
 
   // Distance sensors
 
@@ -58,10 +59,15 @@ std::vector<std::unique_ptr<GoapSensor>> giewont::construct_goap_sensors() {
 }
 
 GoapBlackboardValue IsProppedSensor::sense(SmartAIThinkCtx &ctx) {
-
   bool is_propped = ctx.character.is_propped_by_level;
   return GoapBlackboardValue(is_propped);
 }
+
+
+GoapBlackboardValue IsInWaterSensor::sense(SmartAIThinkCtx &ctx) {
+  return GoapBlackboardValue( ctx.character.is_in_water);
+}
+
 
 GoapBlackboardValue HealthPercentageSensor::sense(SmartAIThinkCtx &ctx) {
   float health_percentage = static_cast<float>(ctx.character.health) /

@@ -22,6 +22,18 @@ public:
   ~IsProppedSensor() override = default;
 };
 
+class IsInWaterSensor : public GoapSensor {
+public:
+  GoapBlackboardKey get_key() const override {
+    return GoapBlackboardKey::IS_IN_WATER;
+  }
+
+  GoapBlackboardValue sense(SmartAIThinkCtx &ctx) override;
+
+  ~IsInWaterSensor() override = default;
+};
+
+
 class HealthPercentageSensor : public GoapSensor {
 public:
   GoapBlackboardKey get_key() const override {

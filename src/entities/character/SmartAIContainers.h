@@ -30,6 +30,15 @@ constexpr bool operator&(AiPathNodeFlag a, AiPathNodeFlag b) {
   return static_cast<uint32_t>(a) & static_cast<uint32_t>(b);
 }
 
+constexpr AiPathNodeFlag operator~(AiPathNodeFlag a) {
+  return static_cast<AiPathNodeFlag>(~static_cast<uint32_t>(a));
+}
+
+constexpr AiPathNodeFlag operator&=(AiPathNodeFlag &a, AiPathNodeFlag b) {
+  a = static_cast<AiPathNodeFlag>(static_cast<uint32_t>(a) &
+                                  static_cast<uint32_t>(b));
+  return a;
+}
 struct AiPathNode {
   Vec2 world_pos;
   IVec2 tile_pos;
