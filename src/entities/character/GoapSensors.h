@@ -79,6 +79,20 @@ private:
   GoapEntityFilterFunc holder_filter;
 };
 
+class HasLineOfSightSensor : public GoapSensor {
+public:
+  HasLineOfSightSensor(GoapBlackboardKey key, GoapEntitySelectorFunc target_selector)
+      : key(key), target_selector(target_selector) {}
+  GoapBlackboardKey get_key() const override { return key; }
+  GoapBlackboardValue sense(SmartAIThinkCtx &ctx) override;
+
+  ~HasLineOfSightSensor() override = default;
+private:
+  GoapBlackboardKey key;
+  EntityRef selected_entity;
+  GoapEntitySelectorFunc target_selector;
+};
+
 /**
  * @brief Given a predicted blackboard state (after some actions were performed
  * by the character), apply any gameplay logic external to the AI which might

@@ -135,6 +135,7 @@ set(COMMON_SOURCES
         src/math/RandUtil.cpp
         src/entities/gameplay/ProjectileEntity.cpp
         src/entities/gameplay/BonusEntity.cpp
+        src/entities/debug/DebugMarkerEntity.cpp
 )
 
 set(COMMON_INCLUDES

@@ -27,6 +27,7 @@ std::vector<std::shared_ptr<GoapAction>> giewont::construct_goap_actions() {
   actions.emplace_back(
       std::make_shared<DwellAtOwnBaseWaitingForFlagToBeCaptured>());
   actions.emplace_back(std::make_shared<JumpAndMoveLeft>());
+  actions.emplace_back(std::make_shared<ShootAtClosestEnemy>());
 
   return actions;
 }
@@ -146,14 +147,15 @@ float DropEnemyFlag::get_reward(SmartAIThinkCtx &ctx,
 }
 
 GoapActionResult DropEnemyFlag::perform(SmartAIThinkCtx &ctx) {
-  
+
   capnp::MallocMessageBuilder message;
   auto interact = message.initRoot<net::InteractNetMessage>();
   interact.setType(net::InteractionType::USE_INTERACTION);
   interact.setInteractorNetId(ctx.character.net_id);
   ctx.game.perform_interaction(interact);
-  ctx.state.dwellTime = rand_float(0.5f, 3.2f); // Wait a bit for the flag to move away
-                                            
+  ctx.state.dwellTime =
+      rand_float(0.5f, 3.2f); // Wait a bit for the flag to move away
+
   return GoapActionResult::DONE;
 }
 
@@ -292,4 +294,50 @@ GoapActionResult JumpAndMoveLeft::perform(SmartAIThinkCtx &ctx) {
   ctx.character.perform_movement(ctx.game, ctx.delta_time, cmd);
   ctx.state.dwellTime = rand_float(0.05f, 0.40f);
   return GoapActionResult::DONE; // Finished waiting at the base
+}
+
+ShootAtClosestEnemy::ShootAtClosestEnemy() {}
+
+std::string ShootAtClosestEnemy::get_name() const {
+  return "ShootAtClosestEnemy";
+}
+
+float ShootAtClosestEnemy::get_reward(SmartAIThinkCtx &ctx,
+                                      const GoapBlackboard &initial_state,
+                                      GoapBlackboard &finish_state_out) const {
+  if (!std::get<bool>(initial_state.at(
+          GoapBlackboardKey::HAS_LINE_OF_SIGHT_TO_CLOSEST_ENEMY))) {
+    return -INFINITY; // Cannot shoot if we don't have line of sight
+  }
+
+  finish_state_out[GoapBlackboardKey::CLOSEST_ENEMY_POS] =
+      Vec2(INFINITY, INFINITY); // Consider the closest enemy dead
+
+  auto closest_enemy_dist = giewont::blackboard_pos_distance(
+      initial_state, GoapBlackboardKey::CLOSEST_ENEMY_POS,
+      GoapBlackboardKey::OWN_POS);
+  return -5.0f - closest_enemy_dist * 0.04f; // MAGICNUMBER
+}
+
+GoapActionResult ShootAtClosestEnemy::perform(SmartAIThinkCtx &ctx) {
+ 
+  EntityRef closest_enemy =
+      goap_selectors::closest_selector(goap_selectors::is_enemy_character)(ctx);
+
+  if (!closest_enemy.valid(ctx.game)) {
+    return GoapActionResult::FAILED_FORCE_REPLAN; // No enemy to shoot at
+  }
+
+  capnp::MallocMessageBuilder message;
+  auto shoot = message.initRoot<net::InteractNetMessage>();
+  shoot.setType(net::InteractionType::PRIMARY_CLICK);
+  shoot.setInteractorNetId(ctx.character.net_id);
+  auto offset = shoot.initCharacterToMouseOffset();
+
+  Vec2 delta = closest_enemy.get(ctx.game).position - ctx.character.position;
+  delta.serialize(offset);
+
+  ctx.game.perform_interaction(shoot);
+
+  return GoapActionResult::DONE;
 }

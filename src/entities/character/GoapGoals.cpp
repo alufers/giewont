@@ -11,6 +11,8 @@ std::vector<std::unique_ptr<GoapGoal>> giewont::construct_goap_goals() {
   goals.push_back(std::make_unique<BringEnemyFlagToBaseGoal>());
   goals.push_back(std::make_unique<KeepHealthAboveHalf>());
   goals.push_back(std::make_unique<FollowTeammateWithFlag>());
+   goals.push_back(std::make_unique<KeepEnemiesAwayFromSelfGoal>());
+
 
   return goals;
 }
@@ -98,6 +100,33 @@ float FollowTeammateWithFlag::get_reward(
 
   float percentage_reached =
       std::clamp((target_dist - dist_to_enemy_flag) / target_dist, 0.0f, 1.0f);
+
+  return total_reward * percentage_reached;
+}
+
+
+float KeepEnemiesAwayFromSelfGoal::get_reward(
+    SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+    const GoapBlackboard &result_state) const {
+
+  Vec2 own_pos = std::get<Vec2>(result_state.at(GoapBlackboardKey::OWN_POS));
+  Vec2 closest_enemy_pos =
+      std::get<Vec2>(result_state.at(GoapBlackboardKey::CLOSEST_ENEMY_POS));
+
+  if (!own_pos.isfinite() ) {
+    return 0.0f; // Invalid state, no reward
+  }
+
+  if(!closest_enemy_pos.isfinite()) {
+    return total_reward; // No enemies, we are safe, return full reward
+  }
+
+  float dist_to_closest_enemy = own_pos.distance(closest_enemy_pos);
+  float target_dist = 80.0f * 8.0f; // MAGICNUMBER, distance to keep from the enemy
+  
+
+  float percentage_reached = std::clamp(dist_to_closest_enemy / target_dist,
+                                        0.0f, 1.0f); // MAGICNUMBER
 
   return total_reward * percentage_reached;
 }

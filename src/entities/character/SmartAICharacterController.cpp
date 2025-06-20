@@ -196,11 +196,11 @@ void SmartAICharacterController::process_goals(SmartAIThinkCtx &ctx) {
 }
 
 void SmartAICharacterController::process_actions(SmartAIThinkCtx &ctx) {
-  // for (auto &action : ctx.state.actions) {
-  //   GoapBlackboard finishState = ctx.state.current_state;
-  //   float cost = action->get_reward(ctx, ctx.state.current_state,
-  //   finishState); action->_last_reward_value = cost;
-  // }
+  for (auto &action : ctx.state.actions) {
+    GoapBlackboard finishState = ctx.state.current_state;
+    float cost = action->get_reward(ctx, ctx.state.current_state, finishState);
+    action->_last_reward_value = cost;
+  }
 }
 
 void SmartAICharacterController::generate_goap_plan(SmartAIThinkCtx &ctx) {
@@ -370,6 +370,9 @@ void SmartAICharacterController::draw_inspector_ui(Game &game) {
   ImGui::Text("Plan expected goal reward: %.2f",
               state.currentPlanExpectedGoalReward);
   ImGui::Text("Plan age: %.2f", state.currentPlanAge);
+  if (ImGui::Button("Force replan")) {
+    state.currentGoapPlan.clear();
+  }
   ImGui::BeginTable("Action State", 4, ImGuiTableFlags_Borders);
   ImGui::TableSetupColumn("Action");
   ImGui::TableSetupColumn("Result");
@@ -419,13 +422,25 @@ void SmartAICharacterController::draw_inspector_ui(Game &game) {
 
   ImGui::Separator();
   ImGui::Text("Current goal state:");
-  ImGui::BeginTable("Goal State", 2);
+  ImGui::BeginTable("Goal State", 2, ImGuiTableFlags_Borders);
   for (const auto &goal : state.goals) {
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
     ImGui::Text("%s", goal->get_name().c_str());
     ImGui::TableNextColumn();
     ImGui::Text("Reward: %.2f", goal->_last_reward_value);
+  }
+  ImGui::EndTable();
+
+  ImGui::Separator();
+  ImGui::Text("Current action state:");
+  ImGui::BeginTable("action State", 2, ImGuiTableFlags_Borders);
+  for (const auto &action : state.actions) {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::Text("%s", action->get_name().c_str());
+    ImGui::TableNextColumn();
+    ImGui::Text("Reward: %.2f", action->_last_reward_value);
   }
   ImGui::EndTable();
 

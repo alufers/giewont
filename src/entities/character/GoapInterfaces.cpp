@@ -40,6 +40,8 @@ std::string giewont::goap_blackboard_key_to_string(GoapBlackboardKey key) {
     return "CLOSEST_HEALTHKIT_POS";
   case giewont::GoapBlackboardKey::IS_IN_WATER:
     return "IS_IN_WATER";
+  case giewont::GoapBlackboardKey::HAS_LINE_OF_SIGHT_TO_CLOSEST_ENEMY:
+    return "HAS_LINE_OF_SIGHT_TO_CLOSEST_ENEMY";
   }
   return "Unknown Key";
 }

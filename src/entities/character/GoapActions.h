@@ -1,23 +1,19 @@
 #pragma once
 
+#include "GoapGoToEntityAction.h"
 #include "GoapInterfaces.h"
 #include "GoapSelectors.h"
-#include "GoapGoToEntityAction.h"
 #include <vector>
 
 namespace giewont {
 
-
-
 std::vector<std::shared_ptr<GoapAction>> construct_goap_actions();
-
-
 
 class GoToEnemyFlagGoapAction : public GoToEntityGoapAction {
 public:
   GoToEnemyFlagGoapAction();
   float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
-                 GoapBlackboard &finish_state_out) const override;
+                   GoapBlackboard &finish_state_out) const override;
 };
 
 /**
@@ -28,7 +24,7 @@ class FollowEnemyFlagAction : public GoToEntityGoapAction {
 public:
   FollowEnemyFlagAction();
   float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
-                 GoapBlackboard &finish_state_out) const override;
+                   GoapBlackboard &finish_state_out) const override;
 };
 
 /**
@@ -42,11 +38,10 @@ public:
   std::string get_name() const override;
 
   float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
-                 GoapBlackboard &finish_state_out) const override;
+                   GoapBlackboard &finish_state_out) const override;
 
   GoapActionResult perform(SmartAIThinkCtx &ctx) override;
 };
-
 
 /**
  * @brief Drops the enemy flag if the character is holding it.
@@ -58,11 +53,10 @@ public:
   std::string get_name() const override;
 
   float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
-                 GoapBlackboard &finish_state_out) const override;
+                   GoapBlackboard &finish_state_out) const override;
 
   GoapActionResult perform(SmartAIThinkCtx &ctx) override;
 };
-
 
 /**
  * @brief An action which uses the interaction system to pick up a healthkit.
@@ -74,12 +68,10 @@ public:
   std::string get_name() const override;
 
   float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
-                 GoapBlackboard &finish_state_out) const override;
+                   GoapBlackboard &finish_state_out) const override;
 
   GoapActionResult perform(SmartAIThinkCtx &ctx) override;
 };
-
-
 
 class DwellAtOwnBaseWaitingForFlagToBeCaptured : public GoapAction {
 public:
@@ -88,7 +80,7 @@ public:
   std::string get_name() const override;
 
   float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
-                 GoapBlackboard &finish_state_out) const override;
+                   GoapBlackboard &finish_state_out) const override;
 
   GoapActionResult perform(SmartAIThinkCtx &ctx) override;
 };
@@ -104,8 +96,17 @@ public:
   std::string get_name() const override;
 
   float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
-                 GoapBlackboard &finish_state_out) const override;
+                   GoapBlackboard &finish_state_out) const override;
 
+  GoapActionResult perform(SmartAIThinkCtx &ctx) override;
+};
+
+class ShootAtClosestEnemy : public GoapAction {
+public:
+  ShootAtClosestEnemy();
+  std::string get_name() const override;
+  float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
+                   GoapBlackboard &finish_state_out) const override;
   GoapActionResult perform(SmartAIThinkCtx &ctx) override;
 };
 

@@ -29,19 +29,17 @@ public:
 
   Game();
   // General stuff
-  static constexpr size_t MAX_ENTITIES = 1024;
+  static constexpr size_t MAX_ENTITIES = 2048;
   std::unique_ptr<ResourceManager> rm = std::make_unique<ResourceManager>();
   virtual EntityRef push_entity(std::unique_ptr<Entity> entity);
 
   // Camera
   EntityRef camera_ref;
 
-
   // Gameplay variables
   std::array<std::variant<float, Vec2>, GVarType::MAX> gameplay_variables;
 
-  template <typename T>
-  T get_gvar(GVarType type) const;
+  template <typename T> T get_gvar(GVarType type) const;
 
   void load_level(std::string tmj_path);
   virtual void update(float delta_time);

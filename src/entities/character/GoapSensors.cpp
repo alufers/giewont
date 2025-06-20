@@ -4,6 +4,7 @@
 #include "Log.h"
 #include "SmartAIContainers.h"
 #include "TeamBaseEntity.h"
+#include "entities/debug/DebugMarkerEntity.h"
 using namespace giewont;
 using namespace giewont::goap_selectors;
 
@@ -37,6 +38,11 @@ std::vector<std::unique_ptr<GoapSensor>> giewont::construct_goap_sensors() {
       std::make_unique<PositionSensor>(GoapBlackboardKey::CLOSEST_HEALTHKIT_POS,
                                        closest_selector(is_healthkit)));
 
+  // Enemy character sensors
+  sensors.push_back(std::make_unique<HasLineOfSightSensor>(
+      GoapBlackboardKey::HAS_LINE_OF_SIGHT_TO_CLOSEST_ENEMY,
+      closest_selector(is_enemy_character)));
+
   // Flag state sensors
 
   sensors.push_back(std::make_unique<FlagStateSensor>(
@@ -63,11 +69,9 @@ GoapBlackboardValue IsProppedSensor::sense(SmartAIThinkCtx &ctx) {
   return GoapBlackboardValue(is_propped);
 }
 
-
 GoapBlackboardValue IsInWaterSensor::sense(SmartAIThinkCtx &ctx) {
-  return GoapBlackboardValue( ctx.character.is_in_water);
+  return GoapBlackboardValue(ctx.character.is_in_water);
 }
-
 
 GoapBlackboardValue HealthPercentageSensor::sense(SmartAIThinkCtx &ctx) {
   float health_percentage = static_cast<float>(ctx.character.health) /
@@ -100,6 +104,62 @@ GoapBlackboardValue FlagStateSensor::sense(SmartAIThinkCtx &ctx) {
   auto &flag = flag_entity.get_as<FlagEntity>(ctx.game);
 
   return GoapBlackboardValue(holder_filter(ctx, flag.flag_holder));
+}
+
+GoapBlackboardValue HasLineOfSightSensor::sense(SmartAIThinkCtx &ctx) {
+  auto target_entity = target_selector(ctx);
+
+  if (!target_entity.valid(ctx.game)) {
+    return GoapBlackboardValue(false); // No target found
+  }
+
+
+
+  const float CHECK_DIST = 35.0f;
+  Vec2 target_pos = target_entity.get(ctx.game).position;
+  Vec2 curr_pos = ctx.character.world_projectile_launch_pos();
+
+  Vec2 dir = (target_pos - curr_pos).normalized();
+  float dist = curr_pos.distance(target_pos);
+  size_t check_count = 500;
+  for (float i = 0.0f; i < dist; i += CHECK_DIST) {
+    check_count--;
+    if (check_count == 0) {
+      return GoapBlackboardValue(
+          false); // Too many checks, probably no line of sight
+    }
+
+    Vec2 check_pos = curr_pos + dir * i;
+
+    for (auto &entity : ctx.game.valid_entities()) {
+      if (TilemapEntity *tm = dynamic_cast<TilemapEntity *>(entity.get())) {
+      
+        if (tm->check_collision_point(check_pos) == TileType::SOLID) {
+
+          return GoapBlackboardValue(false); // There is a solid tile in the way
+        }
+      }
+
+      if (PhysEntity *phys_ent = dynamic_cast<PhysEntity *>(entity.get())) {
+        if (!phys_ent->get_aabb()
+                 .translated(phys_ent->position)
+                 .contains(check_pos)) {
+          continue;
+        }
+        if (phys_ent->net_id == ctx.character.net_id) {
+          // Ignore ourselves
+          continue;
+        }
+        if (phys_ent->net_id == target_entity.get(ctx.game).net_id) {
+          // We are checking the target entity itself, so we can see it
+          return GoapBlackboardValue(true);
+        }
+      }
+    }
+  }
+
+  return GoapBlackboardValue(
+      false); // No solid tiles in the way, we can see the target
 }
 
 void giewont::apply_gameplay_logic_to_predicted_blackboard(

@@ -443,3 +443,8 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
 net::EntityType CharacterEntity::get_net_type() {
   return net::EntityType::CHARACTER;
 }
+
+Vec2 CharacterEntity::world_projectile_launch_pos() {
+  // Launch from the center of the character
+  return position + Vec2(60.0f, 70.0f);
+}

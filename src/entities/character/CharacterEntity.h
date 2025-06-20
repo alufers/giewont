@@ -96,6 +96,10 @@ public:
   /** @brief Get Feet pos in world space */
   Vec2 world_feet_pos();
 
+
+  /** @brief Where projectiles shall be launched. */
+  Vec2 world_projectile_launch_pos();
+
   // Netcode
   void
   build_sync_message(Game &game,
