@@ -184,7 +184,7 @@ void CharacterEntity::load_spritesheet_data(const Game &game) {
       anim_frames[CharacterAnimState::STAND].size() > 0) {
     auto &frame = anim_frames[CharacterAnimState::STAND][0];
     character_aabb = AABB::from_min_and_size(
-        Vec2(0, 0), Vec2(frame.spritesheet_w, frame.spritesheet_h));
+        Vec2(0, 0), Vec2(frame.spritesheet_w - 5.0f, frame.spritesheet_h));
   } else {
     character_aabb = AABB::from_min_and_size(Vec2(0, 0), Vec2(70, 70));
   }

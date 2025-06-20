@@ -42,6 +42,8 @@ std::string giewont::goap_blackboard_key_to_string(GoapBlackboardKey key) {
     return "IS_IN_WATER";
   case giewont::GoapBlackboardKey::HAS_LINE_OF_SIGHT_TO_CLOSEST_ENEMY:
     return "HAS_LINE_OF_SIGHT_TO_CLOSEST_ENEMY";
+  case giewont::GoapBlackboardKey::CLOSEST_ENEMY_HEALTH_PERCENTAGE:
+    return "CLOSEST_ENEMY_HEALTH_PERCENTAGE";
   }
   return "Unknown Key";
 }

@@ -36,13 +36,21 @@ public:
 
 class HealthPercentageSensor : public GoapSensor {
 public:
+
+HealthPercentageSensor(GoapBlackboardKey key, GoapEntitySelectorFunc target_selector)
+      : key(key), target_selector(target_selector) {}
   GoapBlackboardKey get_key() const override {
-    return GoapBlackboardKey::HEALTH_PERCENTAGE;
+    return key;
   }
 
   GoapBlackboardValue sense(SmartAIThinkCtx &ctx) override;
 
   ~HealthPercentageSensor() override = default;
+
+  private:
+  GoapBlackboardKey key;
+  GoapEntitySelectorFunc target_selector;
+  EntityRef selected_entity;
 };
 
 // Implements a sensor which determines the position of various entities

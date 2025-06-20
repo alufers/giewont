@@ -34,7 +34,7 @@ public:
 
 class KeepEnemiesAwayFromSelfGoal : public GoapGoal {
 public:
-  float total_reward = 80000.0f;
+  float total_reward = 90000.0f;
   std::string get_name() const override { return "KeepEnemiesAwayFromSelfGoal"; }
   float get_reward(SmartAIThinkCtx &ctx, const GoapBlackboard &initial_state,
                    const GoapBlackboard &result_state) const override;

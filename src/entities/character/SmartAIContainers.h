@@ -61,7 +61,7 @@ struct SmartAIState {
   std::vector<GoapPlanItem> currentGoapPlan;
 
   float currentPlanAge = 0.0f;
-  float currentPlanExpectedGoalReward = 0.0f;
+  std::map<std::string, float> expectedGoalRewards;
   float planReevaluationInterval = 2.0f;
   float timeUntilPlanReevaluation = 2.0f;
 

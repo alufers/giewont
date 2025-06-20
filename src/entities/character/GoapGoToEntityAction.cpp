@@ -51,33 +51,29 @@ float GoToEntityGoapAction::get_reward(SmartAIThinkCtx &ctx,
 
   finish_state_out[GoapBlackboardKey::OWN_POS] = target_pos;
 
-  return own_pos.distance(target_pos) * -0.3f - 10.0f; // MAGICNUMBER
+  return own_pos.distance(target_pos) * -0.35f - 10.0f; // MAGICNUMBER
 }
 
 GoapActionResult GoToEntityGoapAction::on_begin(SmartAIThinkCtx &ctx) {
   ctx.state.goToEntityTarget = _target_entity(ctx);
 
   if (!ctx.state.goToEntityTarget.valid(ctx.game)) {
-    LOG_DEBUG() << "[AI] Target entity for GoToEntityGoapAction is invalid."
-                << std::endl;
+
     return GoapActionResult::FAILED_FORCE_REPLAN; // Retrying won't help, the
                                                   // entity is gone
   }
 
   Vec2 target_pos = ctx.state.goToEntityTarget.get(ctx.game).position;
-  LOG_DEBUG() << "[AI] Starting action: " << _name
-              << ", target position: " << target_pos << std::endl;
+
 
   this->find_path(ctx, target_pos);
   ctx.state.cancelScheduled = false;
 
   if (ctx.state.path.empty()) {
-    LOG_DEBUG() << "[AI] No path found for GoToEntityGoapAction." << std::endl;
+ 
     return GoapActionResult::FAILED_RECOVERABLE; // Retrying might help
   }
 
-  LOG_DEBUG() << "[AI] Path found for GoToEntityGoapAction, size: "
-              << ctx.state.path.size() << std::endl;
   return GoapActionResult::IN_PROGRESS;
 }
 
@@ -95,8 +91,6 @@ GoapActionResult GoToEntityGoapAction::perform(SmartAIThinkCtx &ctx) {
   }
 
   if (ctx.state.path.empty()) {
-    LOG_DEBUG() << "[AI] Path buffer empty, GoToEntityGoapAction completed."
-                << std::endl;
     result = GoapActionResult::DONE;
   } else {
 
@@ -104,20 +98,12 @@ GoapActionResult GoToEntityGoapAction::perform(SmartAIThinkCtx &ctx) {
     // end
     // of the path.
     if (!ctx.state.goToEntityTarget.valid(ctx.game)) {
-      LOG_DEBUG()
-          << "[AI] Target entity for GoToEntityGoapAction became invalid "
-             "while following path."
-          << std::endl;
       // Do not abort the movement immediately as it may cause the character to
       // fall off a ladder. Delay it until the next waypoint is reached.
       ctx.state.cancelScheduled = true;
     } else if (ctx.state.path.back().world_pos.distance(
                    ctx.state.goToEntityTarget.get(ctx.game).position) >
                out_of_range_dist) {
-      LOG_DEBUG()
-          << "[AI] Target entity for GoToEntityGoapAction is too far away, "
-             "replanning."
-          << std::endl;
       if (this->allow_target_entity_movement) {
         result = GoapActionResult::RESTART_IMMEDIATE; // Restart the action
                                                       // immediately to re-path
@@ -159,8 +145,7 @@ GoapActionResult GoToEntityGoapAction::perform(SmartAIThinkCtx &ctx) {
         if (std::abs(feetPos.y - nextNode.world_pos.y) <
                 WAYPOINT_REACHED_THRESHOLD / 2.0 &&
             (feetPos.x > min_target_x) && (feetPos.x < max_target_x)) {
-          LOG_DEBUG() << "Reached node by overshooting to the next one"
-                      << std::endl;
+          
           hasReachedCurrentNode = true;
         }
       }
@@ -244,7 +229,7 @@ void GoToEntityGoapAction::find_path(SmartAIThinkCtx &ctx, Vec2 target_pos) {
   auto nearestWalkableTargetPosOption =
       tilemap->get_nearest_walkable_tile_pos(target_pos);
   if (!nearestWalkableTargetPosOption.has_value()) {
-    LOG_ERROR() << "No walkable tile found for pathfinding" << std::endl;
+    
     return;
   }
 
@@ -252,7 +237,7 @@ void GoToEntityGoapAction::find_path(SmartAIThinkCtx &ctx, Vec2 target_pos) {
       tilemap->get_nearest_walkable_tile_pos(feet_pos);
 
   if (!nearestWalkableStartPosOption.has_value()) {
-    LOG_ERROR() << "No walkable tile found for pathfinding" << std::endl;
+    
     return;
   }
 
@@ -275,8 +260,6 @@ void GoToEntityGoapAction::find_path(SmartAIThinkCtx &ctx, Vec2 target_pos) {
   auto startTile = nearestWalkableStartPosOption.value();
   auto targetTile = nearestWalkableTargetPosOption.value();
 
-  LOG_DEBUG() << "[AI] Start tile: " << startTile << std::endl;
-  LOG_DEBUG() << "[AI] Target tile: " << targetTile << std::endl;
 
   auto &nodes = ctx.state.aStarData;
   nodes.resize(tilemap->tilemap_width *
@@ -463,7 +446,7 @@ void GoToEntityGoapAction::find_path(SmartAIThinkCtx &ctx, Vec2 target_pos) {
     //             << " isGoal: " << currentNode->isGoal
     //             << " fScore: " << currentNode->fScore << std::endl;
     if (currentNode->isGoal) {
-      LOG_INFO() << "[AI] Found path to goal" << std::endl;
+     
       // We found the goal
       reconstruct_path(ctx, currentNode);
       return;
@@ -498,7 +481,6 @@ void GoToEntityGoapAction::find_path(SmartAIThinkCtx &ctx, Vec2 target_pos) {
     }
   }
 
-  LOG_ERROR() << "[AI] No path found" << std::endl;
 }
 
 void GoToEntityGoapAction::reconstruct_path(SmartAIThinkCtx &ctx,
@@ -533,7 +515,7 @@ void GoToEntityGoapAction::reconstruct_path(SmartAIThinkCtx &ctx,
           nextNode.tile_pos.y == currNode.tile_pos.y) {
         ctx.state.path.erase(ctx.state.path.begin() + i);
         i--;
-        continue; 
+        continue;
       }
     }
 
@@ -543,19 +525,20 @@ void GoToEntityGoapAction::reconstruct_path(SmartAIThinkCtx &ctx,
           nextNode.tile_pos.x == currNode.tile_pos.x) {
         ctx.state.path.erase(ctx.state.path.begin() + i);
         i--;
-        continue; 
+        continue;
       }
     }
 
     if (currNode.flags & AiPathNodeFlag::LANDING_SITE) {
-      // Only permit a landing site node if we were moving in the same x direction 
-      // as the previous and next node
+      // Only permit a landing site node if we were moving in the same x
+      // direction as the previous and next node
       bool is_x_increasing = (prevNode.world_pos.x < currNode.world_pos.x) &&
                              (nextNode.world_pos.x > currNode.world_pos.x);
       bool is_x_decreasing = (prevNode.world_pos.x > currNode.world_pos.x) &&
                              (nextNode.world_pos.x < currNode.world_pos.x);
       if (!is_x_increasing && !is_x_decreasing) {
-        currNode.flags &= ~AiPathNodeFlag::LANDING_SITE; // Remove the landing site flag
+        currNode.flags &=
+            ~AiPathNodeFlag::LANDING_SITE; // Remove the landing site flag
       }
     }
   }

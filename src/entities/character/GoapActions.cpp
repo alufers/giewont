@@ -310,17 +310,19 @@ float ShootAtClosestEnemy::get_reward(SmartAIThinkCtx &ctx,
     return -INFINITY; // Cannot shoot if we don't have line of sight
   }
 
-  finish_state_out[GoapBlackboardKey::CLOSEST_ENEMY_POS] =
-      Vec2(INFINITY, INFINITY); // Consider the closest enemy dead
+  finish_state_out[GoapBlackboardKey::CLOSEST_ENEMY_HEALTH_PERCENTAGE] =
+      std::get<float>(initial_state.at(
+          GoapBlackboardKey::CLOSEST_ENEMY_HEALTH_PERCENTAGE)) -
+      0.3f;
 
   auto closest_enemy_dist = giewont::blackboard_pos_distance(
       initial_state, GoapBlackboardKey::CLOSEST_ENEMY_POS,
       GoapBlackboardKey::OWN_POS);
-  return -5.0f - closest_enemy_dist * 0.04f; // MAGICNUMBER
+  return -2.0f - closest_enemy_dist * 0.005f; // MAGICNUMBER
 }
 
 GoapActionResult ShootAtClosestEnemy::perform(SmartAIThinkCtx &ctx) {
- 
+
   EntityRef closest_enemy =
       goap_selectors::closest_selector(goap_selectors::is_enemy_character)(ctx);
 
@@ -338,6 +340,8 @@ GoapActionResult ShootAtClosestEnemy::perform(SmartAIThinkCtx &ctx) {
   delta.serialize(offset);
 
   ctx.game.perform_interaction(shoot);
+
+  ctx.state.dwellTime = rand_float(0.3f, 0.5f);
 
   return GoapActionResult::DONE;
 }

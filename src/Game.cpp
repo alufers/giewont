@@ -64,8 +64,6 @@ EntityRef Game::push_entity(std::unique_ptr<Entity> entity) {
     }
   }
   entity->id = idx;
-  LOG_DEBUG() << "Pushing entity with id " << idx << " (type "
-              << entity->get_type_name() << ")" << std::endl;
   entity->generation = generation_counter;
   generation_counter++;
   entities[idx] = std::move(entity);

@@ -107,13 +107,13 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
   }
 
   if (!did_do_any_goap_action) {
-    LOG_DEBUG() << "[AI] GOAP plan completed" << std::endl;
+    
     ctx.state.dwellTime = rand_float(0.5f, 3.2f);
   }
 
   if (state.timeUntilPlanReevaluation <= 0.0f) {
     state.timeUntilPlanReevaluation = state.planReevaluationInterval;
-    LOG_DEBUG() << "[AI] Re-evaluating GOAP plan" << std::endl;
+   
     this->evaluate_current_goap_plan(ctx);
   }
 }
@@ -236,10 +236,13 @@ void SmartAICharacterController::generate_goap_plan(SmartAIThinkCtx &ctx) {
 
     this->state.currentPlanAge = 0.0f;
     if (!this->state.currentGoapPlan.empty()) {
-      this->state.currentPlanExpectedGoalReward =
-          this->state.currentGoapPlan.back().goal_reward;
+      for (auto &goal : ctx.state.goals) {
+        this->state.expectedGoalRewards[goal->get_name()] =
+            goal->get_reward(ctx, this->state.currentGoapPlan.back().state,
+                             this->state.currentGoapPlan.back().state);
+      }
     } else {
-      this->state.currentPlanExpectedGoalReward = 0.0f;
+      this->state.expectedGoalRewards.clear();
     }
 
   } else {
@@ -250,7 +253,7 @@ void SmartAICharacterController::generate_goap_plan(SmartAIThinkCtx &ctx) {
 std::optional<std::vector<GoapPlanItem>>
 SmartAICharacterController::consider_next_plan_item(
     SmartAIThinkCtx &ctx, std::vector<GoapPlanItem> const &curr_plan) {
-  if (curr_plan.size() > 4) {
+  if (curr_plan.size() > 5) {
     return std::nullopt; // Too long plan, don't consider it
   }
 
@@ -367,8 +370,7 @@ void SmartAICharacterController::draw_inspector_ui(Game &game) {
 
   ImGui::Separator();
   ImGui::Text("Current plan:");
-  ImGui::Text("Plan expected goal reward: %.2f",
-              state.currentPlanExpectedGoalReward);
+  
   ImGui::Text("Plan age: %.2f", state.currentPlanAge);
   if (ImGui::Button("Force replan")) {
     state.currentGoapPlan.clear();
@@ -404,6 +406,20 @@ void SmartAICharacterController::draw_inspector_ui(Game &game) {
     ImGui::Text("%.2f", plan_item.action_reward);
     ImGui::TableNextColumn();
     ImGui::Text("%.2f", plan_item.goal_reward);
+  }
+  ImGui::EndTable();
+
+  ImGui::Text("Expected goal rewards:");
+  ImGui::BeginTable("Expected Goal Rewards", 2, ImGuiTableFlags_Borders);
+  ImGui::TableSetupColumn("Goal");
+  ImGui::TableSetupColumn("Reward");
+  ImGui::TableHeadersRow();
+  for (const auto &pair : state.expectedGoalRewards) {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::Text("%s", pair.first.c_str());
+    ImGui::TableNextColumn();
+    ImGui::Text("%.2f", pair.second);
   }
   ImGui::EndTable();
 

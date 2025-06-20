@@ -122,7 +122,7 @@ float KeepEnemiesAwayFromSelfGoal::get_reward(
   }
 
   float dist_to_closest_enemy = own_pos.distance(closest_enemy_pos);
-  float target_dist = 80.0f * 8.0f; // MAGICNUMBER, distance to keep from the enemy
+  float target_dist = 80.0f * 9.0f; // MAGICNUMBER, distance to keep from the enemy
   
 
   float percentage_reached = std::clamp(dist_to_closest_enemy / target_dist,
