@@ -15,10 +15,15 @@ Platformowa gra multiplayer typu capture the flag na własnym silniku w C++.
 ## Sterowanie
 
 Poruszanie: A, D, spacja.
+
 Zoom: Scroll w myszce
+
 Strzelanie: lewy przycisk myszy.
+
 Rzut granatem: Q
+
 Interakcja (podniesienei flagi, healthkitu): E
+
 Menu debugowania: F11
 
 
