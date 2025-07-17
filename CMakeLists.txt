@@ -187,8 +187,9 @@ target_link_libraries(${CLIENT_EXE_NAME} PRIVATE raylib nlohmann_json::nlohmann_
 
 # target_compile_definitions(${CLIENT_EXE_NAME} ${CAPNP_DEFINITIONS})
 
-
-target_compile_options(${CLIENT_EXE_NAME} PRIVATE -ggdb)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(${CLIENT_EXE_NAME} PRIVATE -ggdb)
+endif ()
 
 if (EMSCRIPTEN)
     target_compile_options(${CLIENT_EXE_NAME} PRIVATE -fwasm-exceptions)
