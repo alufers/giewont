@@ -136,14 +136,18 @@ void GameplayManager::check_gameplay_state(Game &game) {
             LOG_INFO() << "Score for team "
                        << gameplay_team_to_string(other_team) << " is "
                        << other_state.score << std::endl;
-            if (other_team == GameplayTeam::RED_TEAM) {
 
-              message = "Red team captured the flag!";
-              message_time = 3.0f;
-            } else {
+            if (message == "") {
 
-              message = "Blue team captured the flag!";
-              message_time = 3.0f;
+              if (other_team == GameplayTeam::RED_TEAM) {
+
+                message = "Red team captured the flag!";
+                message_time = 3.0f;
+              } else {
+
+                message = "Blue team captured the flag!";
+                message_time = 3.0f;
+              }
             }
 
             GColor scoring_color = gameplay_team_to_color(other_team);
