@@ -8,6 +8,8 @@
 #endif
 #include "Util.h"
 #include "entities/character/CharacterEntity.h"
+#include <numbers>
+
 
 using namespace giewont;
 
