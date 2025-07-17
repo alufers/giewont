@@ -1,11 +1,13 @@
 #include "FlagEntity.h"
 #include "Log.h"
 #include "PhysEntity.h"
+#include "RandUtil.h"
 #ifdef GIEWONT_HAS_GRAPHICS
 #include "imgui.h"
 #include <raylib.h>
 #endif
 #include "Util.h"
+#include "entities/character/CharacterEntity.h"
 
 using namespace giewont;
 
@@ -87,6 +89,10 @@ void FlagEntity::update(Game &game, float delta_time) {
     if (flag_holder.valid_as<PhysEntity>(game)) {
       velocity = flag_holder.get_as<PhysEntity>(game).velocity;
     }
+  } else {
+    if (this->is_propped_by_level) {
+      this->velocity *= 0.99f;
+    }
   }
 
   needs_flip = velocity.x < 0;
@@ -151,28 +157,62 @@ void FlagEntity::draw(const Game &game) {
 
 bool FlagEntity::handle_interaction(
     Game &game, const net::InteractNetMessage::Reader interaction) {
-      
+
   EntityRef interactor =
       game.get_entity_by_net_id(interaction.getInteractorNetId());
   if (flag_holder.valid(game)) {
     if (flag_holder == interactor) {
       flag_holder = EntityRef();
-      this->velocity *= 2; // Throw the flag
+      this->velocity +=
+          (Vec2(0, 100.0) * rand_float(1.0, 2.0))
+              .rotated(rand_float(
+                  -0.5f * M_PI,
+                  0.5f * M_PI)); // Drop the flag with some random force
       return true;
     }
     return false;
   }
 
-  auto dist = (interactor.get(game).position - position).length();
-
-  if (dist > FLAG_GRAB_DISTANCE) {
+  if (!interactor.valid(game)) {
     return false;
   }
 
-  
+  if (interactor.valid_as<CharacterEntity>(game) &&
+      interactor.get_as<CharacterEntity>(game).team == team) {
+    return false; // Cannot pick up own flag
+  }
+
+  auto dist = (interactor.get(game).position - position).length();
+
+  if (dist > game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
+    return false;
+  }
 
   flag_holder = interactor;
   return true;
+}
+
+bool FlagEntity::check_interaction_possible(Game &game, EntityRef interactor) {
+  if (!interactor.valid(game)) {
+    return false;
+  }
+
+  if (flag_holder.valid(game) && flag_holder == interactor) {
+    return true; // Can drop the flag
+  }
+
+  auto dist = (interactor.get(game).position - position).length();
+
+  if (interactor.valid_as<CharacterEntity>(game) &&
+      interactor.get_as<CharacterEntity>(game).team == team) {
+    return false; // Cannot pick up own flag
+  }
+
+  if (dist > game.get_gvar<float>(GVarType::ENTITY_INTERACTION_RANGE)) {
+    return false;
+  }
+
+  return true; // Can pick up the flag
 }
 
 void FlagEntity::update_from_sync_message(

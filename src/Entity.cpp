@@ -37,6 +37,10 @@ void Entity::update_from_sync_message(
   }
 }
 
+bool Entity::check_interaction_possible(Game &game, EntityRef interactor) {
+  return false;
+}
+
 EntityRef Entity::get_ref() const {
   EntityRef ref;
   ref.id = id;

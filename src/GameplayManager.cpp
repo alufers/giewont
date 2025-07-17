@@ -1,12 +1,14 @@
 #include "GameplayManager.h"
-#include "entities/character/CharacterEntity.h"
 #include "Color.h"
 #include "DataBinder.h"
 #include "Entity.h"
 #include "FlagEntity.h"
 #include "Log.h"
 #include "TeamBaseEntity.h"
+#include "entities/character/CharacterEntity.h"
 #include "entities/decorative/TombstoneEntity.h"
+#include "entities/gameplay/BonusEntity.h"
+#include "math/RandUtil.h"
 #include "schema.capnp.h"
 
 #ifdef GIEWONT_HAS_GRAPHICS
@@ -75,6 +77,13 @@ void GameplayManager::server_update(Game &game, float delta_time) {
     check_gameplay_state(game);
     time_until_gameplay_state_check = 0.5f;
   }
+
+  time_until_bonus_spawn -= delta_time;
+  if (time_until_bonus_spawn <= 0.0f) {
+    time_until_bonus_spawn = rand_float(4.0f, 10.0f);
+    spawn_bonus(game);
+  }
+
   blue_team_score = team_states[GameplayTeam::BLUE_TEAM].score;
   red_team_score = team_states[GameplayTeam::RED_TEAM].score;
 }
@@ -127,14 +136,18 @@ void GameplayManager::check_gameplay_state(Game &game) {
             LOG_INFO() << "Score for team "
                        << gameplay_team_to_string(other_team) << " is "
                        << other_state.score << std::endl;
-            if (other_team == GameplayTeam::RED_TEAM) {
 
-              message = "Red team captured the flag!";
-              message_time = 3.0f;
-            } else {
+            if (message == "") {
 
-              message = "Blue team captured the flag!";
-              message_time = 3.0f;
+              if (other_team == GameplayTeam::RED_TEAM) {
+
+                message = "Red team captured the flag!";
+                message_time = 3.0f;
+              } else {
+
+                message = "Blue team captured the flag!";
+                message_time = 3.0f;
+              }
             }
 
             GColor scoring_color = gameplay_team_to_color(other_team);
@@ -158,7 +171,7 @@ void GameplayManager::check_gameplay_state(Game &game) {
     if (!state.did_spawn_ai_first_time) {
       state.did_spawn_ai_first_time = true;
       for (size_t i = 0; i < initial_ai_spawn_count; i++) {
-        
+
         spawn_player_with_team(game, 0, team);
       }
     }
@@ -196,6 +209,13 @@ void GameplayManager::spawn_player_with_team(Game &game, uint32_t peer_id,
   auto &player = player_ref.get_as<CharacterEntity>(game);
 
   player.team = team;
+
+  if (peer_id == 0) {
+    player.velocity.x += rand_float(
+        -300.0f,
+        300.0f); // Give the AI a random push, to prevent them from stacking up
+    player.velocity.y = -300.0f;
+  }
 
   LOG_INFO() << "spawning player with team "
              << gameplay_team_to_string(player.team) << std::endl;
@@ -257,5 +277,52 @@ GameplayTeam giewont::gameplay_team_get_enemy(GameplayTeam team) {
     return GameplayTeam::RED_TEAM;
   default:
     return GameplayTeam::UNKNOWN_TEAM;
+  }
+}
+
+void GameplayManager::spawn_bonus(Game &game) {
+  TilemapEntity *tilemap = nullptr;
+  size_t bonus_count = 0;
+
+  for (auto &entity : game.valid_entities()) {
+    if (TilemapEntity *tm = dynamic_cast<TilemapEntity *>(entity.get())) {
+      tilemap = tm;
+      break;
+    }
+    if (BonusEntity *bonus = dynamic_cast<BonusEntity *>(entity.get())) {
+      bonus_count++;
+    }
+  }
+
+  if (bonus_count > 0) {
+    return;
+  }
+
+  if (!tilemap || tilemap->tilemap_height < 2) {
+    LOG_ERROR() << "No tilemap found for spawning bonus" << std::endl;
+    return;
+  }
+
+  for (size_t attempt = 0; attempt < 10; attempt++) {
+    IVec2 random_tile_pos =
+        IVec2(rand_int(0, tilemap->tilemap_width - 1),
+              rand_int(0, tilemap->tilemap_height -
+                              2)); // -2 to ensure we always have a floor below
+
+    TileType tile_type = tilemap->get_tile_type_at(random_tile_pos);
+    TileType tile_below_type =
+        tilemap->get_tile_type_at(random_tile_pos + IVec2(0, 1));
+
+    if (tile_type == TileType::AIR && tile_below_type == TileType::SOLID) {
+      // Found a valid position for the bonus
+      Vec2 tile_world_pos =
+          tilemap->get_tile_bottom_center_world_pos(random_tile_pos) +
+          Vec2(0, -tilemap->tile_size.y * 2.0f);
+      auto bonus = std::make_unique<BonusEntity>();
+      bonus->position = tile_world_pos;
+      bonus->load_assets(game);
+
+      game.push_entity(std::move(bonus));
+    }
   }
 }

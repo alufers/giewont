@@ -7,19 +7,20 @@
 #include "NullEntity.h"
 #include <exception>
 
-#include "entities/character/CharacterEntity.h"
 #include "GrenadeEntity.h"
 #include "LevelLoader.h"
 #include "TeamBaseEntity.h"
 #include "Vec2.h"
+#include "entities/character/CharacterEntity.h"
 #include "entities/decorative/TombstoneEntity.h"
+#include "entities/gameplay/ProjectileEntity.h"
+#include "entities/gameplay/BonusEntity.h"
 #include "entities/gui/TeamChoiceGUIEntity.h"
 #include <cstdint>
 #include <format>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
-#include "entities/gameplay/ProjectileEntity.h"
 
 using namespace giewont;
 
@@ -28,6 +29,10 @@ Game::Game() {
   null_ent->id = 0;
   this->entities.push_back(std::move(null_ent));
   this->entities.resize(MAX_ENTITIES);
+
+  this->gameplay_variables[GVarType::GRAVITY] = Vec2(0.0f, 9.81f * 70); // y is positive down, and 1m = 70 units
+  this->gameplay_variables[GVarType::ENTITY_INTERACTION_RANGE] = 140.0f;
+  this->gameplay_variables[GVarType::BASE_ACTIVATION_DIST] = 140.0f;
 }
 
 void Game::update(float delta_time) {
@@ -59,8 +64,6 @@ EntityRef Game::push_entity(std::unique_ptr<Entity> entity) {
     }
   }
   entity->id = idx;
-  LOG_DEBUG() << "Pushing entity with id " << idx << " (type "
-              << entity->get_type_name() << ")" << std::endl;
   entity->generation = generation_counter;
   generation_counter++;
   entities[idx] = std::move(entity);
@@ -112,6 +115,9 @@ void Game::apply_sync_entity(const net::SyncEntityNetMessage::Reader &message) {
         break;
       case net::EntityType::PROJECTILE:
         entToCreate = std::make_unique<ProjectileEntity>();
+        break;
+      case net::EntityType::BONUS:
+        entToCreate = std::make_unique<BonusEntity>();
         break;
       default:
         LOG_WARN() << "apply_sync_entity: Unknown entity type "
@@ -230,4 +236,12 @@ void Game::delete_marked_entities() {
       entities[i] = nullptr;
     }
   }
+}
+
+template <> float Game::get_gvar<float>(GVarType type) const {
+  return std::get<float>(gameplay_variables.at(type));
+}
+
+template <> Vec2 Game::get_gvar<Vec2>(GVarType type) const {
+  return std::get<Vec2>(gameplay_variables.at(type));
 }

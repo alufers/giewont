@@ -3,6 +3,8 @@
 #include "Entity.h"
 #include "FlagEntity.h"
 #include "GameplayManager.h"
+#include "GoapActions.h"
+#include "GoapGoals.h"
 #include "IVec2.h"
 #include "Log.h"
 #include "TeamBaseEntity.h"
@@ -15,187 +17,114 @@
 
 using namespace giewont;
 
-const float WAYPOINT_REACHED_THRESHOLD = 38.0f;
-const float X_CLOSE_THRESHOLD = 20.0f;
-const float WAYPOINT_REACH_MAX_TIME = 5.0f;
+SmartAICharacterController::SmartAICharacterController()
+    : CharacterController() {
+  state.sensors = construct_goap_sensors();
+
+  int ai_class = rand_int(0, 3);
+  if (ai_class == 0) {
+    state.goals = construct_goap_goals();
+  } else if (ai_class == 1) {
+    state.goals = construct_killer_goap_goals();
+  } else if (ai_class == 2) {
+    state.goals = construct_protector_goap_goals();
+  } else {
+    state.goals = construct_goap_goals();
+  }
+
+  state.actions = construct_goap_actions();
+}
 
 void SmartAICharacterController::update(Game &game, CharacterEntity &character,
                                         float delta_time) {
-  SmartAIThinkCtx ctx{game, character, state};
+  SmartAIThinkCtx ctx{game, character, state, delta_time};
 
-  if (ctx.state.enemyAttachCheckTime > 0.0f) {
-    ctx.state.enemyAttachCheckTime -= delta_time;
-  } else {
-    bool didThrow = false;
-    if (ctx.character.is_propped_by_level) {
-      for (auto &entity : ctx.game.valid_entities()) {
-        if (CharacterEntity *enemy =
-                dynamic_cast<CharacterEntity *>(entity.get())) {
-          if (enemy->team != ctx.character.team &&
-              (enemy->position - ctx.character.position).length() < 300.0f) {
-            capnp::MallocMessageBuilder message;
-            auto interact = message.initRoot<net::InteractNetMessage>();
-            interact.setType(net::InteractionType::THROW_INTERACTION);
-            interact.setInteractorNetId(character.net_id);
-            game.perform_interaction(interact);
-            didThrow = true;
-            break;
-          }
-        }
-      }
-    }
+  state.dwellTime -= delta_time;
+  state.timeUntilPlanReevaluation -= delta_time;
+  state.currentPlanAge += delta_time;
 
-    if(didThrow) {
-      ctx.state.enemyAttachCheckTime = rand_float(5.0f, 10.0f);
-    } else {
-      ctx.state.enemyAttachCheckTime = rand_float(0.01f, 1.8f);
-    }
-  }
-  if (ctx.state.dwellTime > 0.0f) {
-    ctx.state.dwellTime -= delta_time;
+  if (state.dwellTime > 0.0f) {
     return;
   }
-  if (ctx.state.path.empty()) {
-    ctx.state.noPathAttempts++;
 
-    if (ctx.state.noPathAttempts > 20) {
-      character.health = 0;
-    }
+  // Goap stuff
+  this->process_sensors(ctx);
+  this->process_goals(ctx);
+  this->process_actions(ctx);
+  this->generate_goap_plan(ctx);
 
-    EntityRef flag_ref = get_enemy_flag(ctx);
-    if (flag_ref.valid_as<FlagEntity>(game)) {
-      auto &flag_ent = flag_ref.get_as<FlagEntity>(game);
-      Vec2 enemy_flag_pos = flag_ent.position;
+  if (!ctx.state.currentGoapPlan.empty()) {
+    auto &currentPlainItem = ctx.state.currentGoapPlan.front();
+  }
 
-      if (flag_ent.flag_holder.valid(game) &&
-          flag_ent.flag_holder == character.get_ref()) {
-        // We are holding it
-        EntityRef base_ref = get_own_base(ctx);
-        if (base_ref.valid_as<TeamBaseEntity>(game)) {
-          auto &base_ent = base_ref.get_as<TeamBaseEntity>(game);
-          Vec2 own_base_pos = base_ent.position;
+  bool did_do_any_goap_action = false;
+  for (auto &plan_item : ctx.state.currentGoapPlan) {
+    if (plan_item.did_complete)
+      continue;
+    if (std::shared_ptr<GoapAction> action = plan_item.action.lock()) {
+      GoapActionResult result;
 
-          this->find_path(ctx, own_base_pos);
-        }
+      did_do_any_goap_action = true;
+      if (!plan_item.did_begin) {
+        result = action->on_begin(ctx);
       } else {
-        if ((character.position - enemy_flag_pos).length() <
-            FlagEntity::FLAG_GRAB_DISTANCE) {
-          capnp::MallocMessageBuilder message;
-          auto interact = message.initRoot<net::InteractNetMessage>();
-          interact.setType(net::InteractionType::USE_INTERACTION);
-          interact.setInteractorNetId(character.net_id);
-          game.perform_interaction(interact);
-          ctx.state.dwellTime = rand_float(0.8f, 1.2f);
-        } else {
-          this->find_path(ctx, enemy_flag_pos);
-          ctx.state.dwellTime = rand_float(0.05f, 1.2f);
-          ctx.state.waypointReachTime = 0.0f;
-        }
+
+        result = action->perform(ctx);
       }
+      plan_item.last_result = result;
+      switch (result) {
+      case GoapActionResult::NOT_ATTEMPTED:
+        throw std::runtime_error(
+            "[AI] Action " + action->get_name() +
+            " returned NOT_ATTEMPTED, this should not happen.");
+        break;
+      case GoapActionResult::FAILED_FORCE_REPLAN:
+        LOG_DEBUG() << "[AI] Action " << action->get_name()
+                    << " failed, replanning." << std::endl;
+        state.dwellTime = rand_float(0.5f, 3.2f);
+        return; // No point in continuing, we need to replan
+      case GoapActionResult::FAILED_RECOVERABLE:
+        LOG_DEBUG() << "[AI] Action " << action->get_name()
+                    << " failed, but can be retried." << std::endl;
+        plan_item.did_begin = false;
+        plan_item.attempt_count++;
+        state.dwellTime = rand_float(0.1f, 1.2f);
+        if (plan_item.attempt_count > 5) {
+          LOG_DEBUG() << "[AI] Action " << action->get_name()
+                      << " failed too many times, replanning." << std::endl;
+          plan_item.last_result =
+              GoapActionResult::FAILED_FORCE_REPLAN; // Force replan
+        }
+        // We can retry the action, so we don't clear the plan
+        return;
+      case GoapActionResult::IN_PROGRESS:
+        plan_item.did_begin = true;
+        break;
+      case GoapActionResult::DONE:
+        LOG_DEBUG() << "[AI] Action " << action->get_name()
+                    << " completed successfully." << std::endl;
+        plan_item.did_begin = true;
+        plan_item.did_complete = true;
+        break;
+      case GoapActionResult::RESTART_IMMEDIATE:
+        plan_item.did_begin = false; // Restart the action immediately
+        return; // No point in continuing, we need to replan
+      }
+
+      break; // We only execute one action at a time
     }
   }
-  CharacterMovementCommand command = giewont::CharacterMovementCommand::NONE;
-  if (!ctx.state.path.empty()) {
-    ctx.state.noPathAttempts = 0;
-    // LOG_DEBUG() << "Path size: " << ctx.state.path.size() << std::endl;
-    auto feetPos = ctx.character.world_feet_pos() - Vec2(0, 1.0f);
-    auto &currentNode = ctx.state.path[0];
 
-    if ((currentNode.flags & AiPathNodeFlag::JUMP_BEFORE_REACHING) &&
-        !ctx.state.did_jump_for_current_waypoint &&
-        ctx.character.is_propped_by_level) {
-      command |= giewont::CharacterMovementCommand::JUMP;
-      ctx.state.did_jump_for_current_waypoint = true;
-    }
+  if (!did_do_any_goap_action) {
 
-    bool hasReachedCurrentNode =
-        currentNode.world_pos.distance(feetPos) < WAYPOINT_REACHED_THRESHOLD;
-
-    IVec2 feetTilePos =
-        ctx.state.last_tilemap->world_pos_to_tilemap_pos(feetPos);
-
-    float min_target_x = currentNode.world_pos.x;
-    float max_target_x = currentNode.world_pos.x;
-
-    // Permit overshooting if the next node iso on the same y
-    if (ctx.state.path.size() > 1) {
-      auto nextNode = ctx.state.path[1];
-      if (nextNode.tile_pos.y == currentNode.tile_pos.y &&
-          !(nextNode.flags & AiPathNodeFlag::JUMP_BEFORE_REACHING)) {
-        min_target_x = std::min(currentNode.world_pos.x, nextNode.world_pos.x);
-        max_target_x = std::max(currentNode.world_pos.x, nextNode.world_pos.x);
-
-        if (std::abs(feetPos.y - nextNode.world_pos.y) <
-                WAYPOINT_REACHED_THRESHOLD / 2.0 &&
-            (feetPos.x > min_target_x) && (feetPos.x < max_target_x)) {
-          LOG_DEBUG() << "Reached node by overshooting to the next one"
-                      << std::endl;
-          hasReachedCurrentNode = true;
-        }
-      }
-    }
-
-    ctx.state.tilemapFeetPos = feetTilePos;
-
-    if (currentNode.flags & AiPathNodeFlag::LANDING_SITE &&
-        !hasReachedCurrentNode) {
-      if (feetTilePos == currentNode.tile_pos) {
-        hasReachedCurrentNode = true;
-      }
-    }
-
-    // wait for stopping when reaching the target
-    if (hasReachedCurrentNode && ctx.state.path.size() == 1) {
-      hasReachedCurrentNode = ctx.character.velocity.length() < 30.0f;
-    }
-
-    if (hasReachedCurrentNode) {
-      ctx.state.did_jump_for_current_waypoint = false;
-      ctx.state.waypointReachTime = 0.0f;
-      // We are close to the node, remove it from the path
-      ctx.state.path.erase(ctx.state.path.begin());
-      if (ctx.state.path.empty()) {
-        ctx.state.dwellTime = rand_float(0.05f, 3.2f);
-      }
-    } else {
-
-      // auto x_dist = std::abs(currentNode.world_pos.x - feetPos.x);
-
-      // if (x_dist > X_CLOSE_THRESHOLD) {
-      //   // Move towards the current node
-      //   bool should_move_right = feetPos.x < currentNode.world_pos.x;
-
-      //   if (should_move_right) {
-
-      //     command |= giewont::CharacterMovementCommand::MOVE_RIGHT;
-      //   } else {
-
-      //     command |= giewont::CharacterMovementCommand::MOVE_LEFT;
-      //   }
-      // }
-
-      if (min_target_x - feetPos.x > X_CLOSE_THRESHOLD) {
-        command |= giewont::CharacterMovementCommand::MOVE_RIGHT;
-      } else if (feetPos.x - max_target_x > X_CLOSE_THRESHOLD) {
-        command |= giewont::CharacterMovementCommand::MOVE_LEFT;
-      }
-
-      bool should_jump = (feetPos.y - currentNode.world_pos.y) > 10.0f;
-      if (should_jump) {
-        command |= giewont::CharacterMovementCommand::JUMP;
-      }
-    }
-
-    ctx.state.waypointReachTime += delta_time;
-    if (ctx.state.waypointReachTime > WAYPOINT_REACH_MAX_TIME) {
-      ctx.state.path.clear();
-      ctx.state.dwellTime = rand_float(0.05f, 1.2f);
-      if (rand_float(0.0f, 1.0f) < 0.5f) {
-        command |= giewont::CharacterMovementCommand::MOVE_LEFT;
-      }
-    }
+    ctx.state.dwellTime = rand_float(0.5f, 3.2f);
   }
-  character.perform_movement(game, delta_time, command);
+
+  if (state.timeUntilPlanReevaluation <= 0.0f) {
+    state.timeUntilPlanReevaluation = state.planReevaluationInterval;
+
+    this->evaluate_current_goap_plan(ctx);
+  }
 }
 
 void SmartAICharacterController::draw_debug(const Game &game) {
@@ -256,340 +185,289 @@ void SmartAICharacterController::draw_debug(const Game &game) {
 #endif
 };
 
-EntityRef SmartAICharacterController::get_own_base(SmartAIThinkCtx &ctx) {
-  for (auto &entity : ctx.game.valid_entities()) {
-    if (TeamBaseEntity *base = dynamic_cast<TeamBaseEntity *>(entity.get())) {
-      if (base->team == ctx.character.team) {
-        return entity->get_ref();
-      }
+void SmartAICharacterController::process_sensors(SmartAIThinkCtx &ctx) {
+  for (auto &sensor : ctx.state.sensors) {
+
+    if (sensor->last_update_frame % sensor->sense_frequency == 0) {
+      sensor->last_update_frame = 0;
+      GoapBlackboardValue value = sensor->sense(ctx);
+      ctx.state.current_state[sensor->get_key()] = value;
     }
+    sensor->last_update_frame++;
   }
-  return EntityRef(); // Return an invalid EntityRef if no base is found
 }
 
-EntityRef SmartAICharacterController::get_enemy_flag(SmartAIThinkCtx &ctx) {
-  for (auto &entity : ctx.game.valid_entities()) {
-    if (FlagEntity *flag = dynamic_cast<FlagEntity *>(entity.get())) {
-      if (flag->team == gameplay_team_get_enemy(ctx.character.team)) {
-        return entity->get_ref();
-      }
-    }
+void SmartAICharacterController::process_goals(SmartAIThinkCtx &ctx) {
+  for (auto &goal : ctx.state.goals) {
+    goal->_last_reward_value =
+        goal->get_reward(ctx, ctx.state.current_state, ctx.state.current_state);
   }
-  return EntityRef(); // Return an invalid EntityRef if no base is found
 }
 
-void SmartAICharacterController::find_path(SmartAIThinkCtx &ctx,
-                                           Vec2 target_pos) {
-
-  Vec2 feet_pos = ctx.character.world_feet_pos() - Vec2(0, 5.0f);
-  target_pos -= Vec2(0, 5.0f);
-  TilemapEntity *tilemap = nullptr;
-  for (auto &entity : ctx.game.valid_entities()) {
-    if (TilemapEntity *tm = dynamic_cast<TilemapEntity *>(entity.get())) {
-      if (tm->is_point_in_tilemap_bounds(target_pos) &&
-          tm->is_point_in_tilemap_bounds(feet_pos)) {
-        tilemap = tm;
-      }
-      break;
-    }
+void SmartAICharacterController::process_actions(SmartAIThinkCtx &ctx) {
+  for (auto &action : ctx.state.actions) {
+    GoapBlackboard finishState = ctx.state.current_state;
+    float cost = action->get_reward(ctx, ctx.state.current_state, finishState);
+    action->_last_reward_value = cost;
   }
-  if (tilemap == nullptr) {
-    LOG_ERROR() << "No tilemap found for pathfinding" << std::endl;
-    return;
-  }
-
-  ctx.state.last_tilemap = tilemap;
-
-  auto nearestWalkableTargetPosOption =
-      tilemap->get_nearest_walkable_tile_pos(target_pos);
-  if (!nearestWalkableTargetPosOption.has_value()) {
-    LOG_ERROR() << "No walkable tile found for pathfinding" << std::endl;
-    return;
-  }
-
-  auto nearestWalkableStartPosOption =
-      tilemap->get_nearest_walkable_tile_pos(feet_pos);
-
-  if (!nearestWalkableStartPosOption.has_value()) {
-    LOG_ERROR() << "No walkable tile found for pathfinding" << std::endl;
-    return;
-  }
-
-  // Calculate character capabilities
-  float maxJumpHeight = (ctx.character.jump_speed * ctx.character.jump_speed) /
-                        (2.0f * ctx.game.gravity.y);
-  float characterHeight = ctx.character.get_aabb().height();
-  int charcterHeightInTiles =
-      static_cast<int>(std::ceil(characterHeight / tilemap->tile_size.y));
-
-  for (auto node : ctx.state.aStarData) {
-    // cleanup last search (we keep it in-between updates for debugging)
-    if (node != nullptr) {
-      delete (node);
-    }
-  }
-
-  ctx.state.aStarData.clear();
-
-  auto startTile = nearestWalkableStartPosOption.value();
-  auto targetTile = nearestWalkableTargetPosOption.value();
-
-  LOG_DEBUG() << "[AI] Start tile: " << startTile << std::endl;
-  LOG_DEBUG() << "[AI] Target tile: " << targetTile << std::endl;
-
-  auto &nodes = ctx.state.aStarData;
-  nodes.resize(tilemap->tilemap_width *
-               tilemap->tilemap_height); // 1D array of nodes
-
-  auto heuristic = [targetTile](IVec2 from) -> float {
-    return (from - targetTile).length2();
-  };
-
-  AiPathNode *startNode = new AiPathNode{
-      .world_pos = tilemap->get_tile_bottom_center_world_pos(startTile),
-      .tile_pos = startTile,
-      .gScore = 0.0f,
-      .fScore = heuristic(targetTile),
-      .isGoal = false};
-
-  nodes[startTile.x + startTile.y * tilemap->tilemap_width] = startNode;
-
-  nodes[targetTile.x + targetTile.y * tilemap->tilemap_width] = new AiPathNode{
-      .world_pos = tilemap->get_tile_bottom_center_world_pos(targetTile),
-      .tile_pos = targetTile,
-      .gScore = INFINITY,
-      .fScore = 0.0f,
-      .isGoal = true,
-  };
-
-  std::vector<AiPathNode *> openSet;
-  openSet.push_back(startNode);
-
-  auto processNeighbour = [&](AiPathNode *comingFrom, IVec2 neighbourPos,
-                              float cost,
-                              AiPathNodeFlag flags = AiPathNodeFlag::NONE) {
-    auto &neighborNode =
-        nodes[neighbourPos.x + neighbourPos.y * tilemap->tilemap_width];
-    if (neighborNode == nullptr) {
-      neighborNode = new AiPathNode{
-          .world_pos = tilemap->get_tile_bottom_center_world_pos(neighbourPos),
-          .tile_pos = neighbourPos,
-          .gScore = INFINITY,
-          .fScore = INFINITY,
-          .isGoal = false};
-    }
-
-    float tentativeGScore = comingFrom->gScore + cost;
-    if (tentativeGScore < neighborNode->gScore) {
-      neighborNode->parent = comingFrom;
-      neighborNode->gScore = tentativeGScore;
-      neighborNode->fScore = tentativeGScore + heuristic(neighbourPos);
-      neighborNode->flags = flags;
-      if (std::find(openSet.begin(), openSet.end(), neighborNode) ==
-          openSet.end()) {
-        openSet.push_back(neighborNode);
-      }
-    }
-  };
-
-  auto canHaveFeetInTile = [&](IVec2 tilePos) {
-    for (int i = 0; i < charcterHeightInTiles; i++) {
-      auto tileType = tilemap->get_tile_type_at(tilePos - IVec2(0, i));
-      if (tileType != TileType::AIR && tileType != TileType::LADDER) {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  /// @brief Given a tile position check where we will end up if we enter it
-  /// from the side
-  auto generateNeighboursAtColumn = [&](IVec2 columnPos,
-                                        AiPathNode *comingFrom) {
-    // First try looking what would happen if we fell down (or just walked
-    // over the tile)
-    auto currTile = columnPos;
-    while (tilemap->is_tile_in_bounds(currTile)) {
-      bool can_stand_in_tile = canHaveFeetInTile(currTile);
-
-      if (!can_stand_in_tile) {
-        break;
-      }
-      TileType tileBelowFeet =
-          tilemap->get_tile_type_at(currTile + IVec2(0, 1));
-      bool can_stand_on_tile_below =
-          tileBelowFeet == TileType::SOLID || tileBelowFeet == TileType::LADDER;
-
-      if (can_stand_in_tile && can_stand_on_tile_below) {
-        float cost = std::abs(currTile.x - comingFrom->tile_pos.x) * 10.0f +
-                     std::abs(currTile.y - comingFrom->tile_pos.y) * 20.0f;
-        // We can fall (or walk) down here
-        processNeighbour(comingFrom, currTile, cost,
-                         (currTile.y == comingFrom->tile_pos.y)
-                             ? AiPathNodeFlag::NONE
-                             : AiPathNodeFlag::LANDING_SITE);
-        break;
-      }
-      currTile.y++;
-    }
-
-    // Try looking if we can jump up
-    currTile = columnPos - IVec2(0, 1);
-
-    while (tilemap->is_tile_in_bounds(currTile) &&
-           (std::abs((currTile - comingFrom->tile_pos).y *
-                     tilemap->tile_size.y) < maxJumpHeight)) {
-      bool can_stand_in_tile = canHaveFeetInTile(currTile);
-
-      TileType tileBelowFeet =
-          tilemap->get_tile_type_at(currTile + IVec2(0, 1));
-      bool can_stand_on_tile_below =
-          tileBelowFeet == TileType::SOLID || tileBelowFeet == TileType::LADDER;
-
-      if (can_stand_in_tile && can_stand_on_tile_below) {
-        float cost = std::abs(currTile.x - comingFrom->tile_pos.x) * 10.0f +
-                     std::abs(currTile.y - comingFrom->tile_pos.y) * 20.0f;
-        if (tileBelowFeet == TileType::LADDER) {
-          cost += 220.0f;
-        }
-        // We can jump up here
-        processNeighbour(comingFrom, currTile, cost);
-        break;
-      }
-      currTile.y--;
-    }
-  };
-
-  auto generateNeighboursForHoleJump = [&](IVec2 targetPos,
-                                           AiPathNode *comingFrom) {
-    if (!tilemap->is_tile_in_bounds(targetPos) ||
-        !canHaveFeetInTile(targetPos)) {
-      return;
-    }
-
-    // First check for clearance
-    int minXToCheck = std::min(comingFrom->tile_pos.x, targetPos.x);
-    int maxXToCheck = std::max(comingFrom->tile_pos.x, targetPos.x);
-    int minYToCheck = std::min(comingFrom->tile_pos.y - charcterHeightInTiles,
-                               targetPos.y - charcterHeightInTiles);
-    int maxYToCheck = std::max(comingFrom->tile_pos.y, targetPos.y);
-
-    for (int x = minXToCheck; x <= maxXToCheck; x++) {
-      for (int y = minYToCheck; y <= maxYToCheck; y++) {
-        auto tileType = tilemap->get_tile_type_at(IVec2(x, y));
-        if (tileType != TileType::AIR && tileType != TileType::LADDER) {
-          return;
-        }
-      }
-    }
-
-    // Now let's check if we can stand on the target tile
-    IVec2 targetFeetTilePos = targetPos + IVec2(0, 1);
-    bool canStandOnTargetTile =
-        tilemap->get_tile_type_at(targetFeetTilePos) == TileType::SOLID ||
-        tilemap->get_tile_type_at(targetFeetTilePos) == TileType::LADDER;
-    if (!canStandOnTargetTile) {
-      return;
-    }
-
-    processNeighbour(
-        comingFrom, targetPos,
-        std::abs(targetPos.x - comingFrom->tile_pos.x) * 60.0f +
-            std::abs(targetPos.y - comingFrom->tile_pos.y) * 20.0f + 210.0f,
-        AiPathNodeFlag::LANDING_SITE | AiPathNodeFlag::JUMP_BEFORE_REACHING);
-  };
-
-  while (!openSet.empty()) {
-    AiPathNode *currentNode = openSet[0];
-    for (auto node : openSet) {
-      if (node->fScore < currentNode->fScore) {
-        currentNode = node;
-      }
-    }
-
-    // LOG_DEBUG() << "[AI] Current node: " << currentNode->tile_pos
-    //             << " isGoal: " << currentNode->isGoal
-    //             << " fScore: " << currentNode->fScore << std::endl;
-    if (currentNode->isGoal) {
-      LOG_INFO() << "[AI] Found path to goal" << std::endl;
-      // We found the goal
-      reconstruct_path(ctx, currentNode);
-      return;
-    }
-
-    // Remove current node from openSet
-    openSet.erase(std::remove(openSet.begin(), openSet.end(), currentNode),
-                  openSet.end());
-
-    // Process neighbors at the sides
-
-    generateNeighboursAtColumn(currentNode->tile_pos + IVec2(1, 0),
-                               currentNode);
-    generateNeighboursAtColumn(currentNode->tile_pos + IVec2(-1, 0),
-                               currentNode);
-
-    generateNeighboursForHoleJump(currentNode->tile_pos + IVec2(-2, 0),
-                                  currentNode);
-    generateNeighboursForHoleJump(currentNode->tile_pos + IVec2(2, 0),
-                                  currentNode);
-    generateNeighboursForHoleJump(currentNode->tile_pos + IVec2(-3, 0),
-                                  currentNode);
-    generateNeighboursForHoleJump(currentNode->tile_pos + IVec2(3, 0),
-                                  currentNode);
-
-    TileType tileInFeet = tilemap->get_tile_type_at(currentNode->tile_pos);
-    // Check if can climb directly upwards
-    if (tileInFeet == TileType::LADDER) {
-      processNeighbour(currentNode, currentNode->tile_pos - IVec2(0, 1), 35.0f,
-                       AiPathNodeFlag::LADDER_CLIMB);
-    }
-  }
-
-  LOG_ERROR() << "[AI] No path found" << std::endl;
 }
 
-void SmartAICharacterController::reconstruct_path(SmartAIThinkCtx &ctx,
-                                                  AiPathNode *goalNode) {
+void SmartAICharacterController::generate_goap_plan(SmartAIThinkCtx &ctx) {
 
-  ctx.state.path.clear();
-  AiPathNode *currentNode = goalNode;
-  while (currentNode != nullptr) {
-    AiPathNode nodeCopy = *currentNode;
-    nodeCopy.parent = nullptr; // Avoid copying the parent pointer
-    ctx.state.path.push_back(nodeCopy);
-    currentNode = currentNode->parent;
-  }
-  std::reverse(ctx.state.path.begin(), ctx.state.path.end());
-
-  // Now let's clean up the path a bit
-  // We mainly want to remove redundant nodes to prevent the AI from jolting
-  // about
-
-  for (size_t i = 1; i < ctx.state.path.size() - 1; ++i) {
-    // If a node has no flags and has the same y coordinate as the previous and
-    // next node we can
-    // remove it
-
-    auto &prevNode = ctx.state.path[i - 1];
-    auto &currNode = ctx.state.path[i];
-    auto &nextNode = ctx.state.path[i + 1];
-    if (!(currNode.flags & AiPathNodeFlag::LADDER_CLIMB) &&
-        !(currNode.flags & AiPathNodeFlag::JUMP_BEFORE_REACHING) &&
-        !(nextNode.flags & AiPathNodeFlag::JUMP_BEFORE_REACHING)) {
-      if (prevNode.tile_pos.y == currNode.tile_pos.y &&
-          nextNode.tile_pos.y == currNode.tile_pos.y) {
-        ctx.state.path.erase(ctx.state.path.begin() + i);
-        i--;
-      }
+  bool has_any_performable_actions = false;
+  for (const auto &plan_step : ctx.state.currentGoapPlan) {
+    GoapActionResult res = plan_step.last_result;
+    if (res == GoapActionResult::FAILED_FORCE_REPLAN) {
+      has_any_performable_actions = false;
+      break; // One action failed unrecoverably, we need to replan
     }
 
-    if (currNode.flags & AiPathNodeFlag::LADDER_CLIMB &&
-        prevNode.flags & AiPathNodeFlag::LADDER_CLIMB) {
-      if (prevNode.tile_pos.x == currNode.tile_pos.x &&
-          nextNode.tile_pos.x == currNode.tile_pos.x) {
-        ctx.state.path.erase(ctx.state.path.begin() + i);
-        i--;
+    if (res != GoapActionResult::DONE) {
+      has_any_performable_actions = true;
+    }
+  }
+
+  if (has_any_performable_actions)
+    return; // The current plan is still valid.
+
+  std::vector<GoapPlanItem> initial_plan;
+  auto next_plan = this->consider_next_plan_item(ctx, initial_plan);
+  if (next_plan.has_value()) {
+    LOG_DEBUG() << "[AI] Found a plan with " << next_plan.value().size()
+                << " items" << std::endl;
+
+    for (const auto &item : next_plan.value()) {
+      LOG_DEBUG() << "[AI] Action: " << item.action.lock()->get_name()
+                  << ", Action Reward: " << item.action_reward
+                  << ", Goal Reward: " << item.goal_reward << std::endl;
+    }
+    this->state.currentGoapPlan = next_plan.value();
+
+    this->state.currentPlanAge = 0.0f;
+    if (!this->state.currentGoapPlan.empty()) {
+      for (auto &goal : ctx.state.goals) {
+        this->state.expectedGoalRewards[goal->get_name()] =
+            goal->get_reward(ctx, this->state.currentGoapPlan.back().state,
+                             this->state.currentGoapPlan.back().state);
+      }
+    } else {
+      this->state.expectedGoalRewards.clear();
+    }
+
+  } else {
+    LOG_DEBUG() << "[AI] No plan found" << std::endl;
+  }
+}
+
+std::optional<std::vector<GoapPlanItem>>
+SmartAICharacterController::consider_next_plan_item(
+    SmartAIThinkCtx &ctx, std::vector<GoapPlanItem> const &curr_plan) {
+  if (curr_plan.size() > 3) {
+    return std::nullopt; // Too long plan, don't consider it
+  }
+
+  GoapBlackboard initial_state = ctx.state.current_state;
+  if (!curr_plan.empty()) {
+    initial_state = curr_plan.back().state;
+  }
+
+  std::optional<std::vector<GoapPlanItem>> best_plan = std::nullopt;
+  float best_plan_reward = -INFINITY;
+  if (!curr_plan.empty()) {
+    // If we already have a plan, use it's reward as the best one,
+    // to prevent taking nonsense paths
+    best_plan_reward = curr_plan.back().goal_reward;
+    for (const auto &item : curr_plan) {
+      best_plan_reward += item.action_reward;
+    }
+  }
+
+  for (auto &action : ctx.state.actions) {
+    GoapBlackboard finish_state = initial_state;
+    float cost = action->get_reward(ctx, initial_state, finish_state);
+    if (!std::isnan(cost) && std::isfinite(cost)) {
+
+      apply_gameplay_logic_to_predicted_blackboard(ctx, finish_state);
+
+      float goal_reward = 0.0f;
+      for (auto &goal : ctx.state.goals) {
+        goal_reward += goal->get_reward(ctx, initial_state, finish_state);
+      }
+
+      // This action can be performed
+      std::vector<GoapPlanItem> new_plan = curr_plan;
+      new_plan.push_back(GoapPlanItem{
+          .action = action,
+          .state = finish_state,
+          .action_reward = cost,
+          .goal_reward = goal_reward,
+      });
+
+      // Now recusively consider the next plan item after the action
+      auto next_plan = this->consider_next_plan_item(ctx, new_plan);
+      if (next_plan.has_value()) {
+        new_plan = next_plan.value();
+      }
+
+      // Calculate the total reward of the plan
+      float total_reward = 0.0f;
+      for (const auto &item : new_plan) {
+        total_reward += item.action_reward; // Sum up action rewards
+      }
+      total_reward +=
+          new_plan[new_plan.size() - 1]
+              .goal_reward; // Add the goal reward for the last state
+
+      if (total_reward > best_plan_reward) {
+
+        best_plan_reward = total_reward;
+        best_plan = new_plan; // Update the best plan if this one is better
       }
     }
   }
+
+  return best_plan;
+}
+
+void SmartAICharacterController::evaluate_current_goap_plan(
+    SmartAIThinkCtx &ctx) {
+  if (ctx.state.currentGoapPlan.empty()) {
+    return; // Nothing to evaluate
+  }
+
+  bool needs_replanning = false;
+  GoapBlackboard bb_state = ctx.state.current_state;
+  for (auto &plan_item : ctx.state.currentGoapPlan) {
+    if (plan_item.last_result == GoapActionResult::DONE)
+      continue; // Skip completed actions
+    if (plan_item.last_result == GoapActionResult::FAILED_FORCE_REPLAN)
+      break; // Plan is already invalid don't check further
+    if (plan_item.action.expired()) {
+      needs_replanning = true;
+      break; // Action is no longer valid, we need to replan
+    }
+
+    GoapBlackboard finish_state = bb_state;
+    float reward =
+        plan_item.action.lock()->get_reward(ctx, bb_state, finish_state);
+    if (!std::isfinite(reward) || std::isnan(reward)) {
+      LOG_DEBUG() << "[AI] Action " << plan_item.action.lock()->get_name()
+                  << " returned invalid reward, replanning." << std::endl;
+      needs_replanning = true;
+      break; // Invalid reward, we need to replan
+    }
+    apply_gameplay_logic_to_predicted_blackboard(ctx, finish_state);
+    float goal_reward = 0.0f;
+    for (auto &goal : ctx.state.goals) {
+      goal_reward += goal->get_reward(ctx, bb_state, finish_state);
+    }
+    plan_item.action_reward = reward;
+    plan_item.state = finish_state;
+    plan_item.goal_reward = goal_reward;
+    bb_state = finish_state; // Update the state for the next action
+  }
+
+  if (needs_replanning) {
+    LOG_DEBUG() << "[AI] =======PLAN NEEDS REPLANNING AFTER EVALUATION====="
+                << std::endl;
+    ctx.state.currentGoapPlan.clear();
+  }
+}
+
+void SmartAICharacterController::draw_inspector_ui(Game &game) {
+#ifdef GIEWONT_HAS_GRAPHICS
+
+  ImGui::Separator();
+  ImGui::Text("Current plan:");
+
+  ImGui::Text("Plan age: %.2f", state.currentPlanAge);
+  if (ImGui::Button("Force replan")) {
+    state.currentGoapPlan.clear();
+  }
+  ImGui::BeginTable("Action State", 4, ImGuiTableFlags_Borders);
+  ImGui::TableSetupColumn("Action");
+  ImGui::TableSetupColumn("Result");
+  ImGui::TableSetupColumn("Action Reward");
+  ImGui::TableSetupColumn("Goal Reward");
+  ImGui::TableHeadersRow();
+  for (const auto &plan_item : state.currentGoapPlan) {
+    ImGui::TableNextRow();
+    if (plan_item.last_result == GoapActionResult::IN_PROGRESS) {
+      ImGui::TableSetBgColor(
+          ImGuiTableBgTarget_RowBg0,
+          ImGui::GetColorU32(ImVec4(0.0f, 0.3f, 0.0f, 0.3f)));
+    } else if (plan_item.last_result == GoapActionResult::DONE) {
+      ImGui::TableSetBgColor(
+          ImGuiTableBgTarget_RowBg0,
+          ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.3f, 0.3f)));
+    } else if (plan_item.last_result == GoapActionResult::FAILED_RECOVERABLE) {
+      ImGui::TableSetBgColor(
+          ImGuiTableBgTarget_RowBg0,
+          ImGui::GetColorU32(ImVec4(0.0f, 0.0f, 0.3f, 0.3f)));
+    }
+    ImGui::TableNextColumn();
+    ImGui::Text("%s", plan_item.action.lock()->get_name().c_str());
+    ImGui::TableNextColumn();
+    ImGui::Text("%s",
+                goap_action_result_to_string(plan_item.last_result).c_str());
+
+    ImGui::TableNextColumn();
+    ImGui::Text("%.2f", plan_item.action_reward);
+    ImGui::TableNextColumn();
+    ImGui::Text("%.2f", plan_item.goal_reward);
+  }
+  ImGui::EndTable();
+
+  ImGui::Text("Expected goal rewards:");
+  ImGui::BeginTable("Expected Goal Rewards", 2, ImGuiTableFlags_Borders);
+  ImGui::TableSetupColumn("Goal");
+  ImGui::TableSetupColumn("Reward");
+  ImGui::TableHeadersRow();
+  for (const auto &pair : state.expectedGoalRewards) {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::Text("%s", pair.first.c_str());
+    ImGui::TableNextColumn();
+    ImGui::Text("%.2f", pair.second);
+  }
+  ImGui::EndTable();
+
+  ImGui::Separator();
+  ImGui::Text("Current sensor state:");
+  ImGui::BeginTable("Sensor State", 2, ImGuiTableFlags_Borders);
+
+  for (const auto &pair : state.current_state) {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::Text("%s", goap_blackboard_key_to_string(pair.first).c_str());
+    ImGui::TableNextColumn();
+    ImGui::Text("%s", goap_blackboard_value_to_string(pair.second).c_str());
+  }
+  ImGui::EndTable();
+
+  ImGui::Separator();
+  ImGui::Text("Current goal state:");
+  ImGui::BeginTable("Goal State", 2, ImGuiTableFlags_Borders);
+  for (const auto &goal : state.goals) {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::Text("%s", goal->get_name().c_str());
+    ImGui::TableNextColumn();
+    ImGui::Text("Reward: %.2f", goal->_last_reward_value);
+  }
+  ImGui::EndTable();
+
+  ImGui::Separator();
+  ImGui::Text("Current action state:");
+  ImGui::BeginTable("action State", 2, ImGuiTableFlags_Borders);
+  for (const auto &action : state.actions) {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::Text("%s", action->get_name().c_str());
+    ImGui::TableNextColumn();
+    ImGui::Text("Reward: %.2f", action->_last_reward_value);
+  }
+  ImGui::EndTable();
+
+#endif
 }

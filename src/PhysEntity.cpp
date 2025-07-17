@@ -23,7 +23,7 @@ void PhysEntity::update(Game &game, float delta_time) {
   this->_resolution_vector_debug = {0, 0};
 
   if (!is_kinematic) {
-    this->velocity += game.gravity * delta_time;
+    this->velocity += game.get_gvar<Vec2>(GVarType::GRAVITY) * delta_time;
     this->position += this->velocity * delta_time;
   }
 

@@ -122,13 +122,22 @@ set(COMMON_SOURCES
         src/entities/character/CharacterController.cpp
         src/entities/character/DumbAICharacterController.cpp
         src/entities/character/SmartAICharacterController.cpp
+        src/entities/character/GoapSensors.cpp
+        src/entities/character/GoapInterfaces.cpp
+        src/entities/character/GoapSelectors.cpp
+        src/entities/character/GoapGoals.cpp
+        src/entities/character/GoapActions.cpp
+        src/entities/character/GoapGoToEntityAction.cpp
         src/Util.cpp
         src/entities/gui/MainMenuGUIEntity.cpp
         src/entities/gui/TeamChoiceGUIEntity.cpp
         src/entities/decorative/TombstoneEntity.cpp
         src/math/RandUtil.cpp
         src/entities/gameplay/ProjectileEntity.cpp
+        src/entities/gameplay/BonusEntity.cpp
+        src/entities/debug/DebugMarkerEntity.cpp
 )
+
 set(COMMON_INCLUDES
         "${CMAKE_CURRENT_LIST_DIR}/src/"
         "${CMAKE_CURRENT_LIST_DIR}/src/math"

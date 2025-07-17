@@ -32,6 +32,20 @@ public:
    * @param game
    */
   virtual void draw_debug(const Game &game) {}
+
+  /**
+   * @brief Draw any in-game UI elements related to the controller. For example highlighted interactables.
+   * 
+   * @param game 
+   */
+  virtual void draw(const Game &game) {}
+
+  /**
+   * @brief Function to draw imgui inspector controls in debug mode.
+   * 
+   * @param game 
+   */
+  virtual void draw_inspector_ui(Game &game) {};
 };
 
 }; // namespace giewont

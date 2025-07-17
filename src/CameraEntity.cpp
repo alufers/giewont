@@ -18,7 +18,7 @@ CameraEntity::CameraEntity() {
   camera.target = {0.0f, 0.0f};
   camera.offset = {50.0f, 50.0f};
   camera.rotation = 0.0f;
-  camera.zoom = 1.0f;
+  camera.zoom = 1.00f;
 #endif
 }
 
@@ -57,6 +57,12 @@ void CameraEntity::draw(const Game &game) {
 
   if (mouse_scroll != 0) {
     camera.zoom += mouse_scroll * 0.1f;
+    if(camera.zoom < 0.1f) {
+      camera.zoom = 0.4f; // Prevent zooming out too much
+    }
+    if(camera.zoom > 10.0f) {
+      camera.zoom = 10.0f; // Prevent zooming in too much
+    }
   }
 #endif
 }

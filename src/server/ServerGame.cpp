@@ -388,8 +388,13 @@ void ServerGame::perform_interaction(
     grenade->load_assets(*this);
     push_entity(std::move(grenade));
   } else if (message.getType() == net::InteractionType::PRIMARY_CLICK) {
+    Vec2 launch_pos = interactor_pos;
+    if (interactor.valid_as<CharacterEntity>(*this)) {
+      launch_pos = interactor.get_as<CharacterEntity>(*this)
+                       .world_projectile_launch_pos();
+    }
     auto projectile = std::make_unique<ProjectileEntity>();
-    projectile->position = interactor_pos;
+    projectile->position = launch_pos;
     auto mouse_offset = Vec2(message.getCharacterToMouseOffset());
     projectile->velocity = mouse_offset.normalized() * 1500.0f;
     projectile->shooter_net_id = interactor.get(*this).net_id;

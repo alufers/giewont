@@ -30,7 +30,13 @@ void DebugGUI::draw_ui(Game &game) {
   if (show_entity_inspector) {
     ImGui::Begin("Entities", &show, 0);
     ImGui::InputTextWithHint("Filter", "Filter", &inspector_filter, 0);
-
+    if (ImGui::Button("Select self")) {
+      auto &cam = game.camera_ref.get_as<CameraEntity>(game);
+      if (cam.entity_to_follow.valid_as<CharacterEntity>(game)) {
+        auto &character = cam.entity_to_follow.get_as<CharacterEntity>(game);
+        inspector_selected_entity = character.get_ref();
+      }
+    }
     if (ImGui::BeginTable("entities_table", 4,
                           ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY,
                           ImVec2(0, 320))) {

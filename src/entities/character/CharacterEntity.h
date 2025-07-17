@@ -81,6 +81,7 @@ public:
   void update(Game &game, float delta_time) override;
   void draw(const Game &game) override;
   void draw_debug(const Game &game) override;
+  void draw_inspector_ui(Game &game) override;
 
   AABB &get_aabb() override { return character_aabb; }
 
@@ -94,6 +95,10 @@ public:
 
   /** @brief Get Feet pos in world space */
   Vec2 world_feet_pos();
+
+
+  /** @brief Where projectiles shall be launched. */
+  Vec2 world_projectile_launch_pos();
 
   // Netcode
   void
@@ -126,6 +131,8 @@ private:
   void draw_raylib_ui(const Game &game) override;
 
   void load_spritesheet_data(const Game &game);
+
+
 };
 
 /**

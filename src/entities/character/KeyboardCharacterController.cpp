@@ -24,6 +24,11 @@ void KeyboardCharacterController::update(Game &game, CharacterEntity &character,
                << std::endl;
   }
 #ifdef GIEWONT_HAS_GRAPHICS
+
+  auto &camera = game.camera_ref.get_as<CameraEntity>(game);
+
+  Vec2 worldCursorPos = camera.screenToWorldPos(GetMousePosition());
+
   CharacterMovementCommand command = giewont::CharacterMovementCommand::NONE;
   if (IsKeyDown(KEY_A)) {
     command |= giewont::CharacterMovementCommand::MOVE_LEFT;
@@ -56,11 +61,8 @@ void KeyboardCharacterController::update(Game &game, CharacterEntity &character,
     ClientGame &client_game = dynamic_cast<ClientGame &>(game);
 
     if (game.camera_ref.valid_as<CameraEntity>(game)) {
-      auto &camera = game.camera_ref.get_as<CameraEntity>(game);
 
-      Vec2 cursorPos = camera.screenToWorldPos(GetMousePosition());
-
-      Vec2 delta = cursorPos - character.position;
+      Vec2 delta = worldCursorPos - character.position;
       auto net_offset = interact.initCharacterToMouseOffset();
       delta.serialize(net_offset);
     }
@@ -68,6 +70,42 @@ void KeyboardCharacterController::update(Game &game, CharacterEntity &character,
     game.perform_interaction(interact);
   }
 
+  check_interactables_counter++;
+  if (check_interactables_counter % 10 == 0) {
+    // Check for interactables under the cursor
+    EntityRef new_highlighted_interactable;
+    float closest_dist = INFINITY;
+    for (auto &entity : game.valid_entities()) {
+      if (entity->check_interaction_possible(game, character.get_ref())) {
+        auto dist = entity->position.distance(worldCursorPos);
+        if (dist < closest_dist) {
+          closest_dist = dist;
+          new_highlighted_interactable = entity->get_ref();
+        }
+      }
+    }
+    this->highlighted_interactable = new_highlighted_interactable;
+  }
+
+  if (highlighted_interactable.valid_as<PhysEntity>(game)) {
+    auto &highlighted_entity =
+        highlighted_interactable.get_as<PhysEntity>(game);
+    highlighted_interactable_aabb =
+        highlighted_entity.get_aabb().translated(highlighted_entity.position);
+  } else {
+    highlighted_interactable_aabb = std::nullopt;
+  }
+
   character.perform_movement(game, delta_time, command);
+#endif
+}
+
+void KeyboardCharacterController::draw(const Game &game) {
+#ifdef GIEWONT_HAS_GRAPHICS
+  if (auto highlight_aabb = highlighted_interactable_aabb) {
+    Rectangle raylib_rect = {highlight_aabb->min.x, highlight_aabb->min.y,
+                             highlight_aabb->width(), highlight_aabb->height()};
+    DrawRectangleLinesEx(raylib_rect, 2.0f, RED);
+  }
 #endif
 }

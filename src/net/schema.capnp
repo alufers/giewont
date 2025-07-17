@@ -34,6 +34,7 @@ enum EntityType {
     teamChoiceGUI @6;
     tombstone @7;
     projectile @8;
+    bonus @9;
 }
 
 struct SyncEntityNetMessage {
@@ -52,6 +53,7 @@ struct SyncEntityNetMessage {
         grenadeData @10 :GrenadeData;
         tombstoneData @11 :SyncTombstoneEntityData;
         projectileData @12 :SyncProjectileEntityData;
+        bonusData @13 :SyncBonusEntityData;
     }
 }
 
@@ -101,6 +103,18 @@ struct SyncProjectileEntityData {
     lifetimeLeft @1 :Float32;
 }
 
+enum BonusEntityType {
+    healthkit @0;
+}
+
+struct SyncBonusEntityData {
+    bonusType @0 :BonusEntityType;
+    lifetime @1 :Float32;
+    totalLifetime @2 :Float32;
+    amount @3 :UInt32; # For healthkit, this is the amount of health it restores
+}
+
+
 struct InstantiatePrefabNetMessage {
     prefabPath @0 :Text;
     position @1 :NetVec2;
@@ -149,6 +163,10 @@ struct InteractNetMessage {
    interactorNetId @0 :Int32;
    characterToMouseOffset @1 :NetVec2;
    type @2 :InteractionType;
+   targetHint :union {
+         none @3 :Void;
+         netId @4 :UInt32; # Net ID of the entity to interact with
+   }
 }
 
 
@@ -166,3 +184,16 @@ struct GuiInteractionNetMessage {
     netId @0 :UInt32; # Net ID of the GUI element / entity
     name @1 :Text;
 }
+
+# Contains global variables which affect the gameplay and are used by multiple subsystems.
+# For example both the flag entity and the AI must know how close to the flag the AI should be to pick it up.
+struct GameplayVariable {
+  union {
+    gravity @0 :NetVec2;
+    entityInteractionRange @1 :Float32;
+    baseActivationDist @2 :Float32; # The range at which a flag is considered being captured by a base.
+
+    max @3 :Void; # Sentinel value
+  }
+}
+

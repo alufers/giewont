@@ -90,7 +90,11 @@ void CharacterEntity::apply_hurt_message(
   if (this->health < 0) {
     this->health = 0;
   }
-  if (!game.is_server() && this->net_owner_peer_id == game.my_peer_id) {
+  if (this->health > max_health) {
+    this->health = max_health;
+  }
+  if (!game.is_server() && this->net_owner_peer_id == game.my_peer_id &&
+      msg.getDamage() > 0) {
     // Add some camera shake if we have been hurt
     std::unique_ptr<CameraShakeEffect> shake_effect =
         std::make_unique<CameraShakeEffect>();
@@ -180,7 +184,7 @@ void CharacterEntity::load_spritesheet_data(const Game &game) {
       anim_frames[CharacterAnimState::STAND].size() > 0) {
     auto &frame = anim_frames[CharacterAnimState::STAND][0];
     character_aabb = AABB::from_min_and_size(
-        Vec2(0, 0), Vec2(frame.spritesheet_w, frame.spritesheet_h));
+        Vec2(0, 0), Vec2(frame.spritesheet_w - 5.0f, frame.spritesheet_h));
   } else {
     character_aabb = AABB::from_min_and_size(Vec2(0, 0), Vec2(70, 70));
   }
@@ -310,12 +314,23 @@ void CharacterEntity::draw(const Game &game) {
   }
 
   DrawTexturePro(*tex, src_rect, dest_rect, {0, 0}, 0.0f, WHITE);
+
+  this->controller->draw(game);
 #endif
 }
 void CharacterEntity::draw_debug(const Game &game) {
 #ifdef GIEWONT_HAS_GRAPHICS
   PhysEntity::draw_debug(game);
   this->controller->draw_debug(game);
+#endif
+}
+
+void CharacterEntity::draw_inspector_ui(Game &game) {
+#ifdef GIEWONT_HAS_GRAPHICS
+  PhysEntity::draw_inspector_ui(game);
+
+  ImGui::Text("Nickname: %s", nickname.c_str());
+  this->controller->draw_inspector_ui(game);
 #endif
 }
 
@@ -427,4 +442,9 @@ void CharacterEntity::perform_movement(const Game &game, float delta_time,
 
 net::EntityType CharacterEntity::get_net_type() {
   return net::EntityType::CHARACTER;
+}
+
+Vec2 CharacterEntity::world_projectile_launch_pos() {
+  // Launch from the center of the character
+  return position + Vec2(60.0f, 70.0f);
 }
