@@ -46,7 +46,10 @@ add_subdirectory(libs/json)
 set(ENABLE_PROGRAMS OFF CACHE BOOL "" FORCE)
 set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
 add_compile_definitions(MBEDTLS_SSL_DTLS_SRTP=1)
-add_compile_options(-Wno-error=unterminated-string-initialization)
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(-Wno-error=unterminated-string-initialization)
+endif ()
 set(MBEDTLS_TARGET_PREFIX "mbedtls-" CACHE STRING "" FORCE)
 set(DISABLE_PACKAGE_CONFIG_AND_INSTALL OFF CACHE BOOL "" FORCE)
 add_subdirectory(libs/mbedtls)
@@ -184,8 +187,9 @@ target_link_libraries(${CLIENT_EXE_NAME} PRIVATE raylib nlohmann_json::nlohmann_
 
 # target_compile_definitions(${CLIENT_EXE_NAME} ${CAPNP_DEFINITIONS})
 
-
-target_compile_options(${CLIENT_EXE_NAME} PRIVATE -ggdb)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(${CLIENT_EXE_NAME} PRIVATE -ggdb)
+endif ()
 
 if (EMSCRIPTEN)
     target_compile_options(${CLIENT_EXE_NAME} PRIVATE -fwasm-exceptions)

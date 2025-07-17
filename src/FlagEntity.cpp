@@ -8,6 +8,8 @@
 #endif
 #include "Util.h"
 #include "entities/character/CharacterEntity.h"
+#include <numbers>
+
 
 using namespace giewont;
 
@@ -166,8 +168,8 @@ bool FlagEntity::handle_interaction(
       this->velocity +=
           (Vec2(0, 100.0) * rand_float(1.0, 2.0))
               .rotated(rand_float(
-                  -0.5f * M_PI,
-                  0.5f * M_PI)); // Drop the flag with some random force
+                  -0.5f * std::numbers::pi,
+                  0.5f * std::numbers::pi)); // Drop the flag with some random force
       return true;
     }
     return false;
