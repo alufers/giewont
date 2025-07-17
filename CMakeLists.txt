@@ -49,7 +49,12 @@ add_compile_definitions(MBEDTLS_SSL_DTLS_SRTP=1)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     add_compile_options(-Wno-error=unterminated-string-initialization)
+    add_compile_options(-ggdb)
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+   # warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+    add_compile_options(/EHsc)   
 endif ()
+
 set(MBEDTLS_TARGET_PREFIX "mbedtls-" CACHE STRING "" FORCE)
 set(DISABLE_PACKAGE_CONFIG_AND_INSTALL OFF CACHE BOOL "" FORCE)
 add_subdirectory(libs/mbedtls)
@@ -187,9 +192,6 @@ target_link_libraries(${CLIENT_EXE_NAME} PRIVATE raylib nlohmann_json::nlohmann_
 
 # target_compile_definitions(${CLIENT_EXE_NAME} ${CAPNP_DEFINITIONS})
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(${CLIENT_EXE_NAME} PRIVATE -ggdb)
-endif ()
 
 if (EMSCRIPTEN)
     target_compile_options(${CLIENT_EXE_NAME} PRIVATE -fwasm-exceptions)
@@ -226,10 +228,7 @@ if (NOT EMSCRIPTEN)
 
     target_link_libraries(${SERVER_EXE_NAME} PRIVATE nlohmann_json::nlohmann_json datachannel-static ${CAPNP_LIBRARIES})
 
-    # if using gcc...
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        target_compile_options(${SERVER_EXE_NAME} PRIVATE -ggdb)
-    endif ()
+
 
 endif ()
 

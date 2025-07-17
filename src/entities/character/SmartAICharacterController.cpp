@@ -12,7 +12,9 @@
 #include "math/RandUtil.h"
 #include <cmath>
 #include <cstdlib>
+#ifdef GIEWONT_HAS_GRAPHICS
 #include <raylib.h>
+#endif
 #include <vector>
 
 using namespace giewont;
