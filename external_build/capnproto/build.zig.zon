@@ -1,0 +1,12 @@
+.{
+    .name = .capnproto,
+    .version = "0.15.2",
+    .dependencies = .{
+        .capnproto_src = .{
+            .url = "git+https://github.com/capnproto/capnproto.git?ref=v1.2.0#d135c9ca5e15219eaf131dfce1a41afdbaea9aab",
+            .hash = "N-V-__8AAM9DkQCjLptyMmDFqOk-X8khglAW9h1npfak9EXT",
+        },
+    },
+    .paths = .{""},
+    .fingerprint = 0xac017315f283c88d,
+}

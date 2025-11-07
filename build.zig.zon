@@ -1,0 +1,11 @@
+.{
+    .name = .giewont,
+    .version = "0.15.2",
+    .dependencies = .{
+        .capnproto = .{
+            .path = "./external_build/capnproto",
+        },
+    },
+    .paths = .{""},
+    .fingerprint = 0xb421ec8e2a8b487f,
+}

@@ -51,8 +51,8 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     add_compile_options(-Wno-error=unterminated-string-initialization)
     add_compile_options(-ggdb)
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-   # warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
-    add_compile_options(/EHsc)   
+    # warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+    add_compile_options(/EHsc)
 endif ()
 
 set(MBEDTLS_TARGET_PREFIX "mbedtls-" CACHE STRING "" FORCE)
@@ -65,9 +65,9 @@ add_library(MbedTLS::MbedTLS ALIAS mbedtls-mbedtls)
 #         mbedtls
 #         SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/libs/mbedtls"
 #         INSTALL_DIR ${CMAKE_BINARY_DIR}
-#         CMAKE_ARGS 
-#             -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> 
-#             -DCMAKE_C_FLAGS=${EXTERNAL_MBEDTLS_C_FLAGS} 
+#         CMAKE_ARGS
+#             -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+#             -DCMAKE_C_FLAGS=${EXTERNAL_MBEDTLS_C_FLAGS}
 #             -DENABLE_TESTING:BOOL=OFF
 #             -DENABLE_PROGRAMS:BOOL=OFF
 #         )
@@ -105,6 +105,24 @@ add_subdirectory(libs/capnproto)
 set(CAPNP_LIBRARIES "CapnProto::capnp")
 
 capnp_generate_cpp(CAPNP_SRCS CAPNP_HDRS "${CMAKE_CURRENT_LIST_DIR}/src/net/schema.capnp")
+
+
+### Curl
+
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libraries" FORCE)
+set(BUILD_CURL_EXE OFF CACHE BOOL "Do not build curl executable" FORCE)
+# If you want to avoid tests/docs/examples:
+set(BUILD_TESTING OFF CACHE BOOL "Disable curl tests" FORCE)
+set(CURL_DISABLE_LDAP ON CACHE BOOL "" FORCE)
+
+
+add_subdirectory(libs/curl)
+
+
+### Game-analytics
+
+
+add_subdirectory(libs/gameanalytics-sdk-cpp)
 
 # List common sources between client and server
 set(COMMON_SOURCES
@@ -152,6 +170,7 @@ set(COMMON_INCLUDES
         "${CMAKE_CURRENT_LIST_DIR}/src/net"
         ${CAPNP_INCLUDE_DIRS}
         "${CMAKE_CURRENT_LIST_DIR}/libs/capnproto/c++/src"
+        "${CMAKE_CURRENT_LIST_DIR}/libs/gameanalytics-sdk-cpp/include"
         ${CMAKE_CURRENT_BINARY_DIR}/src/net # capnproto generated files
 )
 
@@ -170,7 +189,7 @@ set(CLIENT_SOURCES
         src/client/ClientGame.cpp
         src/client/DrawableGame.cpp
         src/client/DebugGUI.cpp
-        
+
 )
 
 set(CLIENT_INCLUDES
@@ -187,7 +206,7 @@ target_include_directories(${CLIENT_EXE_NAME} PRIVATE "${CMAKE_CURRENT_LIST_DIR}
 
 message("CAPNP_LIBRARIES: ${CAPNP_LIBRARIES}")
 
-target_link_libraries(${CLIENT_EXE_NAME} PRIVATE raylib nlohmann_json::nlohmann_json imgui rlImGui ${CAPNP_LIBRARIES})
+target_link_libraries(${CLIENT_EXE_NAME} PRIVATE raylib nlohmann_json::nlohmann_json imgui rlImGui GameAnalytics libcurl ${CAPNP_LIBRARIES})
 
 
 # target_compile_definitions(${CLIENT_EXE_NAME} ${CAPNP_DEFINITIONS})
@@ -231,4 +250,3 @@ if (NOT EMSCRIPTEN)
 
 
 endif ()
-

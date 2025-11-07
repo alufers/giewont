@@ -12,6 +12,8 @@
 #include <chrono>
 #include <memory>
 
+#include <GameAnalytics/GameAnalytics.h>
+
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
 #endif
@@ -50,6 +52,12 @@ static void main_loop() {
 }
 
 int main() {
+    gameanalytics::GameAnalytics::setEnabledInfoLog(true);
+    gameanalytics::GameAnalytics::setEnabledVerboseLog(true);
+
+    gameanalytics::GameAnalytics::configureBuild("0.10");
+
+
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_TITLE);
   SetTargetFPS(60);
 

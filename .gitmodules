@@ -13,3 +13,9 @@
 [submodule "libs/mbedtls"]
 	path = libs/mbedtls
 	url = https://github.com/Mbed-TLS/mbedtls.git
+[submodule "libs/gameanalytics-sdk-cpp"]
+	path = libs/gameanalytics-sdk-cpp
+	url = https://github.com/GameAnalytics/gameanalytics-sdk-cpp.git
+[submodule "libs/curl"]
+	path = libs/curl
+	url = https://github.com/curl/curl.git

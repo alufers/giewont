@@ -5,3 +5,5 @@ CMakeSettings.json
 out
 cmake-build-*
 .idea
+.zig-cache
+zig-out
