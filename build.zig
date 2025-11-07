@@ -3,182 +3,7 @@ const std = @import("std");
 fn generateCapnprotoSchema(b: *std.Build, capnp_schema_source: std.Build.LazyPath, module_to_add_to: *std.Build.Module) void {
     const capnp_dep = b.dependency("capnproto", .{});
 
-    //
-    // kj library
-    //
-
-    const kj_lib_module = b.addModule("kj", .{
-        .target = b.graph.host,
-        .optimize = .Debug,
-        .link_libc = true,
-        .link_libcpp = true,
-    });
-
-    kj_lib_module.addIncludePath(capnp_dep.path("c++/src"));
-    kj_lib_module.addCSourceFiles(.{
-        .root = capnp_dep.path("c++/src/kj"),
-        .files = &.{
-            // Lite
-            "array.c++",
-            "cidr.c++",
-            "list.c++",
-            "common.c++",
-            "debug.c++",
-            "exception.c++",
-            "io.c++",
-            "memory.c++",
-            "mutex.c++",
-            "string.c++",
-            "source-location.c++",
-            "hash.c++",
-            "table.c++",
-            "thread.c++",
-            "main.c++",
-            "arena.c++",
-            "test-helpers.c++",
-            "units.c++",
-            "encoding.c++",
-            // Heavy
-            "refcount.c++",
-            "string-tree.c++",
-            "time.c++",
-            "filesystem.c++",
-            "filesystem-disk-unix.c++",
-            "filesystem-disk-win32.c++",
-            "parse/char.c++",
-        },
-    });
-
-    const kj_lib = b.addLibrary(.{
-        .name = "kj",
-        .linkage = .static,
-        .root_module = kj_lib_module,
-    });
-
-    //
-    // capnproto library
-    //
-
-    const capnp_lib_module = b.addModule("capnp", .{
-        .target = b.graph.host,
-        .optimize = .Debug,
-        .link_libc = true,
-        .link_libcpp = true,
-    });
-
-    capnp_lib_module.addIncludePath(capnp_dep.path("c++/src"));
-    capnp_lib_module.addCSourceFiles(.{
-        .root = capnp_dep.path("c++/src/capnp"),
-        .files = &.{
-            // Lite
-            "c++.capnp.c++",
-            "blob.c++",
-            "arena.c++",
-            "layout.c++",
-            "list.c++",
-            "any.c++",
-            "message.c++",
-            "schema.capnp.c++",
-            "stream.capnp.c++",
-            "serialize.c++",
-            "serialize-packed.c++",
-            // Heavy
-            "schema.c++",
-            "schema-loader.c++",
-            "dynamic.c++",
-            "stringify.c++",
-        },
-    });
-    capnp_lib_module.linkLibrary(kj_lib);
-
-    const capnp_lib = b.addLibrary(.{
-        .name = "capnp",
-        .linkage = .static,
-        .root_module = capnp_lib_module,
-    });
-
-    // capnp_lib_module
-    const capnp_json_lib_module = b.addModule("capnp-json", .{
-        .target = b.graph.host,
-        .optimize = .Debug,
-        .link_libc = true,
-        .link_libcpp = true,
-    });
-
-    capnp_json_lib_module.addIncludePath(capnp_dep.path("c++/src"));
-    capnp_json_lib_module.addCSourceFiles(.{
-        .root = capnp_dep.path("c++/src/capnp"),
-        .files = &.{ "compat/json.c++", "compat/json.capnp.c++" },
-    });
-    capnp_json_lib_module.linkLibrary(capnp_lib);
-    capnp_json_lib_module.linkLibrary(kj_lib);
-
-    const capnp_json_lib = b.addLibrary(.{
-        .name = "capnp-json",
-        .linkage = .static,
-        .root_module = capnp_json_lib_module,
-    });
-
-    //
-    // capnpc library
-    //
-
-    const capnpc_lib_module = b.addModule("capnpc", .{
-        .target = b.graph.host,
-        .optimize = .Debug,
-        .link_libc = true,
-        .link_libcpp = true,
-    });
-    capnpc_lib_module.addIncludePath(capnp_dep.path("c++/src"));
-    capnpc_lib_module.addCSourceFiles(.{
-        .root = capnp_dep.path("c++/src/capnp"),
-        .files = &.{
-            "compiler/type-id.c++",
-            "compiler/error-reporter.c++",
-            "compiler/lexer.capnp.c++",
-            "compiler/lexer.c++",
-            "compiler/grammar.capnp.c++",
-            "compiler/parser.c++",
-            "compiler/generics.c++",
-            "compiler/node-translator.c++",
-            "compiler/compiler.c++",
-            "schema-parser.c++",
-            "serialize-text.c++",
-        },
-    });
-    capnpc_lib_module.linkLibrary(capnp_lib);
-    // capnpc_lib_module.linkLibrary(kj_lib);
-
-    const capnpc_lib = b.addLibrary(.{
-        .name = "capnpc",
-        .linkage = .static,
-        .root_module = capnpc_lib_module,
-    });
-
-    //
-    // capnp_tool executable
-    //
-
-    const capnp_tool_module = b.addModule("capnp_tool", .{
-        .target = b.graph.host,
-        .optimize = .Debug,
-        .link_libc = true,
-        .link_libcpp = true,
-    });
-
-    capnp_tool_module.addIncludePath(capnp_dep.path("c++/src"));
-    capnp_tool_module.addCSourceFiles(.{ .root = capnp_dep.path("c++/src/capnp/compiler"), .files = &.{ "capnp.c++", "module-loader.c++" } });
-    capnp_tool_module.linkLibrary(capnp_lib);
-    capnp_tool_module.linkLibrary(kj_lib);
-    capnp_tool_module.linkLibrary(capnpc_lib);
-    capnp_tool_module.linkLibrary(capnp_json_lib);
-
-    const capnp_tool_exe = b.addExecutable(.{
-        .name = "capnp_tool",
-        .root_module = capnp_tool_module,
-    });
-    b.installArtifact(capnp_tool_exe);
-    const capnp_tool_run = b.addRunArtifact(capnp_tool_exe);
+    const capnp_tool_run = b.addRunArtifact(capnp_dep.artifact("capnp_tool"));
 
     capnp_tool_run.addArg("compile");
     capnp_tool_run.addPrefixedDirectoryArg("--src-prefix=", capnp_schema_source.dirname());
@@ -193,12 +18,18 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const mode = b.standardOptimizeOption(.{});
 
-    const giewont_server_module = b.addModule("giewont_server", .{
+    const capnp_dep = b.dependency("capnproto", .{});
+    const imgui_dep = b.dependency("imgui", .{});
+    const rlImGui_dep = b.dependency("rlImGui", .{});
+    const gameanalytics_sdk_cpp_dep = b.dependency("gameanalytics_sdk_cpp", .{});
+    const raylib_dep = b.dependency("raylib", .{
         .target = target,
         .optimize = mode,
-        .link_libc = true,
-        .link_libcpp = true,
+        .linkage = .dynamic,
     });
+    const curl_dep = b.dependency("curl", .{});
+    const mbedtls_dep = b.dependency("mbedtls", .{});
+    const zlib_dep = b.dependency("zlib", .{});
 
     const common_sources = [_][]const u8{
         "CameraEntity.cpp",
@@ -238,11 +69,25 @@ pub fn build(b: *std.Build) void {
         "entities/debug/DebugMarkerEntity.cpp",
     };
 
+    //
+    // Giewont server
+    //
+
+    const giewont_server_module = b.addModule("giewont_server", .{
+        .target = target,
+        .optimize = mode,
+        .link_libc = true,
+        .link_libcpp = true,
+    });
+
     giewont_server_module.addIncludePath(b.path("src/"));
     giewont_server_module.addIncludePath(b.path("src/math"));
     giewont_server_module.addIncludePath(b.path("src/net"));
     giewont_server_module.addIncludePath(b.path("src/server"));
     giewont_server_module.addIncludePath(b.path("libs/nbnet")); // TODO: add a dependency for this
+    giewont_server_module.linkLibrary(capnp_dep.artifact("capnp"));
+    giewont_server_module.addCMacro("GIEWONT_IS_SERVER", "1");
+
     generateCapnprotoSchema(b, b.path("src/net/schema.capnp"), giewont_server_module);
     giewont_server_module.addCSourceFiles(.{
         .root = b.path("src/"),
@@ -253,10 +98,57 @@ pub fn build(b: *std.Build) void {
         .flags = &.{"-std=c++20"},
     });
 
-    const giewontServerExe = b.addExecutable(.{
+    const giewont_server_exe = b.addExecutable(.{
         .name = "giewont_server",
         .root_module = giewont_server_module,
     });
 
-    b.installArtifact(giewontServerExe);
+    b.installArtifact(giewont_server_exe);
+
+    //
+    // Giewont client
+    //
+
+    const giewont_client_module = b.addModule("giewont_client", .{
+        .target = target,
+        .optimize = mode,
+        .link_libc = true,
+        .link_libcpp = true,
+    });
+
+    giewont_client_module.addIncludePath(b.path("src/"));
+    giewont_client_module.addIncludePath(b.path("src/math"));
+    giewont_client_module.addIncludePath(b.path("src/net"));
+    giewont_client_module.addIncludePath(b.path("libs/nbnet")); // TODO: add a dependency for this
+    giewont_client_module.addIncludePath(b.path("src/client"));
+    giewont_client_module.linkLibrary(capnp_dep.artifact("capnp"));
+    giewont_client_module.linkLibrary(imgui_dep.artifact("imgui"));
+    giewont_client_module.linkLibrary(rlImGui_dep.artifact("rlImGui"));
+    giewont_client_module.linkLibrary(gameanalytics_sdk_cpp_dep.artifact("gameanalytics"));
+    giewont_client_module.linkLibrary(raylib_dep.artifact("raylib"));
+    giewont_client_module.linkLibrary(curl_dep.artifact("curl"));
+    giewont_client_module.linkLibrary(mbedtls_dep.artifact("mbedtls"));
+    giewont_client_module.linkLibrary(zlib_dep.artifact("z"));
+
+    giewont_client_module.addCMacro("GIEWONT_IS_CLIENT", "1");
+    giewont_client_module.addCMacro("GIEWONT_HAS_GRAPHICS", "1");
+
+    generateCapnprotoSchema(b, b.path("src/net/schema.capnp"), giewont_client_module);
+    giewont_client_module.addCSourceFiles(.{
+        .root = b.path("src/"),
+        .files = &(common_sources ++ .{
+            "client/main_client.cpp",
+            "client/ClientGame.cpp",
+            "client/DrawableGame.cpp",
+            "client/DebugGUI.cpp",
+        }),
+        .flags = &.{"-std=c++20"},
+    });
+
+    const giewont_client_exe = b.addExecutable(.{
+        .name = "giewont_client",
+        .root_module = giewont_client_module,
+    });
+
+    b.installArtifact(giewont_client_exe);
 }

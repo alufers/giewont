@@ -100,6 +100,8 @@ pub fn build(b: *std.Build) void {
         .root_module = capnp_lib_module,
     });
 
+    b.installArtifact(capnp_lib);
+
     // capnp_lib_module
     const capnp_json_lib_module = b.addModule("capnp-json", .{
         .target = target,
@@ -150,7 +152,7 @@ pub fn build(b: *std.Build) void {
         },
     });
     capnpc_lib_module.linkLibrary(capnp_lib);
-    // capnpc_lib_module.linkLibrary(kj_lib);
+    capnpc_lib_module.linkLibrary(kj_lib);
 
     const capnpc_lib = b.addLibrary(.{
         .name = "capnpc",
@@ -176,8 +178,9 @@ pub fn build(b: *std.Build) void {
     capnp_tool_module.linkLibrary(capnpc_lib);
     capnp_tool_module.linkLibrary(capnp_json_lib);
 
-    _ = b.addExecutable(.{
+    const capnp_tool_exe = b.addExecutable(.{
         .name = "capnp_tool",
         .root_module = capnp_tool_module,
     });
+    b.installArtifact(capnp_tool_exe);
 }

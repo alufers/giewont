@@ -1,0 +1,12 @@
+.{
+    .name = .imgui,
+    .version = "0.15.2",
+    .dependencies = .{
+        .imgui_src = .{
+            .url = "git+https://github.com/ocornut/imgui.git#86daa8930e3b8ca9e75fac7307a1181e740c064a",
+            .hash = "N-V-__8AAO3ycgCtGwlL_OzgaeqURARwiXtdpbdFiHMaJbLZ",
+        },
+    },
+    .paths = .{""},
+    .fingerprint = 0xb0f24415daca9f45,
+}

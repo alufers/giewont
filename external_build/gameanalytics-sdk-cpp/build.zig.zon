@@ -1,0 +1,12 @@
+.{
+    .name = .gameanalytics_sdk_cpp,
+    .version = "0.15.2",
+    .dependencies = .{
+        .gameanalytics_sdk_cpp_src = .{
+            .url = "git+https://github.com/GameAnalytics/gameanalytics-sdk-cpp.git#18dcf7b961400875e1d48e554a0ddeb4f0bb49b9",
+            .hash = "N-V-__8AAAwjdQfYhBwHpnhYZ3XAhKedTBICh78aoFCEu3jh",
+        },
+    },
+    .paths = .{""},
+    .fingerprint = 0xa6dc42c9be0b5445,
+}

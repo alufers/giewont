@@ -5,6 +5,29 @@
         .capnproto = .{
             .path = "./external_build/capnproto",
         },
+        .imgui = .{
+            .path = "./external_build/imgui",
+        },
+        .rlImGui = .{
+            .path = "./external_build/rlImGui",
+        },
+        .gameanalytics_sdk_cpp = .{
+            .path = "./external_build/gameanalytics-sdk-cpp",
+        },
+
+        .curl = .{
+            .path = "./external_build/curl",
+        },
+        .mbedtls = .{
+            .path = "./external_build/mbedtls",
+        },
+        .zlib = .{
+            .path = "./external_build/zlib",
+        },
+        .raylib = .{
+            .url = "git+https://github.com/raysan5/raylib#8ada37d9671682f420a2be1f1afd4b06173b81ad",
+            .hash = "raylib-5.6.0-dev-whq8uCg2ywTzCiX3VEP9RuCMXR6_VnDBmkj8GjL_p5QN",
+        },
     },
     .paths = .{""},
     .fingerprint = 0xb421ec8e2a8b487f,

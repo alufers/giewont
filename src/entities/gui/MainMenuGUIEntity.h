@@ -12,7 +12,7 @@ public:
   void draw_imgui_ui(Game &game) override;
 
 private:
-  std::string server_addr_text = "localhost";
+  std::string server_addr_text = "127.0.0.1";
   std::string player_name_text = "Player";
 };
 }; // namespace giewont

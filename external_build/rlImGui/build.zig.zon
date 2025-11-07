@@ -1,0 +1,15 @@
+.{
+    .name = .rlImGui,
+    .version = "0.15.2",
+    .dependencies = .{
+        .rlImGui_src = .{
+            .url = "git+https://github.com/raylib-extras/rlImGui.git#4d8a61842903978bc42adf3347cd34f4e6524efc",
+            .hash = "N-V-__8AADXXXgAMtxHlEkviLzE-rA9mLl6JIfXPdogrsmnf",
+        },
+        .imgui = .{
+            .path = "../imgui",
+        },
+    },
+    .paths = .{""},
+    .fingerprint = 0x16f10bb1fe3dc3e3,
+}
