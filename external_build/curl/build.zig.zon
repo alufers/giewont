@@ -6,6 +6,7 @@
             .url = "https://github.com/curl/curl/releases/download/curl-8_8_0/curl-8.8.0.tar.gz",
             .hash = "N-V-__8AAHipPQF9UuLPiaV1CtJzZIxvTN61tMGdFx8LGjIV",
         },
+        .mbedtls = .{ .path = "../mbedtls" },
     },
     .paths = .{""},
     .fingerprint = 0x3e01b4d92bb7f1f,

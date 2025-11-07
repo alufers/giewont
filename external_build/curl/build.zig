@@ -17,12 +17,14 @@ pub fn createLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .optimize = optimize,
     });
 
+    const mbedtls_dep = b.dependency("mbedtls", .{});
     inline for (srcs) |s| {
         lib.addCSourceFile(.{
             .file = curl_dep.path(s),
             .flags = &.{"-std=gnu89"},
         });
     }
+    lib.linkLibrary(mbedtls_dep.artifact("mbedtls"));
     lib.addIncludePath(curl_dep.path("lib"));
     lib.addIncludePath(curl_dep.path("include"));
     lib.installHeadersDirectory(curl_dep.path("include/curl"), "curl", .{});

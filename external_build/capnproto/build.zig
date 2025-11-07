@@ -58,6 +58,41 @@ pub fn build(b: *std.Build) void {
         .root_module = kj_lib_module,
     });
 
+    const kj_headers = .{
+        "cidr.h",
+        "common.h",
+        "units.h",
+        "memory.h",
+        "refcount.h",
+        "array.h",
+        "list.h",
+        "vector.h",
+        "string.h",
+        "string-tree.h",
+        "source-location.h",
+        "hash.h",
+        "table.h",
+        "map.h",
+        "encoding.h",
+        "exception.h",
+        "debug.h",
+        "arena.h",
+        "io.h",
+        "tuple.h",
+        "one-of.h",
+        "function.h",
+        "mutex.h",
+        "thread.h",
+        "threadlocal.h",
+        "filesystem.h",
+        "time.h",
+        "main.h",
+        "win32-api-version.h",
+        "windows-sanity.h",
+    };
+
+    b.installArtifact(kj_lib);
+
     //
     // capnproto library
     //
@@ -99,6 +134,43 @@ pub fn build(b: *std.Build) void {
         .linkage = .static,
         .root_module = capnp_lib_module,
     });
+
+    const capnp_headers = .{
+        "c++.capnp.h",
+        "common.h",
+        "blob.h",
+        "endian.h",
+        "layout.h",
+        "orphan.h",
+        "list.h",
+        "any.h",
+        "message.h",
+        "capability.h",
+        "membrane.h",
+        "dynamic.h",
+        "schema.h",
+        "schema.capnp.h",
+        "stream.capnp.h",
+        "schema-lite.h",
+        "schema-loader.h",
+        "schema-parser.h",
+        "pretty-print.h",
+        "serialize.h",
+        "serialize-async.h",
+        "serialize-packed.h",
+        "serialize-text.h",
+        "pointer-helpers.h",
+        "generated-header-support.h",
+        "raw-schema.h",
+    };
+
+    inline for (capnp_headers) |s| {
+        capnp_lib.installHeader(capnp_dep.path("c++/src/capnp/" ++ s), "capnp/" ++ s);
+    }
+
+    inline for (kj_headers) |h| {
+        capnp_lib.installHeader(capnp_dep.path("c++/src/kj/" ++ h), "kj/" ++ h);
+    }
 
     b.installArtifact(capnp_lib);
 
@@ -183,4 +255,14 @@ pub fn build(b: *std.Build) void {
         .root_module = capnp_tool_module,
     });
     b.installArtifact(capnp_tool_exe);
+    // const write_files = b.addWriteFiles();
+
+    // const install_protos = b.addInstallFileWithDir(capnp_dep.path("c++/src/capnp/c++.capnp"), .{ .custom = "capnp" }, "c++.capnp");
+    // const install_protos2 = b.addInstallFileWithDir(capnp_dep.path("c++/src/capnp/schema.capnp"), .{ .custom = "capnp" }, "schema.capnp");
+
+    // // const install_protos = b.addInstallFileWithDir(capnp_dep.path("c++/src/capnp/c++.capnp"), .{ .custom = "capnp" }, "c++.capnp");
+    // b.getInstallStep().dependOn(&install_protos.step);
+    // b.getInstallStep().dependOn(&install_protos2.step);
+
+    b.addNamedLazyPath("capnp_include_path", capnp_dep.path("c++/src"));
 }

@@ -6,6 +6,7 @@ pub fn build(b: *std.Build) void {
 
     const rlImGui_src_dep = b.dependency("rlImGui_src", .{});
     const imgui_dep = b.dependency("imgui", .{});
+    const raylib_dep = b.dependency("raylib", .{});
 
     const rlImGui_mod = b.addModule("rlImGui", .{
         .target = target,
@@ -29,6 +30,7 @@ pub fn build(b: *std.Build) void {
         .linkage = .static,
     });
     rlImGui_lib.linkLibrary(imgui_dep.artifact("imgui"));
+    rlImGui_lib.linkLibrary(raylib_dep.artifact("raylib"));
 
     rlImGui_lib.installHeader(rlImGui_src_dep.path("rlImGui.h"), "rlImGui.h");
     rlImGui_lib.installHeader(rlImGui_src_dep.path("rlImGuiColors.h"), "rlImGuiColors.h");

@@ -9,6 +9,8 @@ fn generateCapnprotoSchema(b: *std.Build, capnp_schema_source: std.Build.LazyPat
     capnp_tool_run.addPrefixedDirectoryArg("--src-prefix=", capnp_schema_source.dirname());
     capnp_tool_run.addFileArg(capnp_schema_source);
 
+    capnp_tool_run.addPrefixedDirectoryArg("--import-path=", capnp_dep.namedLazyPath("capnp_include_path"));
+
     const output_dir = capnp_tool_run.addPrefixedOutputDirectoryArg("-oc++:", "capnp-generated");
 
     module_to_add_to.addIncludePath(output_dir);
@@ -30,6 +32,7 @@ pub fn build(b: *std.Build) void {
     const curl_dep = b.dependency("curl", .{});
     const mbedtls_dep = b.dependency("mbedtls", .{});
     const zlib_dep = b.dependency("zlib", .{});
+    const nlohmann_json_dep = b.dependency("nlohmann_json", .{});
 
     const common_sources = [_][]const u8{
         "CameraEntity.cpp",
@@ -85,6 +88,7 @@ pub fn build(b: *std.Build) void {
     giewont_server_module.addIncludePath(b.path("src/net"));
     giewont_server_module.addIncludePath(b.path("src/server"));
     giewont_server_module.addIncludePath(b.path("libs/nbnet")); // TODO: add a dependency for this
+    giewont_server_module.addIncludePath(nlohmann_json_dep.path("single_include"));
     giewont_server_module.linkLibrary(capnp_dep.artifact("capnp"));
     giewont_server_module.addCMacro("GIEWONT_IS_SERVER", "1");
 
@@ -121,7 +125,9 @@ pub fn build(b: *std.Build) void {
     giewont_client_module.addIncludePath(b.path("src/net"));
     giewont_client_module.addIncludePath(b.path("libs/nbnet")); // TODO: add a dependency for this
     giewont_client_module.addIncludePath(b.path("src/client"));
+    giewont_client_module.addIncludePath(b.path("single_include"));
     giewont_client_module.linkLibrary(capnp_dep.artifact("capnp"));
+    giewont_client_module.linkLibrary(capnp_dep.artifact("kj"));
     giewont_client_module.linkLibrary(imgui_dep.artifact("imgui"));
     giewont_client_module.linkLibrary(rlImGui_dep.artifact("rlImGui"));
     giewont_client_module.linkLibrary(gameanalytics_sdk_cpp_dep.artifact("gameanalytics"));

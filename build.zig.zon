@@ -28,6 +28,10 @@
             .url = "git+https://github.com/raysan5/raylib#8ada37d9671682f420a2be1f1afd4b06173b81ad",
             .hash = "raylib-5.6.0-dev-whq8uCg2ywTzCiX3VEP9RuCMXR6_VnDBmkj8GjL_p5QN",
         },
+        .nlohmann_json = .{
+            .url = "https://github.com/nlohmann/json/archive/refs/tags/v3.12.0.tar.gz",
+            .hash = "N-V-__8AANqC8wBtv10C_41rBAgWfTMpQow7tzRi4h6LQYxm",
+        },
     },
     .paths = .{""},
     .fingerprint = 0xb421ec8e2a8b487f,

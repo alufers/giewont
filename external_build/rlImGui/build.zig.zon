@@ -9,6 +9,10 @@
         .imgui = .{
             .path = "../imgui",
         },
+        .raylib = .{
+            .url = "git+https://github.com/raysan5/raylib#8ada37d9671682f420a2be1f1afd4b06173b81ad",
+            .hash = "raylib-5.6.0-dev-whq8uCg2ywTzCiX3VEP9RuCMXR6_VnDBmkj8GjL_p5QN",
+        },
     },
     .paths = .{""},
     .fingerprint = 0x16f10bb1fe3dc3e3,
