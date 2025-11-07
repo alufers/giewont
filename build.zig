@@ -33,6 +33,7 @@ pub fn build(b: *std.Build) void {
     const mbedtls_dep = b.dependency("mbedtls", .{});
     const zlib_dep = b.dependency("zlib", .{});
     const nlohmann_json_dep = b.dependency("nlohmann_json", .{});
+    const nbnet_src_dep = b.dependency("nbnet_src", .{});
 
     const common_sources = [_][]const u8{
         "CameraEntity.cpp",
@@ -123,7 +124,7 @@ pub fn build(b: *std.Build) void {
     giewont_client_module.addIncludePath(b.path("src/"));
     giewont_client_module.addIncludePath(b.path("src/math"));
     giewont_client_module.addIncludePath(b.path("src/net"));
-    giewont_client_module.addIncludePath(b.path("libs/nbnet")); // TODO: add a dependency for this
+    giewont_client_module.addIncludePath(nbnet_src_dep.path("./"));
     giewont_client_module.addIncludePath(b.path("src/client"));
     giewont_client_module.addIncludePath(b.path("single_include"));
     giewont_client_module.linkLibrary(capnp_dep.artifact("capnp"));
