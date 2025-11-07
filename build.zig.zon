@@ -32,6 +32,10 @@
             .url = "https://github.com/nlohmann/json/archive/refs/tags/v3.12.0.tar.gz",
             .hash = "N-V-__8AANqC8wBtv10C_41rBAgWfTMpQow7tzRi4h6LQYxm",
         },
+        .nbnet_src = .{
+            .url = "git+https://github.com/alufers/nbnet?ref=hotfix-branch#20612760ceec7ebfe9ee356fb2c2c72705112067",
+            .hash = "N-V-__8AACLEEwA6rw5JluyvX0cFYmuFxUYkJjyyMC8xnr-p",
+        },
     },
     .paths = .{""},
     .fingerprint = 0xb421ec8e2a8b487f,
