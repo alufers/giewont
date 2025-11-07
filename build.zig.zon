@@ -33,8 +33,8 @@
             .hash = "N-V-__8AANqC8wBtv10C_41rBAgWfTMpQow7tzRi4h6LQYxm",
         },
         .nbnet_src = .{
-            .url = "git+https://github.com/alufers/nbnet?ref=hotfix-branch#20612760ceec7ebfe9ee356fb2c2c72705112067",
-            .hash = "N-V-__8AACLEEwA6rw5JluyvX0cFYmuFxUYkJjyyMC8xnr-p",
+            .url = "git+https://github.com/alufers/nbnet?ref=master#c5b8b249417b264726ce6bd4496719dfbfae40af",
+            .hash = "N-V-__8AANRIEgAXblMR63KYVguD5bvU72HBQ7A8LBAw62Gy",
         },
     },
     .paths = .{""},

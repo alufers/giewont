@@ -88,7 +88,7 @@ pub fn build(b: *std.Build) void {
     giewont_server_module.addIncludePath(b.path("src/math"));
     giewont_server_module.addIncludePath(b.path("src/net"));
     giewont_server_module.addIncludePath(b.path("src/server"));
-    giewont_server_module.addIncludePath(b.path("libs/nbnet")); // TODO: add a dependency for this
+    giewont_server_module.addIncludePath(nbnet_src_dep.path("./"));
     giewont_server_module.addIncludePath(nlohmann_json_dep.path("single_include"));
     giewont_server_module.linkLibrary(capnp_dep.artifact("capnp"));
     giewont_server_module.addCMacro("GIEWONT_IS_SERVER", "1");
