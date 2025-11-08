@@ -17,7 +17,14 @@ pub fn createLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .optimize = optimize,
     });
 
-    const mbedtls_dep = b.dependency("mbedtls", .{});
+    const mbedtls_dep = b.dependency("mbedtls", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const zlib_dep = b.dependency("zlib", .{
+        .target = target,
+        .optimize = optimize,
+    });
     inline for (srcs) |s| {
         lib.addCSourceFile(.{
             .file = curl_dep.path(s),
@@ -25,6 +32,8 @@ pub fn createLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         });
     }
     lib.linkLibrary(mbedtls_dep.artifact("mbedtls"));
+    lib.linkLibrary(zlib_dep.artifact("z"));
+
     lib.addIncludePath(curl_dep.path("lib"));
     lib.addIncludePath(curl_dep.path("include"));
     lib.installHeadersDirectory(curl_dep.path("include/curl"), "curl", .{});
@@ -48,6 +57,7 @@ pub fn createLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     lib.root_module.addCMacro("HAVE_LIBZ", "1");
     lib.root_module.addCMacro("HAVE_ZLIB_H", "1");
     if (target.result.os.tag == .windows) {
+        // lib.root_module.addCMacro("CURL_EXTERN_SYMBOL", "__attribute__ ((__visibility__ (\"default\"))");
         lib.linkSystemLibrary("bcrypt");
         return lib;
     }

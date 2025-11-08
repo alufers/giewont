@@ -2,13 +2,19 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
-    const mode = b.standardOptimizeOption(.{});
+    const optimize = b.standardOptimizeOption(.{});
 
-    const gameanalytics_sdk_cpp_src_dep = b.dependency("gameanalytics_sdk_cpp_src", .{});
-
+    const gameanalytics_sdk_cpp_src_dep = b.dependency("gameanalytics_sdk_cpp_src", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const curl_dep = b.dependency("curl", .{
+        .target = target,
+        .optimize = optimize,
+    });
     const gameanalytics_lib_mod = b.addModule("gameanalytics", .{
         .target = target,
-        .optimize = mode,
+        .optimize = optimize,
         .link_libc = true,
         .link_libcpp = true,
     });
@@ -39,9 +45,6 @@ pub fn build(b: *std.Build) void {
             "dependencies/crypto/aes.cpp",
             "dependencies/crypto/md5.cpp",
             "dependencies/miniz/GA_Zip.cpp",
-            "dependencies/stacktrace/stacktrace/call_stack_gcc.cpp",
-            "dependencies/stacktrace/stacktrace/call_stack_msvc.cpp",
-            "dependencies/stackwalker/StackWalker.cpp",
 
             // C dependencies
             "dependencies/crypto/hmac_sha2.c",
@@ -50,6 +53,9 @@ pub fn build(b: *std.Build) void {
             "dependencies/zf_log/zf_log.c",
         },
     });
+
+    gameanalytics_lib_mod.addCMacro("CURL_STATICLIB", "1");
+    gameanalytics_lib_mod.linkLibrary(curl_dep.artifact("curl"));
 
     gameanalytics_lib_mod.addIncludePath(gameanalytics_sdk_cpp_src_dep.path("./include"));
     gameanalytics_lib_mod.addIncludePath(gameanalytics_sdk_cpp_src_dep.path("./source/dependencies/crossguid"));
@@ -63,6 +69,12 @@ pub fn build(b: *std.Build) void {
     gameanalytics_lib_mod.addIncludePath(gameanalytics_sdk_cpp_src_dep.path("./source/gameanalytics"));
 
     if (target.result.os.tag == .linux) {
+        gameanalytics_lib_mod.addCSourceFiles(.{
+            .root = gameanalytics_sdk_cpp_src_dep.path("./source"),
+            .files = &.{
+                "dependencies/stacktrace/stacktrace/call_stack_gcc.cpp",
+            },
+        });
         gameanalytics_lib_mod.addCMacro("GUID_STDLIB", "1");
     } else if (target.result.os.tag == .macos) {
         gameanalytics_lib_mod.addCMacro("GUID_CFUUID", "1");
@@ -76,6 +88,20 @@ pub fn build(b: *std.Build) void {
             .root = gameanalytics_sdk_cpp_src_dep.path("./source"),
             .files = &.{
                 "gameanalytics/Platform/GADeviceOSX.mm",
+                "dependencies/stacktrace/stacktrace/call_stack_gcc.cpp",
+            },
+        });
+    } else if (target.result.os.tag == .windows) {
+        gameanalytics_lib_mod.addCMacro("GUID_WINDOWS", "1");
+        gameanalytics_lib_mod.linkSystemLibrary("Ole32", .{});
+        gameanalytics_lib_mod.linkSystemLibrary("Wininet", .{});
+        gameanalytics_lib_mod.linkSystemLibrary("Version", .{});
+        gameanalytics_lib_mod.addCSourceFiles(.{
+            .root = gameanalytics_sdk_cpp_src_dep.path("./source"),
+            .flags = &.{}, //"-D_MSC_VER=1200"
+            .files = &.{
+                "dependencies/stackwalker/StackWalker.cpp",
+                "dependencies/stacktrace/stacktrace/call_stack_msvc.cpp",
             },
         });
     }

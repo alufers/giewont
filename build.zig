@@ -1,7 +1,9 @@
 const std = @import("std");
 
 fn generateCapnprotoSchema(b: *std.Build, capnp_schema_source: std.Build.LazyPath, module_to_add_to: *std.Build.Module) void {
-    const capnp_dep = b.dependency("capnproto", .{});
+    const capnp_dep = b.dependency("capnproto", .{
+        .target = b.graph.host,
+    });
 
     const capnp_tool_run = b.addRunArtifact(capnp_dep.artifact("capnp_tool"));
 
@@ -18,22 +20,49 @@ fn generateCapnprotoSchema(b: *std.Build, capnp_schema_source: std.Build.LazyPat
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
-    const mode = b.standardOptimizeOption(.{});
+    const optimize = b.standardOptimizeOption(.{});
 
-    const capnp_dep = b.dependency("capnproto", .{});
-    const imgui_dep = b.dependency("imgui", .{});
-    const rlImGui_dep = b.dependency("rlImGui", .{});
-    const gameanalytics_sdk_cpp_dep = b.dependency("gameanalytics_sdk_cpp", .{});
+    const capnp_dep = b.dependency("capnproto", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const imgui_dep = b.dependency("imgui", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const rlImGui_dep = b.dependency("rlImGui", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const gameanalytics_sdk_cpp_dep = b.dependency("gameanalytics_sdk_cpp", .{
+        .target = target,
+        .optimize = optimize,
+    });
     const raylib_dep = b.dependency("raylib", .{
         .target = target,
-        .optimize = mode,
-        .linkage = .dynamic,
+        .optimize = optimize,
+        .linkage = .static,
     });
-    const curl_dep = b.dependency("curl", .{});
-    const mbedtls_dep = b.dependency("mbedtls", .{});
-    const zlib_dep = b.dependency("zlib", .{});
-    const nlohmann_json_dep = b.dependency("nlohmann_json", .{});
-    const nbnet_src_dep = b.dependency("nbnet_src", .{});
+    const curl_dep = b.dependency("curl", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const mbedtls_dep = b.dependency("mbedtls", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const zlib_dep = b.dependency("zlib", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const nlohmann_json_dep = b.dependency("nlohmann_json", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const nbnet_src_dep = b.dependency("nbnet_src", .{
+        .target = target,
+        .optimize = optimize,
+    });
 
     const common_sources = [_][]const u8{
         "CameraEntity.cpp",
@@ -79,7 +108,7 @@ pub fn build(b: *std.Build) void {
 
     const giewont_server_module = b.addModule("giewont_server", .{
         .target = target,
-        .optimize = mode,
+        .optimize = optimize,
         .link_libc = true,
         .link_libcpp = true,
     });
@@ -91,6 +120,9 @@ pub fn build(b: *std.Build) void {
     giewont_server_module.addIncludePath(nbnet_src_dep.path("./"));
     giewont_server_module.addIncludePath(nlohmann_json_dep.path("single_include"));
     giewont_server_module.linkLibrary(capnp_dep.artifact("capnp"));
+    if (target.result.os.tag == .windows) {
+        giewont_server_module.linkSystemLibrary("ws2_32", .{});
+    }
     giewont_server_module.addCMacro("GIEWONT_IS_SERVER", "1");
 
     generateCapnprotoSchema(b, b.path("src/net/schema.capnp"), giewont_server_module);
@@ -116,7 +148,7 @@ pub fn build(b: *std.Build) void {
 
     const giewont_client_module = b.addModule("giewont_client", .{
         .target = target,
-        .optimize = mode,
+        .optimize = optimize,
         .link_libc = true,
         .link_libcpp = true,
     });
@@ -127,6 +159,7 @@ pub fn build(b: *std.Build) void {
     giewont_client_module.addIncludePath(nbnet_src_dep.path("./"));
     giewont_client_module.addIncludePath(b.path("src/client"));
     giewont_client_module.addIncludePath(b.path("single_include"));
+    giewont_client_module.addIncludePath(nlohmann_json_dep.path("single_include"));
     giewont_client_module.linkLibrary(capnp_dep.artifact("capnp"));
     giewont_client_module.linkLibrary(capnp_dep.artifact("kj"));
     giewont_client_module.linkLibrary(imgui_dep.artifact("imgui"));

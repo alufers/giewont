@@ -7,6 +7,7 @@
             .hash = "N-V-__8AAHipPQF9UuLPiaV1CtJzZIxvTN61tMGdFx8LGjIV",
         },
         .mbedtls = .{ .path = "../mbedtls" },
+        .zlib = .{ .path = "../zlib" },
     },
     .paths = .{""},
     .fingerprint = 0x3e01b4d92bb7f1f,

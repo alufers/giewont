@@ -2,15 +2,24 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
-    const mode = b.standardOptimizeOption(.{});
+    const optimize = b.standardOptimizeOption(.{});
 
-    const rlImGui_src_dep = b.dependency("rlImGui_src", .{});
-    const imgui_dep = b.dependency("imgui", .{});
-    const raylib_dep = b.dependency("raylib", .{});
+    const rlImGui_src_dep = b.dependency("rlImGui_src", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const imgui_dep = b.dependency("imgui", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const raylib_dep = b.dependency("raylib", .{
+        .target = target,
+        .optimize = optimize,
+    });
 
     const rlImGui_mod = b.addModule("rlImGui", .{
         .target = target,
-        .optimize = mode,
+        .optimize = optimize,
         .link_libc = true,
         .link_libcpp = true,
     });
