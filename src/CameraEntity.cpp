@@ -156,7 +156,7 @@ float CameraEffect::computed_intensity() {
   if (duration_left > falloff_time) {
     return intensity;
   }
-  return intensity * (duration_left / falloff_time);
+  return std::clamp(intensity * (duration_left / falloff_time), 0.0f, intensity);
 }
 
 Camera2D CameraEffect::modify_camera(float delta_time, const Camera2D &input) {
