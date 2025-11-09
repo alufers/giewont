@@ -206,6 +206,12 @@ void GameplayManager::spawn_player_with_team(Game &game, uint32_t peer_id,
   EntityRef player_ref = game.spawn_player_character(
       peer_id, team_states[team].base.get(game).position + Vec2(0, -10));
 
+  if(!player_ref.valid(game)) {
+    LOG_ERROR() << "Failed to spawn player for team "
+                << gameplay_team_to_string(team) << std::endl;
+    return;
+  }
+
   auto &player = player_ref.get_as<CharacterEntity>(game);
 
   player.team = team;
