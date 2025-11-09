@@ -1,0 +1,27 @@
+.{
+    .name = .libdatachannel,
+    .version = "0.15.2",
+    .dependencies = .{
+        .libdatachannel_src = .{
+            .url = "git+https://github.com/paullouisageneau/libdatachannel.git#4a4c2ce187bd8ee5b96398f9f87a89b07feca564",
+            .hash = "N-V-__8AAC-pNwNUfgeIL8YyHG5LZw6Rp17yrIOsBjc9VW-X",
+        },
+        .plog = .{
+            .path = "../plog",
+        },
+        .usrsctp = .{
+            .path = "../usrsctp",
+        },
+        .libsrtp = .{
+            .path = "../libsrtp",
+        },
+        .mbedtls = .{
+            .path = "../mbedtls",
+        },
+        .libjuice = .{
+            .path = "../libjuice",
+        },
+    },
+    .paths = .{""},
+    .fingerprint = 0x6a2facd35548efd8,
+}

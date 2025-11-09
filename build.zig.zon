@@ -36,6 +36,9 @@
             .url = "git+https://github.com/alufers/nbnet?ref=master#c5b8b249417b264726ce6bd4496719dfbfae40af",
             .hash = "N-V-__8AANRIEgAXblMR63KYVguD5bvU72HBQ7A8LBAw62Gy",
         },
+        .libdatachannel = .{
+            .path = "./external_build/libdatachannel",
+        },
     },
     .paths = .{""},
     .fingerprint = 0xb421ec8e2a8b487f,

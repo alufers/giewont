@@ -18,6 +18,20 @@ pub fn createLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .target = target,
         .optimize = optimize,
     });
+
+    // TODO: make this work
+    // const config_header = b.addConfigHeader(.{
+    //     .style = .blank,
+    //     .include_path = "gen_mbedtls_user_config.h",
+    // }, .{
+    //     .MBEDTLS_SSL_PROTO_DTLS = 1,
+    //     .MBEDTLS_SSL_DTLS_SRTP = 1,
+    // });
+    // lib.root_module.addConfigHeader(config_header);
+
+    lib.root_module.addCMacro("MBEDTLS_SSL_PROTO_DTLS", "1");
+    lib.root_module.addCMacro("MBEDTLS_SSL_DTLS_SRTP", "1");
+
     inline for (srcs) |s| {
         lib.addCSourceFile(.{ .file = mbedtls_dep.path(s), .flags = &.{"-std=c99"} });
     }
@@ -148,4 +162,5 @@ const srcs = &.{
     "library/ssl_tls13_server.c",
     "library/ssl_tls13_client.c",
     "library/ssl_tls13_generic.c",
+    "library/x509write.c",
 };

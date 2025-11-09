@@ -1,0 +1,15 @@
+.{
+    .name = .libsrtp,
+    .version = "0.15.2",
+    .dependencies = .{
+        .libsrtp_src = .{
+            .url = "https://github.com/cisco/libsrtp/archive/refs/tags/v2.7.0.tar.gz",
+            .hash = "N-V-__8AAH_0JgA-Cj0KD-FRD79YKfpke_jGj3tRLcggPbkf",
+        },
+        .mbedtls = .{
+            .path = "../mbedtls",
+        },
+    },
+    .paths = .{""},
+    .fingerprint = 0x28dafdd280265aef,
+}

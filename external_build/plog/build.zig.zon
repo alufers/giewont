@@ -1,0 +1,12 @@
+.{
+    .name = .plog,
+    .version = "0.15.2",
+    .dependencies = .{
+        .plog_src = .{
+            .url = "git+https://github.com/SergiusTheBest/plog.git#e5c033e317a01b2703d13aab42288d09b2efdafc",
+            .hash = "N-V-__8AAPR7DQBzNOu797YiL87Xb_svp_gzXOYZVJy--Ixp",
+        },
+    },
+    .paths = .{""},
+    .fingerprint = 0x3a05ce57a8a56a2e,
+}

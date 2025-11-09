@@ -1,0 +1,12 @@
+.{
+    .name = .libjuice,
+    .version = "0.15.2",
+    .dependencies = .{
+        .libjuice_src = .{
+            .url = "https://github.com/paullouisageneau/libjuice/archive/refs/tags/v1.6.2.tar.gz",
+            .hash = "N-V-__8AABrqBwD_kog3FvvZPgNx2arnvAzZdvWvyovohA6H",
+        },
+    },
+    .paths = .{""},
+    .fingerprint = 0x219afa49284c3a0,
+}

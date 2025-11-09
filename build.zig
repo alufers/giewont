@@ -64,6 +64,11 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const libdatachannel_dep = b.dependency("libdatachannel", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
     const common_sources = [_][]const u8{
         "CameraEntity.cpp",
         "Entity.cpp",
@@ -120,6 +125,7 @@ pub fn build(b: *std.Build) void {
     giewont_server_module.addIncludePath(nbnet_src_dep.path("./"));
     giewont_server_module.addIncludePath(nlohmann_json_dep.path("single_include"));
     giewont_server_module.linkLibrary(capnp_dep.artifact("capnp"));
+    giewont_server_module.linkLibrary(libdatachannel_dep.artifact("libdatachannel"));
     if (target.result.os.tag == .windows) {
         giewont_server_module.linkSystemLibrary("ws2_32", .{});
     }
@@ -169,6 +175,7 @@ pub fn build(b: *std.Build) void {
     giewont_client_module.linkLibrary(curl_dep.artifact("curl"));
     giewont_client_module.linkLibrary(mbedtls_dep.artifact("mbedtls"));
     giewont_client_module.linkLibrary(zlib_dep.artifact("z"));
+    giewont_client_module.linkLibrary(libdatachannel_dep.artifact("libdatachannel"));
 
     giewont_client_module.addCMacro("GIEWONT_IS_CLIENT", "1");
     giewont_client_module.addCMacro("GIEWONT_HAS_GRAPHICS", "1");

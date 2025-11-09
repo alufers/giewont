@@ -37,20 +37,20 @@ void Log(int type, const char *fmt, ...) {
 
 #include "nbnet.h"
 
-// #ifdef PLATFORM_WEB
-// #include "net_drivers/webrtc.h"
-// #else
-// #include "net_drivers/webrtc_c.h"
-// #endif
-#include "net_drivers/udp.h"
+#ifdef PLATFORM_WEB
+#include "net_drivers/webrtc.h"
+#else
+#include "net_drivers/webrtc_c.h"
+#endif
+// #include "net_drivers/udp.h"
 
 }
 
 using namespace giewont;
 
 void giewont::install_nbnet_webrtc_driver() {
-  // NBN_WebRTC_C_Register(NBN_WebRTC_C_Config{
-  //   .enable_tls = false,
-  // });
-  NBN_UDP_Register();
+  NBN_WebRTC_C_Register(NBN_WebRTC_C_Config{
+    .enable_tls = false,
+  });
+  // NBN_UDP_Register();
 }

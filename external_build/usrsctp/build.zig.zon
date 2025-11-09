@@ -1,0 +1,13 @@
+.{
+    .name = .usrsctplib,
+    .version = "0.15.2",
+    .dependencies = .{
+        .usrsctp_src = .{
+            // .url = "git+https://github.com/sctplab/usrsctp.git#fd070e05a7474f38c7fecdf4d4b6005d2547ee00",
+            // .hash = "N-V-__8AAH8JWAAnLo1IhGB_xM7Gds4eXGoF64rFChCefjNr",
+            .path = "./usrsctp",
+        },
+    },
+    .paths = .{""},
+    .fingerprint = 0xb672fc58b47df88a,
+}
