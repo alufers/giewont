@@ -6,8 +6,8 @@
             .path = "../curl",
         },
         .gameanalytics_sdk_cpp_src = .{
-            .url = "git+https://github.com/alufers/gameanalytics-sdk-cpp.git#4d1a4946f25edcfbca83860d0ed4b57350665694",
-            .hash = "N-V-__8AALIfdQc9DAbmygMULfLtpD26z9RSS7WVIrvksbmB",
+            .url = "git+https://github.com/alufers/gameanalytics-sdk-cpp.git#3de6331608e7de1b1764406364811eacd70a8eff",
+            .hash = "N-V-__8AALMfdQenJ-Qced_eAPyAWCegX1o1HLyt_q-0fM_3",
         },
     },
     .paths = .{""},
