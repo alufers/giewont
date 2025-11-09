@@ -2,13 +2,12 @@
     .name = .gameanalytics_sdk_cpp,
     .version = "0.15.2",
     .dependencies = .{
-        .gameanalytics_sdk_cpp_src = .{
-            // .url = "git+https://github.com/GameAnalytics/gameanalytics-sdk-cpp.git#18dcf7b961400875e1d48e554a0ddeb4f0bb49b9",
-            // .hash = "N-V-__8AAAwjdQfYhBwHpnhYZ3XAhKedTBICh78aoFCEu3jh",
-            .path = "./gameanalytics-sdk-cpp",
-        },
         .curl = .{
             .path = "../curl",
+        },
+        .gameanalytics_sdk_cpp_src = .{
+            .url = "git+https://github.com/alufers/gameanalytics-sdk-cpp.git#4d1a4946f25edcfbca83860d0ed4b57350665694",
+            .hash = "N-V-__8AALIfdQc9DAbmygMULfLtpD26z9RSS7WVIrvksbmB",
         },
     },
     .paths = .{""},
