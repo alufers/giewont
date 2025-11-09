@@ -190,5 +190,13 @@ pub fn build(b: *std.Build) void {
         .root_module = giewont_client_module,
     });
 
+    const install_assets_step = b.addInstallDirectory(.{
+        .source_dir = b.path("gw_assets/"),
+        .install_dir = .bin,
+        .install_subdir = "gw_assets/",
+    });
+
+    b.getInstallStep().dependOn(&install_assets_step.step);
+
     b.installArtifact(giewont_client_exe);
 }
