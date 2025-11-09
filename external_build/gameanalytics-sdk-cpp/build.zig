@@ -93,9 +93,9 @@ pub fn build(b: *std.Build) void {
         });
     } else if (target.result.os.tag == .windows) {
         gameanalytics_lib_mod.addCMacro("GUID_WINDOWS", "1");
-        gameanalytics_lib_mod.linkSystemLibrary("Ole32", .{});
-        gameanalytics_lib_mod.linkSystemLibrary("Wininet", .{});
-        gameanalytics_lib_mod.linkSystemLibrary("Version", .{});
+        gameanalytics_lib_mod.linkSystemLibrary("ole32", .{});
+        gameanalytics_lib_mod.linkSystemLibrary("wininet", .{});
+        gameanalytics_lib_mod.linkSystemLibrary("version", .{});
         gameanalytics_lib_mod.addCSourceFiles(.{
             .root = gameanalytics_sdk_cpp_src_dep.path("./source"),
             .flags = &.{}, //"-D_MSC_VER=1200"
