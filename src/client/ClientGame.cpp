@@ -37,8 +37,9 @@ void ClientGame::connect_to_server(const std::string &server_address,
 }
 
 void ClientGame::load_level(std::string tmj_path) {
+  gameanalytics::GameAnalytics::addProgressionEvent(gameanalytics::EGAProgressionStatus::Complete, current_tmj_path);
   Game::load_level(tmj_path);
-  gameanalytics::GameAnalytics::addProgressionEvent(gameanalytics::EGAProgressionStatus::Start, tmj_path);
+  gameanalytics::GameAnalytics::addProgressionEvent(gameanalytics::EGAProgressionStatus::Start, current_tmj_path);
 
 
 

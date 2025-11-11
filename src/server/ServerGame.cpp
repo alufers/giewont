@@ -24,7 +24,7 @@ extern "C" {
 
 using namespace giewont;
 
-ServerGame::ServerGame(std::string tmj_path) : Game(), tmj_path(tmj_path) {
+ServerGame::ServerGame(std::string tmj_path) : Game() {
   load_level(tmj_path);
 }
 
@@ -58,7 +58,7 @@ void ServerGame::update(float delta_time) {
       auto root = message.initRoot<net::BaseNetMessage>();
 
       auto initLoadLevel = root.initLoadLevel();
-      initLoadLevel.setLevelName(tmj_path);
+      initLoadLevel.setLevelName(current_tmj_path);
       initLoadLevel.setYourPeerId(peer.peer_id);
       peer.send_reliable(message);
       clients.push_back(peer);

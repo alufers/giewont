@@ -154,6 +154,7 @@ void Game::load_level(std::string tmj_path) {
   delete_marked_entities();
   LevelLoader level_loader(tmj_path);
   level_loader.load_level(*this);
+  this->current_tmj_path = tmj_path;
 
   for (auto &entity : entities) {
     if (entity != nullptr) {

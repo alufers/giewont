@@ -41,6 +41,8 @@ public:
 
   template <typename T> T get_gvar(GVarType type) const;
 
+  std::string current_tmj_path;
+
   virtual void load_level(std::string tmj_path);
   virtual void update(float delta_time);
 

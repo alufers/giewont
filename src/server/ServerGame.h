@@ -41,7 +41,6 @@ public:
   perform_interaction(const net::InteractNetMessage::Reader &message) override;
 
 private:
-  std::string tmj_path;
   uint32_t net_id_counter = 1;
   uint32_t peer_id_counter = 1;
 
