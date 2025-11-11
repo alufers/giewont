@@ -41,7 +41,7 @@ public:
 
   template <typename T> T get_gvar(GVarType type) const;
 
-  void load_level(std::string tmj_path);
+  virtual void load_level(std::string tmj_path);
   virtual void update(float delta_time);
 
   // Multiplayer

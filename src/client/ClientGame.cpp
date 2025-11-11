@@ -18,6 +18,8 @@
 #include <stdexcept>
 #include <stdlib.h>
 
+#include "GameAnalytics/GameAnalytics.h"
+
 using namespace giewont;
 
 ClientGame::ClientGame() : DrawableGame() {
@@ -32,6 +34,14 @@ void ClientGame::connect_to_server(const std::string &server_address,
   this->server_port = server_port;
   state = ClientGameState::INITIAL;
   this->local_player_name = player_name;
+}
+
+void ClientGame::load_level(std::string tmj_path) {
+  Game::load_level(tmj_path);
+  gameanalytics::GameAnalytics::addProgressionEvent(gameanalytics::EGAProgressionStatus::Start, tmj_path);
+
+
+
 }
 
 void ClientGame::draw() {

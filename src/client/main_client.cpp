@@ -52,10 +52,14 @@ static void main_loop() {
 }
 
 int main() {
-    gameanalytics::GameAnalytics::setEnabledInfoLog(true);
-    gameanalytics::GameAnalytics::setEnabledVerboseLog(true);
+  gameanalytics::GameAnalytics::setEnabledInfoLog(true);
+  gameanalytics::GameAnalytics::setEnabledVerboseLog(true);
 
-    gameanalytics::GameAnalytics::configureBuild("0.10");
+  gameanalytics::GameAnalytics::configureBuild("0.1");
+
+  gameanalytics::GameAnalytics::initialize(
+      "7c25138255eefc6358730e314820caae",
+      "1fcba7aff7f93986c11890783c2c14574b21f0da");
 
 
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_TITLE);

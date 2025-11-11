@@ -34,6 +34,8 @@ public:
   bool is_server() const override { return false; }
   void shutdown() override;
 
+  void  load_level(std::string tmj_path) override;
+
   void connect_to_server(const std::string &server_address, int server_port,
                          const std::string &player_name);
 
