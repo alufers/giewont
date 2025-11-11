@@ -41,9 +41,9 @@ pub fn build(b: *std.Build) void {
     const raylib_dep = b.dependency("raylib", .{
         .target = target,
         .optimize = optimize,
-        .linkage = .static,
+        .linkage = .dynamic,
     });
-    const curl_dep = b.dependency("curl", .{
+    _ = b.dependency("curl", .{
         .target = target,
         .optimize = optimize,
     });
@@ -64,10 +64,10 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const libdatachannel_dep = b.dependency("libdatachannel", .{
-        .target = target,
-        .optimize = optimize,
-    });
+    // const libdatachannel_dep = b.dependency("libdatachannel", .{
+    //     .target = target,
+    //     .optimize = optimize,
+    // });
 
     const common_sources = [_][]const u8{
         "CameraEntity.cpp",
@@ -125,7 +125,7 @@ pub fn build(b: *std.Build) void {
     giewont_server_module.addIncludePath(nbnet_src_dep.path("./"));
     giewont_server_module.addIncludePath(nlohmann_json_dep.path("single_include"));
     giewont_server_module.linkLibrary(capnp_dep.artifact("capnp"));
-    giewont_server_module.linkLibrary(libdatachannel_dep.artifact("libdatachannel"));
+    // giewont_server_module.linkLibrary(libdatachannel_dep.artifact("libdatachannel"));
     if (target.result.os.tag == .windows) {
         giewont_server_module.linkSystemLibrary("ws2_32", .{});
     }
@@ -144,6 +144,7 @@ pub fn build(b: *std.Build) void {
     const giewont_server_exe = b.addExecutable(.{
         .name = "giewont_server",
         .root_module = giewont_server_module,
+        .use_lld = false,
     });
 
     b.installArtifact(giewont_server_exe);
@@ -172,10 +173,10 @@ pub fn build(b: *std.Build) void {
     giewont_client_module.linkLibrary(rlImGui_dep.artifact("rlImGui"));
     giewont_client_module.linkLibrary(gameanalytics_sdk_cpp_dep.artifact("gameanalytics"));
     giewont_client_module.linkLibrary(raylib_dep.artifact("raylib"));
-    giewont_client_module.linkLibrary(curl_dep.artifact("curl"));
+    // giewont_client_module.linkLibrary(curl_dep.artifact("curl"));
     giewont_client_module.linkLibrary(mbedtls_dep.artifact("mbedtls"));
     giewont_client_module.linkLibrary(zlib_dep.artifact("z"));
-    giewont_client_module.linkLibrary(libdatachannel_dep.artifact("libdatachannel"));
+    // giewont_client_module.linkLibrary(libdatachannel_dep.artifact("libdatachannel"));
 
     giewont_client_module.addCMacro("GIEWONT_IS_CLIENT", "1");
     giewont_client_module.addCMacro("GIEWONT_HAS_GRAPHICS", "1");
@@ -195,6 +196,7 @@ pub fn build(b: *std.Build) void {
     const giewont_client_exe = b.addExecutable(.{
         .name = "giewont_client",
         .root_module = giewont_client_module,
+        .use_lld = false,
     });
 
     const install_assets_step = b.addInstallDirectory(.{
