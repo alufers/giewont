@@ -175,9 +175,17 @@ struct DestroyEntityNetMessage {
     netId @0 :UInt32;
 }   
 
+enum HurtReason {
+    unknown @0;
+    environment @1;
+    projectile @2;
+    explosion @3;
+}
+
 struct HurtEntityNetMessage {
     netId @0 :UInt32;
     damage @1 :Int32;
+    reason @2 :HurtReason;
 }
 
 struct GuiInteractionNetMessage {

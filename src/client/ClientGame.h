@@ -34,7 +34,7 @@ public:
   bool is_server() const override { return false; }
   void shutdown() override;
 
-  void  load_level(std::string tmj_path) override;
+  void load_level(std::string tmj_path) override;
 
   void connect_to_server(const std::string &server_address, int server_port,
                          const std::string &player_name);
@@ -58,6 +58,10 @@ public:
   perform_interaction(const net::InteractNetMessage::Reader &message) override;
 
   ~ClientGame();
+
+
+  // used used to identify the team in analytics
+  std::string own_team_name = "";
 
 private:
   std::string error_message;

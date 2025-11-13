@@ -12,6 +12,7 @@
 #include "TilemapEntity.h"
 #include "Util.h"
 #include "schema.capnp.h"
+#include <capnp/dynamic.h>
 #include <capnp/message.h>
 #include <cmath>
 #include <cstring>
@@ -20,7 +21,12 @@
 #include <nlohmann/json.hpp>
 
 #ifdef GIEWONT_HAS_GRAPHICS
+#include "ClientGame.h"
 #include <raylib.h>
+#endif
+
+#ifdef GIEWONT_IS_CLIENT
+#include <GameAnalytics/GameAnalytics.h>
 #endif
 
 using namespace giewont;
@@ -36,6 +42,12 @@ void CharacterEntity::load_assets(const Game &game) {
   PhysEntity::load_assets(game);
   if (!game.is_server() && this->net_owner_peer_id == game.my_peer_id) {
     this->controller = std::make_unique<KeyboardCharacterController>();
+
+#if GIEWONT_IS_CLIENT
+    gameanalytics::GameAnalytics::addProgressionEvent(
+        gameanalytics::EGAProgressionStatus::Start, game.current_tmj_path,
+        static_cast<const ClientGame &>(game).own_team_name, "Spawn");
+#endif
   }
 
   _texture_id = game.rm->load_texture("entities/p1_spritesheet.png");
@@ -119,6 +131,27 @@ void CharacterEntity::apply_hurt_message(
       game.camera_ref.get_as<CameraEntity>(game).effects.push_back(
           std::move(vignette_effect));
     }
+
+    // CHeck if we die here for analytics
+
+#if GIEWONT_IS_CLIENT
+    if (this->health <= 0) {
+      nlohmann::json event_fields;
+      auto reasonValue = capnp::DynamicEnum(msg.getReason());
+      std::string death_reason =
+          reasonValue.getEnumerant()
+              .map([](auto &e) { return e.getProto().getName().cStr(); })
+              .orDefault("unknown");
+      event_fields["death_reason"] = death_reason;
+
+      event_fields["damage"] = msg.getDamage();
+
+      gameanalytics::GameAnalytics::addProgressionEvent(
+          gameanalytics::EGAProgressionStatus ::Fail, game.current_tmj_path,
+          static_cast<const ClientGame &>(game).own_team_name, "Spawn",
+          nlohmann::to_string(event_fields));
+    }
+#endif
   }
 }
 

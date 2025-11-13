@@ -39,6 +39,9 @@ void TeamChoiceGUIEntity::draw_imgui_ui(Game &game) {
     gui_interaction.setName("BLUE_TEAM_CHOSEN");
 
     game.send_reliable_to_peer(0, message_builder);
+
+    // Store for analytics
+    static_cast<ClientGame &>(game).own_team_name = "BLUE_TEAM";
   }
 
   if (ImGui::Button("RED TEAM")) {
@@ -49,6 +52,8 @@ void TeamChoiceGUIEntity::draw_imgui_ui(Game &game) {
     gui_interaction.setName("RED_TEAM_CHOSEN");
 
     game.send_reliable_to_peer(0, message_builder);
+    static_cast<ClientGame &>(game).own_team_name = "BLUE_TEAM";
+
   }
   ImGui::End();
 #endif
