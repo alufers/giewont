@@ -41,20 +41,28 @@ pub fn build(b: *std.Build) void {
     const raylib_dep = b.dependency("raylib", .{
         .target = target,
         .optimize = optimize,
-        .linkage = .dynamic,
+        .linkage = .static,
     });
-    _ = b.dependency("curl", .{
+    const curl_dependency = b.dependency("curl", .{
         .target = target,
         .optimize = optimize,
+        .libpsl = false,
+        .libssh2 = false,
+        .libidn2 = false,
+        .nghttp2 = false,
+        .@"disable-ldap" = true,
+        .@"use-mbedtls" = true,
+        .@"use-openssl" = false,
+        .linkage = .static,
     });
-    const mbedtls_dep = b.dependency("mbedtls", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    const zlib_dep = b.dependency("zlib", .{
-        .target = target,
-        .optimize = optimize,
-    });
+    // const mbedtls_dep = b.dependency("mbedtls", .{
+    //     .target = target,
+    //     .optimize = optimize,
+    // });
+    // const zlib_dep = b.dependency("zlib", .{
+    //     .target = target,
+    //     .optimize = optimize,
+    // });
     const nlohmann_json_dep = b.dependency("nlohmann_json", .{
         .target = target,
         .optimize = optimize,
@@ -63,6 +71,8 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+
+    const libCurl = @import("curl").artifact(curl_dependency, .lib);
 
     // const libdatachannel_dep = b.dependency("libdatachannel", .{
     //     .target = target,
@@ -144,7 +154,7 @@ pub fn build(b: *std.Build) void {
     const giewont_server_exe = b.addExecutable(.{
         .name = "giewont_server",
         .root_module = giewont_server_module,
-        .use_lld = false,
+        .use_lld = target.result.os.tag == .windows,
     });
 
     b.installArtifact(giewont_server_exe);
@@ -173,9 +183,9 @@ pub fn build(b: *std.Build) void {
     giewont_client_module.linkLibrary(rlImGui_dep.artifact("rlImGui"));
     giewont_client_module.linkLibrary(gameanalytics_sdk_cpp_dep.artifact("gameanalytics"));
     giewont_client_module.linkLibrary(raylib_dep.artifact("raylib"));
-    // giewont_client_module.linkLibrary(curl_dep.artifact("curl"));
-    giewont_client_module.linkLibrary(mbedtls_dep.artifact("mbedtls"));
-    giewont_client_module.linkLibrary(zlib_dep.artifact("z"));
+    giewont_client_module.linkLibrary(libCurl);
+    // giewont_client_module.linkLibrary(mbedtls_dep.artifact("mbedtls"));
+    // giewont_client_module.linkLibrary(zlib_dep.artifact("z"));
     // giewont_client_module.linkLibrary(libdatachannel_dep.artifact("libdatachannel"));
 
     giewont_client_module.addCMacro("GIEWONT_IS_CLIENT", "1");
@@ -196,7 +206,7 @@ pub fn build(b: *std.Build) void {
     const giewont_client_exe = b.addExecutable(.{
         .name = "giewont_client",
         .root_module = giewont_client_module,
-        .use_lld = false,
+        .use_lld = target.result.os.tag == .windows,
     });
 
     const install_assets_step = b.addInstallDirectory(.{

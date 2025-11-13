@@ -8,9 +8,17 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    const curl_dep = b.dependency("curl", .{
+    const curl_dependency = b.dependency("curl", .{
         .target = target,
         .optimize = optimize,
+        .libpsl = false,
+        .libssh2 = false,
+        .libidn2 = false,
+        .nghttp2 = false,
+        .@"disable-ldap" = true,
+        .@"use-mbedtls" = true,
+        .@"use-openssl" = false,
+        .linkage = .static,
     });
     const gameanalytics_lib_mod = b.addModule("gameanalytics", .{
         .target = target,
@@ -55,10 +63,10 @@ pub fn build(b: *std.Build) void {
         },
     });
 
+    const libCurl = @import("curl").artifact(curl_dependency, .lib);
+
     gameanalytics_lib_mod.addCMacro("CURL_STATICLIB", "1");
-    // gameanalytics_lib_mod.linkLibrary(curl_dep.artifact("curl"));
-    _ = curl_dep;
-    gameanalytics_lib_mod.linkSystemLibrary("curl", .{});
+    gameanalytics_lib_mod.linkLibrary(libCurl);
 
     gameanalytics_lib_mod.addIncludePath(gameanalytics_sdk_cpp_src_dep.path("./include"));
     gameanalytics_lib_mod.addIncludePath(gameanalytics_sdk_cpp_src_dep.path("./source/dependencies/crossguid"));

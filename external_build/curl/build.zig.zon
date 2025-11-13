@@ -1,15 +1,24 @@
 .{
     .name = .curl,
-    .version = "0.15.2",
+    .version = "8.15.0",
+    .minimum_zig_version = "0.15.1",
     .dependencies = .{
-        .curl_src = .{
-            // .url = "https://github.com/curl/curl/releases/download/curl-8_8_0/curl-8.8.0.tar.gz",
-            // .hash = "N-V-__8AAHipPQF9UuLPiaV1CtJzZIxvTN61tMGdFx8LGjIV",
-            .path = "./curl",
+        .curl = .{
+            .url = "https://github.com/curl/curl/releases/download/curl-8_17_0/curl-8.17.0.tar.gz",
+            .hash = "N-V-__8AAE8yPgHpdSYoimyA6QyHNxLuuwJTbYv7n5v7pxvu",
         },
-        .mbedtls = .{ .path = "../mbedtls" },
-        .zlib = .{ .path = "../zlib" },
+        .zlib = .{
+            .path = "../zlib",
+        },
+        .mbedtls = .{
+            .path = "../mbedtls",
+        },
     },
-    .paths = .{""},
-    .fingerprint = 0x3e01b4d92bb7f1f,
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "LICENSE",
+        "README.md",
+    },
+    .fingerprint = 0x3e01b4d58c05098, // Changing this has security and trust implications.
 }
