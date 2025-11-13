@@ -15,6 +15,7 @@
 #include <string>
 #include <variant>
 #include <vector>
+#include "ThreadPool.h"
 
 #define PHYS_EPSILON 0.00001f
 
@@ -106,6 +107,8 @@ public:
 #endif
 
   std::string local_player_name = "Player";
+
+  ThreadPool thread_pool;
 
 protected:
   /** @brief Last update per second. */

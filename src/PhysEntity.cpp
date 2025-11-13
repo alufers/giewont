@@ -183,7 +183,5 @@ void PhysEntity::handle_apply_impulse_message(
     Game &game,
     const net::ApplyPhysicsImpulseNetMessage::Reader &apply_impulse_message) {
   Vec2 vec = Vec2(apply_impulse_message.getImpulse());
-  LOG_DEBUG() << "Applying impulse to entity " << this->net_id << ", " << vec
-              << std::endl;
   this->velocity += vec / this->mass;
 }

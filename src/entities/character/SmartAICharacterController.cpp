@@ -81,19 +81,19 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
             " returned NOT_ATTEMPTED, this should not happen.");
         break;
       case GoapActionResult::FAILED_FORCE_REPLAN:
-        LOG_DEBUG() << "[AI] Action " << action->get_name()
-                    << " failed, replanning." << std::endl;
+        // LOG_DEBUG() << "[AI] Action " << action->get_name()
+        //             << " failed, replanning." << std::endl;
         state.dwellTime = rand_float(0.5f, 3.2f);
         return; // No point in continuing, we need to replan
       case GoapActionResult::FAILED_RECOVERABLE:
-        LOG_DEBUG() << "[AI] Action " << action->get_name()
-                    << " failed, but can be retried." << std::endl;
+        // LOG_DEBUG() << "[AI] Action " << action->get_name()
+        //             << " failed, but can be retried." << std::endl;
         plan_item.did_begin = false;
         plan_item.attempt_count++;
         state.dwellTime = rand_float(0.1f, 1.2f);
         if (plan_item.attempt_count > 5) {
-          LOG_DEBUG() << "[AI] Action " << action->get_name()
-                      << " failed too many times, replanning." << std::endl;
+          // LOG_DEBUG() << "[AI] Action " << action->get_name()
+          //             << " failed too many times, replanning." << std::endl;
           plan_item.last_result =
               GoapActionResult::FAILED_FORCE_REPLAN; // Force replan
         }
@@ -103,8 +103,8 @@ void SmartAICharacterController::update(Game &game, CharacterEntity &character,
         plan_item.did_begin = true;
         break;
       case GoapActionResult::DONE:
-        LOG_DEBUG() << "[AI] Action " << action->get_name()
-                    << " completed successfully." << std::endl;
+        // LOG_DEBUG() << "[AI] Action " << action->get_name()
+        //             << " completed successfully." << std::endl;
         plan_item.did_begin = true;
         plan_item.did_complete = true;
         break;
@@ -232,45 +232,44 @@ void SmartAICharacterController::generate_goap_plan(SmartAIThinkCtx &ctx) {
   if (has_any_performable_actions)
     return; // The current plan is still valid.
 
-  std::vector<GoapPlanItem> initial_plan;
-  auto next_plan = this->consider_next_plan_item(ctx, initial_plan);
-  if (next_plan.has_value()) {
-    LOG_DEBUG() << "[AI] Found a plan with " << next_plan.value().size()
-                << " items" << std::endl;
+  if (ctx.state.is_generating_plan)
+    return; // Already generating a plan
 
-    for (const auto &item : next_plan.value()) {
-      LOG_DEBUG() << "[AI] Action: " << item.action.lock()->get_name()
-                  << ", Action Reward: " << item.action_reward
-                  << ", Goal Reward: " << item.goal_reward << std::endl;
-    }
-    this->state.currentGoapPlan = next_plan.value();
-
-    this->state.currentPlanAge = 0.0f;
-    if (!this->state.currentGoapPlan.empty()) {
-      for (auto &goal : ctx.state.goals) {
-        this->state.expectedGoalRewards[goal->get_name()] =
-            goal->get_reward(ctx, this->state.currentGoapPlan.back().state,
-                             this->state.currentGoapPlan.back().state);
-      }
-    } else {
-      this->state.expectedGoalRewards.clear();
-    }
-
-  } else {
-    LOG_DEBUG() << "[AI] No plan found" << std::endl;
+  if (ctx.state.plan_from_threadpool.size() > 0) {
+    // LOG_DEBUG() << "[AI] Retrieved plan from thread pool with "
+    //             << ctx.state.plan_from_threadpool.size() << " items."
+    //             << std::endl;
+    ctx.state.currentGoapPlan = ctx.state.plan_from_threadpool;
+    return;
   }
+
+  ctx.state.is_generating_plan = true;
+
+  GoapBlackboard initial_state = ctx.state.current_state;
+  ctx.game.thread_pool.queue_job([this, ctx, initial_state]() {
+  SmartAIThinkCtx thread_ctx = ctx;
+    std::optional<std::vector<GoapPlanItem>> best_plan =
+        this->consider_next_plan_item(thread_ctx, {}, initial_state);
+
+    if (best_plan.has_value()) {
+      // LOG_DEBUG() << "[AI] Generated new plan with " << best_plan->size()
+      //             << " items in thread pool." << std::endl;
+      thread_ctx.state.plan_from_threadpool = best_plan.value();
+    } else {
+      // LOG_DEBUG() << "[AI] Failed to generate a valid plan in thread pool."
+      //             << std::endl;
+    }
+
+    thread_ctx.state.is_generating_plan = false;
+  });
 }
 
 std::optional<std::vector<GoapPlanItem>>
 SmartAICharacterController::consider_next_plan_item(
-    SmartAIThinkCtx &ctx, std::vector<GoapPlanItem> const &curr_plan) {
+    SmartAIThinkCtx &ctx, std::vector<GoapPlanItem> const &curr_plan,
+    GoapBlackboard initial_state) {
   if (curr_plan.size() > 3) {
     return std::nullopt; // Too long plan, don't consider it
-  }
-
-  GoapBlackboard initial_state = ctx.state.current_state;
-  if (!curr_plan.empty()) {
-    initial_state = curr_plan.back().state;
   }
 
   std::optional<std::vector<GoapPlanItem>> best_plan = std::nullopt;
@@ -306,7 +305,8 @@ SmartAICharacterController::consider_next_plan_item(
       });
 
       // Now recusively consider the next plan item after the action
-      auto next_plan = this->consider_next_plan_item(ctx, new_plan);
+      auto next_plan =
+          this->consider_next_plan_item(ctx, new_plan, finish_state);
       if (next_plan.has_value()) {
         new_plan = next_plan.value();
       }
@@ -353,8 +353,8 @@ void SmartAICharacterController::evaluate_current_goap_plan(
     float reward =
         plan_item.action.lock()->get_reward(ctx, bb_state, finish_state);
     if (!std::isfinite(reward) || std::isnan(reward)) {
-      LOG_DEBUG() << "[AI] Action " << plan_item.action.lock()->get_name()
-                  << " returned invalid reward, replanning." << std::endl;
+      // LOG_DEBUG() << "[AI] Action " << plan_item.action.lock()->get_name()
+      //             << " returned invalid reward, replanning." << std::endl;
       needs_replanning = true;
       break; // Invalid reward, we need to replan
     }
@@ -370,8 +370,8 @@ void SmartAICharacterController::evaluate_current_goap_plan(
   }
 
   if (needs_replanning) {
-    LOG_DEBUG() << "[AI] =======PLAN NEEDS REPLANNING AFTER EVALUATION====="
-                << std::endl;
+    // LOG_DEBUG() << "[AI] =======PLAN NEEDS REPLANNING AFTER EVALUATION====="
+    //             << std::endl;
     ctx.state.currentGoapPlan.clear();
   }
 }

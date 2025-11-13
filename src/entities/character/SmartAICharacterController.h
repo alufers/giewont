@@ -10,7 +10,6 @@
 #include <optional>
 #include <vector>
 
-
 namespace giewont {
 
 // SmartAICharacterController controls a character using pathfinding.
@@ -31,14 +30,14 @@ private:
   void generate_goap_plan(SmartAIThinkCtx &ctx);
 
   /**
-   * @brief Check whether the current Goap plan can still be executed and the goal reward is high enough.\
-   * 
+   * @brief Check whether the current Goap plan can still be executed and the
+   * goal reward is high enough.\
+   *
    */
   void evaluate_current_goap_plan(SmartAIThinkCtx &ctx);
-  std::optional<std::vector<GoapPlanItem>> consider_next_plan_item(SmartAIThinkCtx &ctx, std::vector<GoapPlanItem> const &curr_plan);
-
- 
-
+  std::optional<std::vector<GoapPlanItem>> consider_next_plan_item(
+      SmartAIThinkCtx &ctx, std::vector<GoapPlanItem> const &curr_plan,
+      GoapBlackboard initial_state);
 
   SmartAIState state;
 };

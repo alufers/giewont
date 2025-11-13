@@ -6,6 +6,7 @@
 #include "TilemapEntity.h"
 #include "GoapInterfaces.h"
 #include "GoapSensors.h"
+#include <atomic>
 
 namespace giewont {
 
@@ -59,6 +60,8 @@ struct SmartAIState {
   std::vector<std::unique_ptr<GoapGoal>> goals;
   std::vector<std::shared_ptr<GoapAction>> actions;
   std::vector<GoapPlanItem> currentGoapPlan;
+  std::atomic<bool> is_generating_plan = false;
+  std::vector<GoapPlanItem> plan_from_threadpool;
 
   float currentPlanAge = 0.0f;
   std::map<std::string, float> expectedGoalRewards;
