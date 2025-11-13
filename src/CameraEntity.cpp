@@ -57,10 +57,10 @@ void CameraEntity::draw(const Game &game) {
 
   if (mouse_scroll != 0) {
     camera.zoom += mouse_scroll * 0.1f;
-    if(camera.zoom < 0.1f) {
+    if (camera.zoom < 0.1f) {
       camera.zoom = 0.4f; // Prevent zooming out too much
     }
-    if(camera.zoom > 10.0f) {
+    if (camera.zoom > 10.0f) {
       camera.zoom = 10.0f; // Prevent zooming in too much
     }
   }
@@ -156,7 +156,8 @@ float CameraEffect::computed_intensity() {
   if (duration_left > falloff_time) {
     return intensity;
   }
-  return std::clamp(intensity * (duration_left / falloff_time), 0.0f, intensity);
+  return std::clamp(intensity * (duration_left / falloff_time), 0.0f,
+                    intensity);
 }
 
 Camera2D CameraEffect::modify_camera(float delta_time, const Camera2D &input) {
@@ -185,7 +186,7 @@ void VignetteEffect::on_after_end_mode2d() {
                            GetScreenHeight() * GetScreenHeight()) *
                  0.5f;
 
-  uint8_t alpha = (uint8_t)(computed_intensity() * 255);
+  uint8_t alpha = (uint8_t)(std::clamp(computed_intensity(), 0.0f, 1.0f) * 255);
 
   Color raylib_color = color.to_raylib_color();
 
