@@ -2,6 +2,8 @@
 
 const std = @import("std");
 
+const version: std.SemanticVersion = .{ .major = 8, .minor = 17, .patch = 0 };
+
 pub fn createLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) *std.Build.Step.Compile {
     const lib = b.addLibrary(.{
         .linkage = .static,
@@ -31,184 +33,332 @@ pub fn createLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             .flags = &.{"-std=gnu89"},
         });
     }
+
+    lib.root_module.addCMacro("HAVE_CONFIG_H", "1");
+    lib.root_module.addCMacro("CURL_STATICLIB", "1");
+
+    lib.addCSourceFile(.{
+        .file = b.path("./ca_cert_embed.c"),
+        .flags = &.{"-std=gnu89"},
+    });
     lib.linkLibrary(mbedtls_dep.artifact("mbedtls"));
     lib.linkLibrary(zlib_dep.artifact("z"));
 
     lib.addIncludePath(curl_dep.path("lib"));
     lib.addIncludePath(curl_dep.path("include"));
     lib.installHeadersDirectory(curl_dep.path("include/curl"), "curl", .{});
-    lib.root_module.addCMacro("BUILDING_LIBCURL", "1");
-    lib.root_module.addCMacro("CURL_STATICLIB", "1");
-    lib.root_module.addCMacro("CURL_DISABLE_LDAP", "1");
-    lib.root_module.addCMacro("CURL_DISABLE_LDAPS", "1");
-    lib.root_module.addCMacro("USE_MBEDTLS", "1");
-    lib.root_module.addCMacro("CURL_DISABLE_DICT", "1");
-    lib.root_module.addCMacro("CURL_DISABLE_FILE", "1");
-    lib.root_module.addCMacro("CURL_DISABLE_FTP", "1");
-    lib.root_module.addCMacro("CURL_DISABLE_GOPHER", "1");
-    lib.root_module.addCMacro("CURL_DISABLE_IMAP", "1");
-    lib.root_module.addCMacro("CURL_DISABLE_MQTT", "1");
-    lib.root_module.addCMacro("CURL_DISABLE_POP3", "1");
-    lib.root_module.addCMacro("CURL_DISABLE_RTSP", "1");
-    lib.root_module.addCMacro("CURL_DISABLE_SMB", "1");
-    lib.root_module.addCMacro("CURL_DISABLE_SMTP", "1");
-    lib.root_module.addCMacro("CURL_DISABLE_TELNET", "1");
-    lib.root_module.addCMacro("CURL_DISABLE_TFTP", "1");
-    lib.root_module.addCMacro("HAVE_LIBZ", "1");
-    lib.root_module.addCMacro("HAVE_ZLIB_H", "1");
-    if (target.result.os.tag == .windows) {
-        // lib.root_module.addCMacro("CURL_EXTERN_SYMBOL", "__attribute__ ((__visibility__ (\"default\"))");
-        lib.linkSystemLibrary("bcrypt");
-        return lib;
-    }
-    lib.root_module.addCMacro("CURL_EXTERN_SYMBOL", "__attribute__ ((__visibility__ (\"default\"))");
 
-    const isDarwin = target.result.os.tag.isDarwin();
-    if (!isDarwin)
-        lib.root_module.addCMacro("ENABLE_IPV6", "1");
-    lib.root_module.addCMacro("HAVE_ALARM", "1");
-    lib.root_module.addCMacro("HAVE_ALLOCA_H", "1");
-    lib.root_module.addCMacro("HAVE_ARPA_INET_H", "1");
-    lib.root_module.addCMacro("HAVE_ARPA_TFTP_H", "1");
-    lib.root_module.addCMacro("HAVE_ASSERT_H", "1");
-    lib.root_module.addCMacro("HAVE_BASENAME", "1");
-    lib.root_module.addCMacro("HAVE_BOOL_T", "1");
-    lib.root_module.addCMacro("HAVE_BUILTIN_AVAILABLE", "1");
-    lib.root_module.addCMacro("HAVE_CLOCK_GETTIME_MONOTONIC", "1");
-    lib.root_module.addCMacro("HAVE_DLFCN_H", "1");
-    lib.root_module.addCMacro("HAVE_ERRNO_H", "1");
-    lib.root_module.addCMacro("HAVE_FCNTL", "1");
-    lib.root_module.addCMacro("HAVE_FCNTL_H", "1");
-    lib.root_module.addCMacro("HAVE_FCNTL_O_NONBLOCK", "1");
-    lib.root_module.addCMacro("HAVE_FREEADDRINFO", "1");
-    lib.root_module.addCMacro("HAVE_FTRUNCATE", "1");
-    lib.root_module.addCMacro("HAVE_GETADDRINFO", "1");
-    lib.root_module.addCMacro("HAVE_GETEUID", "1");
-    lib.root_module.addCMacro("HAVE_GETPPID", "1");
-    lib.root_module.addCMacro("HAVE_GETHOSTBYNAME", "1");
-    if (!isDarwin)
-        lib.root_module.addCMacro("HAVE_GETHOSTBYNAME_R", "1");
-    lib.root_module.addCMacro("HAVE_GETHOSTBYNAME_R_6", "1");
-    lib.root_module.addCMacro("HAVE_GETHOSTNAME", "1");
-    lib.root_module.addCMacro("HAVE_GETPPID", "1");
-    lib.root_module.addCMacro("HAVE_GETPROTOBYNAME", "1");
-    lib.root_module.addCMacro("HAVE_GETPEERNAME", "1");
-    lib.root_module.addCMacro("HAVE_GETSOCKNAME", "1");
-    lib.root_module.addCMacro("HAVE_IF_NAMETOINDEX", "1");
-    lib.root_module.addCMacro("HAVE_GETPWUID", "1");
-    lib.root_module.addCMacro("HAVE_GETPWUID_R", "1");
-    lib.root_module.addCMacro("HAVE_GETRLIMIT", "1");
-    lib.root_module.addCMacro("HAVE_GETTIMEOFDAY", "1");
-    lib.root_module.addCMacro("HAVE_GMTIME_R", "1");
-    lib.root_module.addCMacro("HAVE_IFADDRS_H", "1");
-    lib.root_module.addCMacro("HAVE_INET_ADDR", "1");
-    lib.root_module.addCMacro("HAVE_INET_PTON", "1");
-    lib.root_module.addCMacro("HAVE_SA_FAMILY_T", "1");
-    lib.root_module.addCMacro("HAVE_INTTYPES_H", "1");
-    lib.root_module.addCMacro("HAVE_IOCTL", "1");
-    lib.root_module.addCMacro("HAVE_IOCTL_FIONBIO", "1");
-    lib.root_module.addCMacro("HAVE_IOCTL_SIOCGIFADDR", "1");
-    lib.root_module.addCMacro("HAVE_LDAP_URL_PARSE", "1");
-    lib.root_module.addCMacro("HAVE_LIBGEN_H", "1");
-    lib.root_module.addCMacro("HAVE_IDN2_H", "1");
-    lib.root_module.addCMacro("HAVE_LL", "1");
-    lib.root_module.addCMacro("HAVE_LOCALE_H", "1");
-    lib.root_module.addCMacro("HAVE_LOCALTIME_R", "1");
-    lib.root_module.addCMacro("HAVE_LONGLONG", "1");
-    lib.root_module.addCMacro("HAVE_MALLOC_H", "1");
-    lib.root_module.addCMacro("HAVE_MEMORY_H", "1");
-    if (!isDarwin)
-        lib.root_module.addCMacro("HAVE_MSG_NOSIGNAL", "1");
-    lib.root_module.addCMacro("HAVE_NETDB_H", "1");
-    lib.root_module.addCMacro("HAVE_NETINET_IN_H", "1");
-    lib.root_module.addCMacro("HAVE_NETINET_TCP_H", "1");
-
-    if (target.result.os.tag == .linux)
-        lib.root_module.addCMacro("HAVE_LINUX_TCP_H", "1");
-    lib.root_module.addCMacro("HAVE_NET_IF_H", "1");
-    lib.root_module.addCMacro("HAVE_PIPE", "1");
-    lib.root_module.addCMacro("HAVE_POLL", "1");
-    lib.root_module.addCMacro("HAVE_POLL_FINE", "1");
-    lib.root_module.addCMacro("HAVE_POLL_H", "1");
-    lib.root_module.addCMacro("HAVE_POSIX_STRERROR_R", "1");
-    lib.root_module.addCMacro("HAVE_PTHREAD_H", "1");
-    lib.root_module.addCMacro("HAVE_PWD_H", "1");
-    lib.root_module.addCMacro("HAVE_RECV", "1");
-    lib.root_module.addCMacro("HAVE_SELECT", "1");
-    lib.root_module.addCMacro("HAVE_SEND", "1");
-    lib.root_module.addCMacro("HAVE_FSETXATTR", "1");
-    lib.root_module.addCMacro("HAVE_FSETXATTR_5", "1");
-    lib.root_module.addCMacro("HAVE_SETJMP_H", "1");
-    lib.root_module.addCMacro("HAVE_SETLOCALE", "1");
-    lib.root_module.addCMacro("HAVE_SETRLIMIT", "1");
-    lib.root_module.addCMacro("HAVE_SETSOCKOPT", "1");
-    lib.root_module.addCMacro("HAVE_SIGACTION", "1");
-    lib.root_module.addCMacro("HAVE_SIGINTERRUPT", "1");
-    lib.root_module.addCMacro("HAVE_SIGNAL", "1");
-    lib.root_module.addCMacro("HAVE_SIGNAL_H", "1");
-    lib.root_module.addCMacro("HAVE_SIGSETJMP", "1");
-    lib.root_module.addCMacro("HAVE_SOCKADDR_IN6_SIN6_SCOPE_ID", "1");
-    lib.root_module.addCMacro("HAVE_SOCKET", "1");
-    lib.root_module.addCMacro("HAVE_STDBOOL_H", "1");
-    lib.root_module.addCMacro("HAVE_STDINT_H", "1");
-    lib.root_module.addCMacro("HAVE_STDIO_H", "1");
-    lib.root_module.addCMacro("HAVE_STDLIB_H", "1");
-    lib.root_module.addCMacro("HAVE_STRCASECMP", "1");
-    lib.root_module.addCMacro("HAVE_STRDUP", "1");
-    lib.root_module.addCMacro("HAVE_STRERROR_R", "1");
-    lib.root_module.addCMacro("HAVE_STRINGS_H", "1");
-    lib.root_module.addCMacro("HAVE_STRING_H", "1");
-    lib.root_module.addCMacro("HAVE_STRSTR", "1");
-    lib.root_module.addCMacro("HAVE_STRTOK_R", "1");
-    lib.root_module.addCMacro("HAVE_STRTOLL", "1");
-    lib.root_module.addCMacro("HAVE_STRUCT_SOCKADDR_STORAGE", "1");
-    lib.root_module.addCMacro("HAVE_STRUCT_TIMEVAL", "1");
-    lib.root_module.addCMacro("HAVE_SYS_IOCTL_H", "1");
-    lib.root_module.addCMacro("HAVE_SYS_PARAM_H", "1");
-    lib.root_module.addCMacro("HAVE_SYS_POLL_H", "1");
-    lib.root_module.addCMacro("HAVE_SYS_RESOURCE_H", "1");
-    lib.root_module.addCMacro("HAVE_SYS_SELECT_H", "1");
-    lib.root_module.addCMacro("HAVE_SYS_SOCKET_H", "1");
-    lib.root_module.addCMacro("HAVE_SYS_STAT_H", "1");
-    lib.root_module.addCMacro("HAVE_SYS_TIME_H", "1");
-    lib.root_module.addCMacro("HAVE_SYS_TYPES_H", "1");
-    lib.root_module.addCMacro("HAVE_SYS_UIO_H", "1");
-    lib.root_module.addCMacro("HAVE_SYS_UN_H", "1");
-    lib.root_module.addCMacro("HAVE_TERMIOS_H", "1");
-    lib.root_module.addCMacro("HAVE_TERMIO_H", "1");
-    lib.root_module.addCMacro("HAVE_TIME_H", "1");
-    lib.root_module.addCMacro("HAVE_UNAME", "1");
-    lib.root_module.addCMacro("HAVE_UNISTD_H", "1");
-    lib.root_module.addCMacro("HAVE_UTIME", "1");
-    lib.root_module.addCMacro("HAVE_UTIMES", "1");
-    lib.root_module.addCMacro("HAVE_UTIME_H", "1");
-    lib.root_module.addCMacro("HAVE_VARIADIC_MACROS_C99", "1");
-    lib.root_module.addCMacro("HAVE_VARIADIC_MACROS_GCC", "1");
-    lib.root_module.addCMacro("OS", "\"Linux\"");
-    lib.root_module.addCMacro("RANDOM_FILE", "\"/dev/urandom\"");
-    lib.root_module.addCMacro("RECV_TYPE_ARG1", "int");
-    lib.root_module.addCMacro("RECV_TYPE_ARG2", "void *");
-    lib.root_module.addCMacro("RECV_TYPE_ARG3", "size_t");
-    lib.root_module.addCMacro("RECV_TYPE_ARG4", "int");
-    lib.root_module.addCMacro("RECV_TYPE_RETV", "ssize_t");
-    lib.root_module.addCMacro("SEND_QUAL_ARG2", "const");
-    lib.root_module.addCMacro("SEND_TYPE_ARG1", "int");
-    lib.root_module.addCMacro("SEND_TYPE_ARG2", "void *");
-    lib.root_module.addCMacro("SEND_TYPE_ARG3", "size_t");
-    lib.root_module.addCMacro("SEND_TYPE_ARG4", "int");
-    lib.root_module.addCMacro("SEND_TYPE_RETV", "ssize_t");
-    lib.root_module.addCMacro("SIZEOF_INT", "4");
-    lib.root_module.addCMacro("SIZEOF_SHORT", "2");
-    lib.root_module.addCMacro("SIZEOF_LONG", "8");
-    lib.root_module.addCMacro("SIZEOF_OFF_T", "8");
-    lib.root_module.addCMacro("SIZEOF_CURL_OFF_T", "8");
-    lib.root_module.addCMacro("SIZEOF_SIZE_T", "8");
-    lib.root_module.addCMacro("SIZEOF_TIME_T", "8");
-    lib.root_module.addCMacro("STDC_HEADERS", "1");
-    lib.root_module.addCMacro("TIME_WITH_SYS_TIME", "1");
-    lib.root_module.addCMacro("USE_THREADS_POSIX", "1");
-    lib.root_module.addCMacro("USE_UNIX_SOCKETS", "1");
-    lib.root_module.addCMacro("_FILE_OFFSET_BITS", "64");
+    const curl_config = b.addConfigHeader(.{
+        .style = .{ .cmake = curl_dep.path("lib/curl_config.h.cmake") },
+        .include_path = "curl_config.h",
+    }, .{
+        .CURL_CA_BUNDLE = null,
+        .CURL_CA_FALLBACK = false,
+        .CURL_CA_PATH = null,
+        .CURL_DEFAULT_SSL_BACKEND = "mbedtls",
+        .CURL_DISABLE_ALTSVC = false,
+        .CURL_DISABLE_COOKIES = false,
+        .CURL_DISABLE_BASIC_AUTH = false,
+        .CURL_DISABLE_BEARER_AUTH = false,
+        .CURL_DISABLE_DIGEST_AUTH = false,
+        .CURL_DISABLE_KERBEROS_AUTH = false,
+        .CURL_DISABLE_NEGOTIATE_AUTH = false,
+        .CURL_DISABLE_AWS = false,
+        .CURL_DISABLE_DICT = false,
+        .CURL_DISABLE_DOH = false,
+        .CURL_DISABLE_FILE = false,
+        .CURL_DISABLE_FORM_API = false,
+        .CURL_DISABLE_FTP = true,
+        .CURL_DISABLE_GETOPTIONS = false,
+        .CURL_DISABLE_GOPHER = true,
+        .CURL_DISABLE_HEADERS_API = false,
+        .CURL_DISABLE_HSTS = false,
+        .CURL_DISABLE_HTTP = false,
+        .CURL_DISABLE_HTTP_AUTH = false,
+        .CURL_DISABLE_IMAP = false,
+        .CURL_DISABLE_LDAP = true,
+        .CURL_DISABLE_LDAPS = true,
+        .CURL_DISABLE_LIBCURL_OPTION = false,
+        .CURL_DISABLE_MIME = false,
+        .CURL_DISABLE_BINDLOCAL = false,
+        .CURL_DISABLE_MQTT = true,
+        .CURL_DISABLE_NETRC = false,
+        .CURL_DISABLE_NTLM = true,
+        .CURL_DISABLE_PARSEDATE = false,
+        .CURL_DISABLE_POP3 = true,
+        .CURL_DISABLE_PROGRESS_METER = false,
+        .CURL_DISABLE_PROXY = false,
+        .CURL_DISABLE_IPFS = true,
+        .CURL_DISABLE_RTSP = true,
+        .CURL_DISABLE_SHA512_256 = false,
+        .CURL_DISABLE_SHUFFLE_DNS = false,
+        .CURL_DISABLE_SMB = true,
+        .CURL_DISABLE_SMTP = true,
+        .CURL_DISABLE_WEBSOCKETS = false,
+        .CURL_DISABLE_SOCKETPAIR = false,
+        .CURL_DISABLE_TELNET = true,
+        .CURL_DISABLE_TFTP = true,
+        .CURL_DISABLE_VERBOSE_STRINGS = false,
+        .CURL_DISABLE_CA_SEARCH = false,
+        .CURL_CA_SEARCH_SAFE = false,
+        .CURL_EXTERN_SYMBOL = "__attribute__((__visibility__(\"default\")))",
+        .USE_WIN32_CRYPTO = target.result.os.tag == .windows, // Assumes 'NOT WINDOWS_STORE'
+        .USE_WIN32_LDAP = false, // Assumes 'NOT WINDOWS_STORE'
+        .USE_IPV6 = true,
+        .HAVE_ALARM = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_ARC4RANDOM = switch (target.result.os.tag) {
+            .dragonfly,
+            .netbsd,
+            .freebsd,
+            .solaris,
+            .openbsd,
+            .macos,
+            .ios,
+            .tvos,
+            .watchos,
+            .visionos,
+            .wasi,
+            => true,
+            .linux => target.result.abi.isGnu() and target.result.os.isAtLeast(.linux, .{ .major = 2, .minor = 36, .patch = 0 }) orelse false,
+            else => false,
+        },
+        .HAVE_ARPA_INET_H = target.result.os.tag != .windows,
+        .HAVE_ATOMIC = true,
+        .HAVE_ACCEPT4 = target.result.os.tag == .linux,
+        .HAVE_FNMATCH = target.result.os.tag != .windows,
+        .HAVE_BASENAME = true,
+        .HAVE_BOOL_T = true,
+        .HAVE_BUILTIN_AVAILABLE = null,
+        .HAVE_CLOCK_GETTIME_MONOTONIC = target.result.os.tag != .windows,
+        .HAVE_CLOCK_GETTIME_MONOTONIC_RAW = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_CLOSESOCKET = target.result.os.tag == .windows,
+        .HAVE_CLOSESOCKET_CAMEL = null,
+        .HAVE_DIRENT_H = true,
+        .HAVE_OPENDIR = true,
+        .HAVE_FCNTL = target.result.os.tag != .windows,
+        .HAVE_FCNTL_H = true,
+        .HAVE_FCNTL_O_NONBLOCK = target.result.os.tag != .windows,
+        .HAVE_FREEADDRINFO = target.result.os.tag != .wasi,
+        .HAVE_FSEEKO = target.result.os.tag != .windows,
+        .HAVE_DECL_FSEEKO = target.result.os.tag != .windows,
+        .HAVE_FTRUNCATE = true,
+        .HAVE_GETADDRINFO = target.result.os.tag != .wasi,
+        .HAVE_GETADDRINFO_THREADSAFE = target.result.os.tag != .wasi,
+        .HAVE_GETEUID = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_GETPPID = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_GETHOSTBYNAME_R = target.result.os.tag != .windows and !target.result.os.tag.isDarwin() and target.result.os.tag != .wasi,
+        .HAVE_GETHOSTBYNAME_R_3 = null,
+        .HAVE_GETHOSTBYNAME_R_5 = null,
+        .HAVE_GETHOSTBYNAME_R_6 = target.result.os.tag != .windows and !target.result.os.tag.isDarwin() and target.result.os.tag != .wasi,
+        .HAVE_GETHOSTNAME = target.result.os.tag != .wasi,
+        .HAVE_GETIFADDRS = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_GETPASS_R = null,
+        .HAVE_GETPEERNAME = target.result.os.tag != .wasi,
+        .HAVE_GETSOCKNAME = target.result.os.tag != .wasi,
+        .HAVE_IF_NAMETOINDEX = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_GETPWUID = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_GETPWUID_R = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_GETRLIMIT = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_GETTIMEOFDAY = true,
+        .HAVE_GLIBC_STRERROR_R = target.result.isGnuLibC(),
+        .HAVE_GMTIME_R = target.result.os.tag != .windows,
+        .HAVE_GSSAPI = null,
+        .HAVE_GSSAPI_GSSAPI_GENERIC_H = null,
+        .HAVE_GSSAPI_GSSAPI_H = null,
+        .HAVE_GSSGNU = null,
+        .HAVE_IFADDRS_H = target.result.os.tag != .windows,
+        .HAVE_INET_NTOP = target.result.os.tag != .windows,
+        .HAVE_INET_PTON = target.result.os.tag != .windows,
+        .HAVE_SA_FAMILY_T = target.result.os.tag != .windows,
+        .HAVE_ADDRESS_FAMILY = target.result.os.tag == .windows,
+        .HAVE_IOCTLSOCKET = target.result.os.tag == .windows,
+        .HAVE_IOCTLSOCKET_CAMEL = null,
+        .HAVE_IOCTLSOCKET_CAMEL_FIONBIO = null,
+        .HAVE_IOCTLSOCKET_FIONBIO = target.result.os.tag == .windows,
+        .HAVE_IOCTL_FIONBIO = target.result.os.tag != .windows,
+        .HAVE_IOCTL_SIOCGIFADDR = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_IO_H = target.result.os.tag == .windows,
+        .HAVE_LBER_H = false,
+        .HAVE_LDAP_SSL = false,
+        .HAVE_LDAP_SSL_H = null,
+        .HAVE_LDAP_URL_PARSE = null,
+        .HAVE_LIBGEN_H = true,
+        .HAVE_LIBIDN2 = false,
+        .HAVE_IDN2_H = false,
+        .HAVE_LIBZ = true,
+        .HAVE_BROTLI = false,
+        .HAVE_ZSTD = false,
+        .HAVE_LOCALE_H = true,
+        .HAVE_LONGLONG = true,
+        .HAVE_SUSECONDS_T = target.result.os.tag != .windows,
+        .HAVE_MSG_NOSIGNAL = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_NETDB_H = target.result.os.tag != .windows,
+        .HAVE_NETINET_IN_H = target.result.os.tag != .windows,
+        .HAVE_NETINET_IN6_H = null,
+        .HAVE_NETINET_TCP_H = target.result.os.tag != .windows,
+        .HAVE_NETINET_UDP_H = target.result.os.tag != .windows,
+        .HAVE_LINUX_TCP_H = target.result.os.tag == .linux,
+        .HAVE_NET_IF_H = target.result.os.tag != .windows,
+        .HAVE_OLD_GSSMIT = null,
+        .HAVE_PIPE = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_PIPE2 = switch (target.result.os.tag) {
+            .linux => true,
+            .dragonfly, .freebsd, .netbsd, .openbsd => true,
+            else => false,
+        },
+        .HAVE_EVENTFD = switch (target.result.os.tag) {
+            .windows, .wasi => false,
+            .linux => if (target.result.isMuslLibC())
+                true
+            else
+                target.result.os.isAtLeast(.linux, .{ .major = 2, .minor = 8, .patch = 0 }),
+            else => !target.result.os.tag.isDarwin(),
+        },
+        .HAVE_POLL = target.result.os.tag != .windows,
+        .HAVE_POLL_H = target.result.os.tag != .windows,
+        .HAVE_POSIX_STRERROR_R = switch (target.result.os.tag) {
+            .windows => false,
+            .linux => target.result.isMuslLibC(),
+            else => true,
+        },
+        .HAVE_PWD_H = target.result.os.tag != .windows,
+        .HAVE_SSL_SET0_WBIO = null, // TODO
+        .HAVE_RECV = true,
+        .HAVE_SELECT = true,
+        .HAVE_SCHED_YIELD = target.result.os.tag != .windows,
+        .HAVE_SEND = true,
+        .HAVE_SENDMSG = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_SENDMMSG = switch (target.result.os.tag) {
+            .windows, .wasi => false,
+            .linux => if (target.result.isMuslLibC())
+                true
+            else
+                target.result.os.isAtLeast(.linux, .{ .major = 2, .minor = 14, .patch = 0 }),
+            else => !target.result.os.tag.isDarwin(),
+        },
+        .HAVE_FSETXATTR = target.result.os.tag != .windows and !target.result.os.tag.isDarwin() and target.result.os.tag != .wasi,
+        .HAVE_FSETXATTR_5 = target.result.os.tag != .windows and !target.result.os.tag.isDarwin() and target.result.os.tag != .wasi,
+        .HAVE_FSETXATTR_6 = null,
+        .HAVE_SETLOCALE = true,
+        .HAVE_SETMODE = target.result.os.tag == .windows or target.result.os.tag.isDarwin(),
+        .HAVE__SETMODE = target.result.os.tag == .windows,
+        .HAVE_SETRLIMIT = target.result.os.tag != .wasi,
+        .HAVE_SETSOCKOPT_SO_NONBLOCK = null,
+        .HAVE_SIGACTION = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_SIGINTERRUPT = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_SIGNAL = target.result.os.tag != .wasi,
+        .HAVE_SIGSETJMP = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_SNPRINTF = true,
+        .HAVE_SOCKADDR_IN6_SIN6_SCOPE_ID = true, // TODO
+        .HAVE_SOCKET = target.result.os.tag != .wasi,
+        .HAVE_PROTO_BSDSOCKET_H = null,
+        .HAVE_SOCKETPAIR = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_STDATOMIC_H = true,
+        .HAVE_STDBOOL_H = true,
+        .HAVE_STDINT_H = true,
+        .HAVE_STRCASECMP = target.result.os.tag != .windows,
+        .HAVE_STRCMPI = null,
+        .HAVE_STRDUP = true,
+        .HAVE_STRERROR_R = target.result.os.tag != .windows,
+        .HAVE_STRICMP = null,
+        .HAVE_STRINGS_H = true,
+        .HAVE_STROPTS_H = target.result.isMuslLibC(),
+        .HAVE_MEMRCHR = target.result.os.tag != .windows and !target.result.os.tag.isDarwin() and target.result.os.tag != .wasi,
+        .HAVE_STRUCT_SOCKADDR_STORAGE = true,
+        .HAVE_STRUCT_TIMEVAL = true,
+        .HAVE_SYS_EVENTFD_H = target.result.os.tag != .windows and !target.result.os.tag.isDarwin(),
+        .HAVE_SYS_FILIO_H = target.result.os.tag.isDarwin(),
+        .HAVE_SYS_IOCTL_H = target.result.os.tag != .windows,
+        .HAVE_SYS_PARAM_H = true,
+        .HAVE_SYS_POLL_H = target.result.os.tag != .windows,
+        .HAVE_SYS_RESOURCE_H = target.result.os.tag != .windows and target.result.os.tag != .wasi,
+        .HAVE_SYS_SELECT_H = target.result.os.tag != .windows,
+        .HAVE_SYS_SOCKIO_H = target.result.os.tag.isDarwin(),
+        .HAVE_SYS_STAT_H = true,
+        .HAVE_SYS_TYPES_H = true,
+        .HAVE_SYS_UN_H = target.result.os.tag != .windows,
+        .HAVE_SYS_UTIME_H = target.result.os.tag == .windows,
+        .HAVE_TERMIOS_H = target.result.os.tag != .windows,
+        .HAVE_TERMIO_H = target.result.isGnuLibC(),
+        .HAVE_UNISTD_H = true,
+        .HAVE_UTIME = true,
+        .HAVE_UTIMES = target.result.os.tag != .windows,
+        .HAVE_UTIME_H = true,
+        .HAVE_WRITABLE_ARGV = target.result.os.tag != .windows,
+        .HAVE_TIME_T_UNSIGNED = null,
+        .NEED_REENTRANT = null,
+        .CURL_OS = b.fmt("\"{s}\"", .{target.result.zigTriple(b.allocator) catch @panic("OOM")}),
+        .SIZEOF_INT_CODE = b.fmt("#define SIZEOF_INT {d}", .{target.result.cTypeByteSize(.int)}),
+        .SIZEOF_LONG_CODE = b.fmt("#define SIZEOF_LONG {d}", .{target.result.cTypeByteSize(.long)}),
+        .SIZEOF_LONG_LONG_CODE = b.fmt("#define SIZEOF_LONG_LONG {d}", .{target.result.cTypeByteSize(.longlong)}),
+        .SIZEOF_OFF_T_CODE = b.fmt("#define SIZEOF_OFF_T {d}", .{8}),
+        .SIZEOF_CURL_OFF_T_CODE = b.fmt("#define SIZEOF_CURL_OFF_T {d}", .{8}),
+        .SIZEOF_CURL_SOCKET_T_CODE = b.fmt("#define SIZEOF_CURL_SOCKET_T {d}", .{@as(i64, if (target.result.os.tag == .windows) 8 else 4)}),
+        .SIZEOF_SIZE_T_CODE = b.fmt("#define SIZEOF_SIZE_T {d}", .{target.result.ptrBitWidth() / 8}),
+        .SIZEOF_TIME_T_CODE = b.fmt("#define SIZEOF_TIME_T {d}", .{8}),
+        .PACKAGE = "",
+        .PACKAGE_BUGREPORT = "curl",
+        .PACKAGE_NAME = "a suitable curl mailing list: https://curl.se/mail/",
+        .PACKAGE_STRING = "curl",
+        .PACKAGE_TARNAME = "curl",
+        .PACKAGE_VERSION = b.fmt("{f}", .{version}),
+        .STDC_HEADERS = true,
+        .USE_ARES = false,
+        .USE_THREADS_POSIX = target.result.os.tag != .windows and !target.result.os.tag.isDarwin(),
+        .USE_THREADS_WIN32 = true and target.result.os.tag == .windows,
+        .USE_GNUTLS = false,
+        .USE_SSLS_EXPORT = false,
+        .USE_MBEDTLS = true,
+        .USE_RUSTLS = false,
+        .USE_WOLFSSL = false,
+        .HAVE_WOLFSSL_DES_ECB_ENCRYPT = false,
+        .HAVE_WOLFSSL_BIO = false,
+        .HAVE_WOLFSSL_FULL_BIO = false,
+        .USE_LIBSSH = false,
+        .USE_LIBSSH2 = false,
+        .USE_WOLFSSH = false,
+        .USE_LIBPSL = false,
+        .USE_OPENLDAP = false,
+        .USE_OPENSSL = false,
+        .USE_AMISSL = null, // AMIGA
+        .USE_LIBRTMP = false,
+        .USE_GSASL = false,
+        .USE_LIBUV = false,
+        .HAVE_UV_H = false,
+        .CURL_DISABLE_OPENSSL_AUTO_LOAD_CONFIG = true,
+        .USE_NGHTTP2 = false,
+        .USE_NGTCP2 = false,
+        .USE_NGHTTP3 = false, // same condition
+        .USE_QUICHE = false,
+        .USE_OPENSSL_QUIC = false,
+        .HAVE_QUICHE_CONN_SET_QLOG_FD = null, // TODO
+        .USE_MSH3 = false,
+        .USE_UNIX_SOCKETS = target.result.os.tag == .windows or true,
+        .USE_WIN32_LARGE_FILES = target.result.os.tag == .windows,
+        .USE_WINDOWS_SSPI = false,
+        .USE_SCHANNEL = false,
+        .USE_WATT32 = null, // DOS
+        .CURL_WITH_MULTI_SSL = false,
+        .VERSION = b.fmt("{f}", .{version}),
+        ._FILE_OFFSET_BITS = 64,
+        ._LARGE_FILES = null, // OS/400
+        ._THREAD_SAFE = null, // AIX 4.3
+        .@"const" = null,
+        .size_t = null,
+        .ssize_t = null,
+        .HAVE_MACH_ABSOLUTE_TIME = target.result.os.tag.isDarwin(),
+        .USE_WIN32_IDN = false,
+        .USE_APPLE_IDN = false,
+        .HAVE_OPENSSL_SRP = null, // TODO
+        .HAVE_GNUTLS_SRP = null, // TODO
+        .USE_TLS_SRP = null, // TODO
+        .USE_HTTPSRR = false,
+        .USE_ECH = false,
+        .HAVE_WOLFSSL_CTX_GENERATEECHCONFIG = null, // TODO
+        .HAVE_SSL_SET1_ECH_CONFIG_LIST = null, // TODO
+        .CURL_KRB5_VERSION = null,
+    });
+    lib.addConfigHeader(curl_config);
 
     return lib;
 }
@@ -219,174 +369,155 @@ pub fn build(b: *std.Build) void {
 
     const lib = createLib(b, target, optimize);
 
+    const https_test_exe = b.addExecutable(.{
+        .linkage = .static,
+        .name = "https_test",
+        .use_lld = false,
+        .root_module = b.addModule("https_test", .{
+            .link_libc = true,
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    https_test_exe.root_module.linkLibrary(lib);
+    https_test_exe.root_module.addCMacro("CURL_STATICLIB", "1");
+    https_test_exe.addCSourceFile(.{ .file = b.path("./samples/https_test.c") });
+    // https_test_exe.add
+
+    const run_https_test_exe = b.addRunArtifact(https_test_exe);
+
+    const https_test_exe_run_step = b.step("https-test", "Run a test program which makes a request to a HTTPs page.");
+    https_test_exe_run_step.dependOn(&run_https_test_exe.step);
+
     b.installArtifact(lib);
 }
 
 const srcs = &.{
-    "lib/cookie.c",
-    "lib/http_chunks.c",
-    "lib/escape.c",
-    "lib/version_win32.c",
-    "lib/url.c",
-    "lib/base64.c",
-    "lib/mqtt.c",
-    "lib/setopt.c",
-    "lib/telnet.c",
-    "lib/hostip.c",
-    "lib/curl_gethostname.c",
-    "lib/connect.c",
-    "lib/socks_sspi.c",
-    "lib/cf-socket.c",
-    "lib/curl_fnmatch.c",
-    "lib/curl_gssapi.c",
-    "lib/http1.c",
-    "lib/multi.c",
-    "lib/gopher.c",
-    "lib/noproxy.c",
-    "lib/curl_sasl.c",
-    "lib/dict.c",
-    "lib/bufref.c",
-    "lib/slist.c",
-    "lib/curl_trc.c",
-    "lib/vtls/rustls.c",
-    "lib/vtls/mbedtls.c",
-    "lib/vtls/wolfssl.c",
-    "lib/vtls/schannel.c",
-    "lib/vtls/gtls.c",
-    "lib/vtls/sectransp.c",
-    "lib/vtls/vtls.c",
-    "lib/vtls/mbedtls_threadlock.c",
-    "lib/vtls/schannel_verify.c",
-    "lib/vtls/hostcheck.c",
-    "lib/vtls/bearssl.c",
-    "lib/vtls/openssl.c",
-    "lib/vtls/x509asn1.c",
-    "lib/vtls/keylog.c",
-    "lib/file.c",
-    "lib/socks_gssapi.c",
-    "lib/select.c",
-    "lib/socketpair.c",
-    "lib/curl_memrchr.c",
-    "lib/cfilters.c",
-    "lib/strtok.c",
-    "lib/version.c",
-    "lib/fopen.c",
-    "lib/http_aws_sigv4.c",
-    "lib/mprintf.c",
-    "lib/curl_path.c",
-    "lib/parsedate.c",
-    "lib/rename.c",
-    "lib/ftplistparser.c",
-    "lib/content_encoding.c",
-    "lib/mime.c",
-    "lib/rand.c",
-    "lib/curl_des.c",
-    "lib/curl_ntlm_core.c",
-    "lib/pop3.c",
-    "lib/curl_sspi.c",
-    "lib/smb.c",
-    "lib/conncache.c",
-    "lib/inet_pton.c",
-    "lib/if2ip.c",
-    "lib/openldap.c",
-    "lib/http_digest.c",
-    "lib/cf-h1-proxy.c",
-    "lib/asyn-thread.c",
-    "lib/strerror.c",
-    "lib/ftp.c",
-    "lib/strdup.c",
-    "lib/memdebug.c",
-    "lib/speedcheck.c",
-    "lib/vquic/curl_ngtcp2.c",
-    "lib/vquic/curl_msh3.c",
-    "lib/vquic/vquic.c",
-    "lib/vquic/curl_quiche.c",
-    "lib/getinfo.c",
-    "lib/http2.c",
-    "lib/vauth/oauth2.c",
-    "lib/vauth/vauth.c",
-    "lib/vauth/digest_sspi.c",
-    "lib/vauth/digest.c",
-    "lib/vauth/cram.c",
-    "lib/vauth/cleartext.c",
-    "lib/vauth/krb5_sspi.c",
-    "lib/vauth/spnego_sspi.c",
-    "lib/vauth/ntlm_sspi.c",
-    "lib/vauth/spnego_gssapi.c",
-    "lib/vauth/ntlm.c",
-    "lib/vauth/krb5_gssapi.c",
-    "lib/vauth/gsasl.c",
-    "lib/md4.c",
-    "lib/bufq.c",
-    "lib/curl_get_line.c",
-    "lib/hostip4.c",
-    "lib/curl_rtmp.c",
-    "lib/amigaos.c",
-    "lib/share.c",
-    "lib/warnless.c",
-    "lib/hostsyn.c",
-    "lib/md5.c",
-    "lib/strtoofft.c",
     "lib/altsvc.c",
-    "lib/formdata.c",
-    "lib/dynbuf.c",
-    "lib/curl_addrinfo.c",
-    "lib/hostasyn.c",
-    "lib/doh.c",
-    "lib/request.c",
-    "lib/cw-out.c",
-    "lib/curl_sha512_256.c",
-    "lib/vtls/cipher_suite.c",
-    "lib/easygetopt.c",
-    "lib/ldap.c",
-    "lib/nonblock.c",
-    "lib/idn.c",
-    "lib/pingpong.c",
-    "lib/imap.c",
-    "lib/vssh/libssh.c",
-    "lib/vssh/wolfssh.c",
-    "lib/vssh/libssh2.c",
-    "lib/splay.c",
-    "lib/krb5.c",
-    "lib/progress.c",
-    "lib/cf-haproxy.c",
-    "lib/easyoptions.c",
-    "lib/curl_range.c",
-    "lib/curl_endian.c",
-    "lib/http_proxy.c",
-    "lib/inet_ntop.c",
-    "lib/timeval.c",
+    "lib/amigaos.c",
     "lib/asyn-ares.c",
-    "lib/rtsp.c",
-    "lib/sha256.c",
-    "lib/curl_threads.c",
-    "lib/easy.c",
-    "lib/dynhds.c",
-    "lib/tftp.c",
-    "lib/hsts.c",
-    "lib/smtp.c",
-    "lib/hash.c",
-    "lib/cf-https-connect.c",
-    "lib/getenv.c",
-    "lib/headers.c",
-    "lib/system_win32.c",
-    "lib/http_ntlm.c",
-    "lib/psl.c",
-    "lib/ws.c",
-    "lib/hostip6.c",
-    "lib/curl_multibyte.c",
-    "lib/netrc.c",
-    "lib/llist.c",
-    "lib/urlapi.c",
-    "lib/strcase.c",
-    "lib/sendf.c",
-    "lib/timediff.c",
-    "lib/http.c",
+    "lib/asyn-base.c",
+    "lib/asyn-thrdd.c",
+    "lib/bufq.c",
+    "lib/bufref.c",
+    "lib/cf-h1-proxy.c",
     "lib/cf-h2-proxy.c",
-    "lib/socks.c",
-    "lib/http_negotiate.c",
-    "lib/transfer.c",
-    "lib/c-hyper.c",
-    "lib/hmac.c",
+    "lib/cf-haproxy.c",
+    "lib/cf-https-connect.c",
+    "lib/cf-ip-happy.c",
+    "lib/cf-socket.c",
+    "lib/cfilters.c",
+    "lib/conncache.c",
+    "lib/connect.c",
+    "lib/content_encoding.c",
+    "lib/cookie.c",
+    "lib/cshutdn.c",
+    "lib/curl_addrinfo.c",
+    "lib/curl_endian.c",
+    "lib/curl_fnmatch.c",
+    "lib/curl_fopen.c",
+    "lib/curl_get_line.c",
+    "lib/curl_gethostname.c",
+    "lib/curl_gssapi.c",
+    "lib/curl_memrchr.c",
+    "lib/curl_ntlm_core.c",
+    "lib/curl_range.c",
+    "lib/curl_rtmp.c",
+    "lib/curl_sasl.c",
+    "lib/curl_sha512_256.c",
+    "lib/curl_sspi.c",
+    "lib/curl_threads.c",
+    "lib/curl_trc.c",
+    "lib/cw-out.c",
+    "lib/cw-pause.c",
+    "lib/dict.c",
+    "lib/doh.c",
+    "lib/dynhds.c",
+    "lib/easy.c",
+    "lib/easygetopt.c",
+    "lib/easyoptions.c",
+    "lib/escape.c",
+    "lib/fake_addrinfo.c",
+    "lib/file.c",
     "lib/fileinfo.c",
+    "lib/formdata.c",
+    "lib/ftp.c",
+    "lib/ftplistparser.c",
+    "lib/getenv.c",
+    "lib/getinfo.c",
+    "lib/gopher.c",
+    "lib/hash.c",
+    "lib/headers.c",
+    "lib/hmac.c",
+    "lib/hostip.c",
+    "lib/hostip4.c",
+    "lib/hostip6.c",
+    "lib/hsts.c",
+    "lib/http.c",
+    "lib/http1.c",
+    "lib/http2.c",
+    "lib/http_aws_sigv4.c",
+    "lib/http_chunks.c",
+    "lib/http_digest.c",
+    "lib/http_negotiate.c",
+    "lib/http_ntlm.c",
+    "lib/http_proxy.c",
+    "lib/httpsrr.c",
+    "lib/idn.c",
+    "lib/if2ip.c",
+    "lib/imap.c",
+    "lib/ldap.c",
+    "lib/llist.c",
+    "lib/macos.c",
+    "lib/md4.c",
+    "lib/md5.c",
+    "lib/memdebug.c",
+    "lib/mime.c",
+    "lib/mprintf.c",
+    "lib/mqtt.c",
+    "lib/multi.c",
+    "lib/multi_ev.c",
+    "lib/multi_ntfy.c",
+    "lib/netrc.c",
+    "lib/noproxy.c",
+    "lib/openldap.c",
+    "lib/parsedate.c",
+    "lib/pingpong.c",
+    "lib/pop3.c",
+    "lib/progress.c",
+    "lib/psl.c",
+    "lib/rand.c",
+    "lib/rename.c",
+    "lib/request.c",
+    "lib/rtsp.c",
+    "lib/select.c",
+    "lib/sendf.c",
+    "lib/setopt.c",
+    "lib/sha256.c",
+    "lib/share.c",
+    "lib/slist.c",
+    "lib/smb.c",
+    "lib/smtp.c",
+    "lib/socketpair.c",
+    "lib/socks.c",
+    "lib/socks_gssapi.c",
+    "lib/socks_sspi.c",
+    "lib/speedcheck.c",
+    "lib/splay.c",
+    "lib/strcase.c",
+    "lib/strdup.c",
+    "lib/strequal.c",
+    "lib/strerror.c",
+    "lib/system_win32.c",
+    "lib/telnet.c",
+    "lib/tftp.c",
+    "lib/transfer.c",
+    "lib/uint-bset.c",
+    "lib/uint-hash.c",
+    "lib/uint-spbset.c",
+    "lib/uint-table.c",
+    "lib/url.c",
+    "lib/urlapi.c",
+    "lib/version.c",
+    "lib/ws.c",
 };

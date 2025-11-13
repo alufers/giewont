@@ -3,8 +3,9 @@
     .version = "0.15.2",
     .dependencies = .{
         .curl_src = .{
-            .url = "https://github.com/curl/curl/releases/download/curl-8_8_0/curl-8.8.0.tar.gz",
-            .hash = "N-V-__8AAHipPQF9UuLPiaV1CtJzZIxvTN61tMGdFx8LGjIV",
+            // .url = "https://github.com/curl/curl/releases/download/curl-8_8_0/curl-8.8.0.tar.gz",
+            // .hash = "N-V-__8AAHipPQF9UuLPiaV1CtJzZIxvTN61tMGdFx8LGjIV",
+            .path = "./curl",
         },
         .mbedtls = .{ .path = "../mbedtls" },
         .zlib = .{ .path = "../zlib" },
