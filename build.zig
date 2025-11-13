@@ -20,6 +20,14 @@ fn generateCapnprotoSchema(b: *std.Build, capnp_schema_source: std.Build.LazyPat
     const output_dir = capnp_tool_run.addPrefixedOutputDirectoryArg("-oc++:", "capnp-generated");
 
     module_to_add_to.addIncludePath(output_dir);
+    module_to_add_to.addCSourceFile(.{
+        .file = output_dir.path(
+            b,
+            b.fmt("{s}.c++", .{
+                capnp_schema_source.basename(b, step_to_add_dep_to),
+            }),
+        ),
+    });
 }
 
 pub fn build(b: *std.Build) void {
