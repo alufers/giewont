@@ -128,6 +128,7 @@ pub fn build(b: *std.Build) void {
         "entities/gameplay/ProjectileEntity.cpp",
         "entities/gameplay/BonusEntity.cpp",
         "entities/debug/DebugMarkerEntity.cpp",
+        "ThreadPool.cpp",
     };
 
     //
