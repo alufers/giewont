@@ -9,3 +9,4 @@ cmake-build-*
 zig-out
 .DS_store
 .gdb_history
+compile_commands.json

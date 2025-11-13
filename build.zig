@@ -1,11 +1,15 @@
 const std = @import("std");
 
-fn generateCapnprotoSchema(b: *std.Build, capnp_schema_source: std.Build.LazyPath, module_to_add_to: *std.Build.Module) void {
+const zcc = @import("compile_commands.zig");
+
+fn generateCapnprotoSchema(b: *std.Build, capnp_schema_source: std.Build.LazyPath, module_to_add_to: *std.Build.Module, step_to_add_dep_to: *std.Build.Step) void {
     const capnp_dep = b.dependency("capnproto", .{
         .target = b.graph.host,
     });
 
-    const capnp_tool_run = b.addRunArtifact(capnp_dep.artifact("capnp_tool"));
+    const capnp_tool_exe = capnp_dep.artifact("capnp_tool");
+    const capnp_tool_run = b.addRunArtifact(capnp_tool_exe);
+    step_to_add_dep_to.dependOn(&capnp_tool_run.step);
 
     capnp_tool_run.addArg("compile");
     capnp_tool_run.addPrefixedDirectoryArg("--src-prefix=", capnp_schema_source.dirname());
@@ -19,6 +23,7 @@ fn generateCapnprotoSchema(b: *std.Build, capnp_schema_source: std.Build.LazyPat
 }
 
 pub fn build(b: *std.Build) void {
+    var targets = std.ArrayListUnmanaged(*std.Build.Step.Compile){};
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -141,7 +146,6 @@ pub fn build(b: *std.Build) void {
     }
     giewont_server_module.addCMacro("GIEWONT_IS_SERVER", "1");
 
-    generateCapnprotoSchema(b, b.path("src/net/schema.capnp"), giewont_server_module);
     giewont_server_module.addCSourceFiles(.{
         .root = b.path("src/"),
         .files = &(common_sources ++ .{
@@ -156,6 +160,9 @@ pub fn build(b: *std.Build) void {
         .root_module = giewont_server_module,
         .use_lld = target.result.os.tag == .windows,
     });
+    generateCapnprotoSchema(b, b.path("src/net/schema.capnp"), giewont_server_module, &giewont_server_exe.step);
+
+    targets.append(b.allocator, giewont_server_exe) catch @panic("OOM");
 
     b.installArtifact(giewont_server_exe);
 
@@ -191,7 +198,6 @@ pub fn build(b: *std.Build) void {
     giewont_client_module.addCMacro("GIEWONT_IS_CLIENT", "1");
     giewont_client_module.addCMacro("GIEWONT_HAS_GRAPHICS", "1");
 
-    generateCapnprotoSchema(b, b.path("src/net/schema.capnp"), giewont_client_module);
     giewont_client_module.addCSourceFiles(.{
         .root = b.path("src/"),
         .files = &(common_sources ++ .{
@@ -208,6 +214,8 @@ pub fn build(b: *std.Build) void {
         .root_module = giewont_client_module,
         .use_lld = target.result.os.tag == .windows,
     });
+    generateCapnprotoSchema(b, b.path("src/net/schema.capnp"), giewont_client_module, &giewont_client_exe.step);
+    targets.append(b.allocator, giewont_client_exe) catch @panic("OOM");
 
     const install_assets_step = b.addInstallDirectory(.{
         .source_dir = b.path("gw_assets/"),
@@ -218,4 +226,6 @@ pub fn build(b: *std.Build) void {
     b.getInstallStep().dependOn(&install_assets_step.step);
 
     b.installArtifact(giewont_client_exe);
+
+    _ = zcc.createStep(b, "cdb", targets.toOwnedSlice(b.allocator) catch @panic("OOM"));
 }
