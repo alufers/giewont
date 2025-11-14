@@ -15,6 +15,7 @@
 #ifdef GIEWONT_HAS_GRAPHICS
 #include <raylib.h>
 #endif
+#include <memory>
 #include <vector>
 
 using namespace giewont;
@@ -232,36 +233,36 @@ void SmartAICharacterController::generate_goap_plan(SmartAIThinkCtx &ctx) {
   if (has_any_performable_actions)
     return; // The current plan is still valid.
 
-  if (ctx.state.is_generating_plan)
-    return; // Already generating a plan
-
-  if (ctx.state.plan_from_threadpool.size() > 0) {
-    // LOG_DEBUG() << "[AI] Retrieved plan from thread pool with "
-    //             << ctx.state.plan_from_threadpool.size() << " items."
-    //             << std::endl;
-    ctx.state.currentGoapPlan = ctx.state.plan_from_threadpool;
+  // Handle a plan generated from a background task
+  if (ctx.state.plan_from_threadpool.valid()) {
+    ctx.state.currentGoapPlan = ctx.state.plan_from_threadpool.get();
+    ctx.state.plan_from_threadpool =
+        std::future<std::vector<GoapPlanItem>>(); // Reset future
     return;
   }
 
-  ctx.state.is_generating_plan = true;
-
   GoapBlackboard initial_state = ctx.state.current_state;
-  ctx.game.thread_pool.queue_job([this, ctx, initial_state]() {
-  SmartAIThinkCtx thread_ctx = ctx;
-    std::optional<std::vector<GoapPlanItem>> best_plan =
-        this->consider_next_plan_item(thread_ctx, {}, initial_state);
 
-    if (best_plan.has_value()) {
-      // LOG_DEBUG() << "[AI] Generated new plan with " << best_plan->size()
-      //             << " items in thread pool." << std::endl;
-      thread_ctx.state.plan_from_threadpool = best_plan.value();
-    } else {
-      // LOG_DEBUG() << "[AI] Failed to generate a valid plan in thread pool."
-      //             << std::endl;
-    }
+  std::packaged_task<std::vector<GoapPlanItem>(void)> task(
+      [this, ctx, initial_state]() {
+        SmartAIThinkCtx thread_ctx = ctx;
+        std::optional<std::vector<GoapPlanItem>> best_plan =
+            this->consider_next_plan_item(thread_ctx, {}, initial_state);
 
-    thread_ctx.state.is_generating_plan = false;
-  });
+        if (best_plan.has_value()) {
+          return best_plan.value();
+        } else {
+          // Return an empty plan to cause replanning again
+          return std::vector<GoapPlanItem>{};
+        }
+      });
+
+  ctx.state.plan_from_threadpool = task.get_future();
+  // WTF C++
+  ctx.game.thread_pool.queue_job(
+      [t = std::make_shared<
+           std::packaged_task<std::vector<GoapPlanItem>(void)>>(
+           std::move(task))]() { (*t)(); });
 }
 
 std::optional<std::vector<GoapPlanItem>>
