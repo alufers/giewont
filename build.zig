@@ -236,5 +236,13 @@ pub fn build(b: *std.Build) void {
 
     b.installArtifact(giewont_client_exe);
 
+    const server_run = b.addRunArtifact(giewont_server_exe);
+    const server_run_step = b.step("run-server", "Compile and run giewont_server");
+    server_run_step.dependOn(&server_run.step);
+
+    const client_run = b.addRunArtifact(giewont_client_exe);
+    const client_run_step = b.step("run-client", "Compile and run giewont_client");
+    client_run_step.dependOn(&client_run.step);
+
     _ = zcc.createStep(b, "cdb", targets.toOwnedSlice(b.allocator) catch @panic("OOM"));
 }
