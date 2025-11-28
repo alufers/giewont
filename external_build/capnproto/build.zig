@@ -89,6 +89,7 @@ pub fn build(b: *std.Build) void {
         "main.h",
         "win32-api-version.h",
         "windows-sanity.h",
+        "async.h",
     };
 
     b.installArtifact(kj_lib);

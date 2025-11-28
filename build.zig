@@ -149,6 +149,7 @@ pub fn build(b: *std.Build) void {
     giewont_server_module.addIncludePath(nbnet_src_dep.path("./"));
     giewont_server_module.addIncludePath(nlohmann_json_dep.path("single_include"));
     giewont_server_module.linkLibrary(capnp_dep.artifact("capnp"));
+    giewont_server_module.linkLibrary(capnp_dep.artifact("kj"));
     // giewont_server_module.linkLibrary(libdatachannel_dep.artifact("libdatachannel"));
     if (target.result.os.tag == .windows) {
         giewont_server_module.linkSystemLibrary("ws2_32", .{});
