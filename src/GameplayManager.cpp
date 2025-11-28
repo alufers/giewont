@@ -168,13 +168,45 @@ void GameplayManager::check_gameplay_state(Game &game) {
       state.did_create_flag_first_time = true;
     }
 
-    if (!state.did_spawn_ai_first_time) {
-      state.did_spawn_ai_first_time = true;
-      for (size_t i = 0; i < initial_ai_spawn_count; i++) {
+    state.human_players_count = 0;
+    state.ai_players_count = 0;
 
-        spawn_player_with_team(game, 0, team);
+    for (auto &entity : game.valid_entities()) {
+      if (CharacterEntity *character =
+              dynamic_cast<CharacterEntity *>(entity.get())) {
+        if (character->team == team) {
+          if (character->net_owner_peer_id == game.my_peer_id) {
+            state.ai_players_count++;
+          } else {
+            state.human_players_count++;
+          }
+        }
       }
     }
+
+    if (state.human_players_count + state.ai_players_count <
+        game.get_gvar<uint32_t>(GVarType::TEAM_MIN_PLAYERS)) {
+      // Need to spawn an AI player
+      spawn_player_with_team(game, 0, team);
+    }
+
+    // Kill excess AI players
+    if (state.human_players_count + state.ai_players_count >
+            game.get_gvar<uint32_t>(GVarType::TEAM_MAX_PLAYERS) &&
+        state.ai_players_count > 0) {
+      for (auto &entity : game.valid_entities()) {
+        if (CharacterEntity *character =
+                dynamic_cast<CharacterEntity *>(entity.get())) {
+          if (character->team == team &&
+              character->net_owner_peer_id == game.my_peer_id) {
+            character->destroy();
+            break;
+          }
+        }
+      }
+    }
+
+    
   }
 }
 
@@ -206,7 +238,7 @@ void GameplayManager::spawn_player_with_team(Game &game, uint32_t peer_id,
   EntityRef player_ref = game.spawn_player_character(
       peer_id, team_states[team].base.get(game).position + Vec2(0, -10));
 
-  if(!player_ref.valid(game)) {
+  if (!player_ref.valid(game)) {
     LOG_ERROR() << "Failed to spawn player for team "
                 << gameplay_team_to_string(team) << std::endl;
     return;

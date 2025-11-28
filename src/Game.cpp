@@ -33,6 +33,11 @@ Game::Game() {
   this->gameplay_variables[GVarType::GRAVITY] = Vec2(0.0f, 9.81f * 70); // y is positive down, and 1m = 70 units
   this->gameplay_variables[GVarType::ENTITY_INTERACTION_RANGE] = 140.0f;
   this->gameplay_variables[GVarType::BASE_ACTIVATION_DIST] = 140.0f;
+
+  this->gameplay_variables[GVarType::TEAM_MIN_PLAYERS] = 4u;
+  this->gameplay_variables[GVarType::TEAM_MAX_PLAYERS] = 10u;
+
+
 }
 
 void Game::update(float delta_time) {
@@ -245,4 +250,8 @@ template <> float Game::get_gvar<float>(GVarType type) const {
 
 template <> Vec2 Game::get_gvar<Vec2>(GVarType type) const {
   return std::get<Vec2>(gameplay_variables.at(type));
+}
+
+template <> uint32_t Game::get_gvar<uint32_t>(GVarType type) const {
+  return std::get<uint32_t>(gameplay_variables.at(type));
 }

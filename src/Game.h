@@ -38,7 +38,7 @@ public:
   EntityRef camera_ref;
 
   // Gameplay variables
-  std::array<std::variant<float, Vec2>, GVarType::MAX> gameplay_variables;
+  std::array<std::variant<float, Vec2, uint32_t>, GVarType::MAX> gameplay_variables;
 
   template <typename T> T get_gvar(GVarType type) const;
 

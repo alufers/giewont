@@ -17,7 +17,8 @@ GameplayTeam gameplay_team_get_enemy(GameplayTeam team);
 class GameplayTeamState {
 public:
   bool did_create_flag_first_time = false;
-  bool did_spawn_ai_first_time = false;
+  uint32_t human_players_count = 0;
+  uint32_t ai_players_count = 0;
   int score = 0;
   EntityRef base;
   EntityRef flag;
@@ -64,7 +65,7 @@ public:
 
 private:
   // Config
-  size_t initial_ai_spawn_count = 5; // Per team
+
 
   void server_update(Game &game, float delta_time);
 

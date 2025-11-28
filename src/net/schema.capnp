@@ -200,8 +200,11 @@ struct GameplayVariable {
     gravity @0 :NetVec2;
     entityInteractionRange @1 :Float32;
     baseActivationDist @2 :Float32; # The range at which a flag is considered being captured by a base.
-
-    max @3 :Void; # Sentinel value
+    gameWinPoints @3 :UInt32;
+    teamMaxPlayers @4 :UInt32;
+    teamMinPlayers @5 :UInt32;
+    
+    max @6 :Void; # Sentinel value
   }
 }
 
